@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gabarito</title>
+<meta name="description" content="Estudo médico com questões comentadas — UFPR e USMLE">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0E6B5A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: app de estudo mobile-first — barra de contexto no topo, navegação inferior no celular / trilho lateral no desktop, uma questão por tela */
+:root{
+  --bg:#F3F4F1; --surface:#FFFFFF; --surface-2:#E9ECE7; --ink:#15201D; --muted:#5B6964; --line:#D7DDD7;
+  --accent:#0E6B5A; --accent-ink:#FFFFFF; --accent-soft:#DCEEE8;
+  --ok:#1E7743; --ok-soft:#E0F1E6; --bad:#B3261E; --bad-soft:#F8E2DF; --warn:#875700; --warn-soft:#FAEFD3;
+  --f-display:"Fraunces", Georgia, serif;
+  --f-ui:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-read:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --fs:1;
+  --nav-h:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1211; --surface:#141C1A; --surface-2:#1C2623; --ink:#E5EDE9; --muted:#94A49E; --line:#283431;
+  --accent:#52CFAF; --accent-ink:#062019; --accent-soft:#12382F;
+  --ok:#62C98E; --ok-soft:#132E20; --bad:#F2877E; --bad-soft:#3A1917; --warn:#E6B95C; --warn-soft:#32270E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1211; --surface:#141C1A; --surface-2:#1C2623; --ink:#E5EDE9; --muted:#94A49E; --line:#283431;
+  --accent:#52CFAF; --accent-ink:#062019; --accent-soft:#12382F;
+  --ok:#62C98E; --ok-soft:#132E20; --bad:#F2877E; --bad-soft:#3A1917; --warn:#E6B95C; --warn-soft:#32270E; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:calc(15px * var(--fs));line-height:1.5;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono)}
+.shell{display:grid;grid-template-columns:minmax(0,1fr);min-height:100%}
+.top,main{min-width:0}
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.brand i{font-style:normal;color:var(--accent)}
+.sync{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--ok)} .dot.warn{background:var(--warn)}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;min-width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0 10px}
+.ctx{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));scrollbar-width:none}
+.ctx::-webkit-scrollbar{display:none}
+.ctx:empty{display:none}
+.sel{position:relative;flex:1 1 150px;min-width:0;max-width:360px}
+.sel select{appearance:none;-webkit-appearance:none;font:inherit;font-size:13px;font-weight:500;color:var(--ink);background:var(--surface-2);border:1px solid transparent;border-radius:999px;padding:8px 30px 8px 12px;width:100%;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.sel::after{content:"";position:absolute;right:12px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.sel .lab{position:absolute;left:-9999px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;flex:none}
+.seg button{border:0;background:transparent;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--f-mono);letter-spacing:.02em}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+/* main */
+main{padding-block:18px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0}
+.wrap{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-family:var(--f-display);font-weight:700;font-size:calc(28px * var(--fs));line-height:1.1;letter-spacing:-.01em}
+h2{font-family:var(--f-display);font-weight:600;font-size:calc(19px * var(--fs));line-height:1.2}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);margin:4px 0 0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.panel h2{margin-bottom:10px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 16px;font-weight:600;cursor:pointer;min-height:44px;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn.small{min-height:36px;padding:7px 12px;font-size:13px;border-radius:10px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn.block{width:100%}
+.big{font-family:var(--f-display);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kpi .v{font-family:var(--f-display);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .l{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.due{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:16px;padding:16px}
+.due .big{color:var(--accent)}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:baseline}
+.bar-row .n{font-size:14px;font-weight:500;min-width:0}
+.bar-row .p{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{grid-column:1/-1;height:8px;border-radius:8px;background:var(--surface-2);overflow:hidden;display:flex}
+.track i{display:block;height:100%}
+.track .ok{background:var(--ok)} .track .bad{background:var(--bad);opacity:.8}
+.spark{display:flex;align-items:flex-end;gap:4px;height:70px;padding-top:6px}
+.spark div{flex:1;display:flex;flex-direction:column-reverse;gap:1px;height:100%;min-width:0}
+.spark i{display:block;border-radius:3px 3px 0 0;background:var(--ok)}
+.spark i.b{background:var(--bad);opacity:.75;border-radius:0}
+.spark-l{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);margin-top:4px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--ok)}
+.legend span.b::before{background:var(--bad)}
+/* forms */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.flabel{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field select,.field input,.field textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+.field textarea{min-height:120px;font-family:var(--f-mono);font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;font-weight:500}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.toggle:first-child{border-top:0}
+.switch{position:relative;width:46px;height:28px;flex:none;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);cursor:pointer}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .15s}
+.switch[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(18px);background:var(--accent-ink)}
+/* question */
+.qtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qnum{font-family:var(--f-mono);font-weight:500;color:var(--accent)}
+.progress{flex:1;min-width:80px;height:5px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent)}
+.timer{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);white-space:nowrap}
+.tag.real{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.tag.gen{border-color:var(--bad);color:var(--bad)}
+.tag.exc{border-color:var(--accent);color:var(--accent)}
+.tag.std{color:var(--ink)}
+.stem{font-family:var(--f-read);font-size:calc(18px * var(--fs));line-height:1.6;margin:2px 0 0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 14px;cursor:pointer}
+.opt[disabled]{cursor:default}
+.opt.picked{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.opt.correct{border-color:var(--ok);background:var(--ok-soft);box-shadow:0 0 0 1px var(--ok) inset}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad) inset}
+.orow{display:flex;gap:12px;align-items:baseline}
+.letter{font-family:var(--f-mono);font-weight:500;color:var(--accent);flex:none;width:18px}
+.opt.correct .letter{color:var(--ok)} .opt.wrong .letter{color:var(--bad)}
+.otext{font-family:var(--f-read);font-size:calc(16.5px * var(--fs));line-height:1.5;min-width:0;flex:1}
+.mark{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;flex:none;align-self:center}
+.opt.correct .mark{color:var(--ok)} .opt.wrong .mark{color:var(--bad)}
+.why{margin:10px 0 0 30px;padding-top:10px;border-top:1px dashed var(--line);font-size:calc(14.5px * var(--fs));line-height:1.55}
+.why .v{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;color:var(--bad)}
+.opt.correct .why .v{color:var(--ok)}
+.why .v.neutral{color:var(--muted)}
+.result{font-family:var(--f-mono);font-size:13px;font-weight:500}
+.result.ok{color:var(--ok)} .result.bad{color:var(--bad)}
+.box{border-radius:14px;padding:13px 15px;font-size:calc(14.5px * var(--fs));line-height:1.55}
+.box h3{font-family:var(--f-mono);font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px}
+.box.peg{background:var(--warn-soft);border:1px solid var(--warn)} .box.peg h3{color:var(--warn)}
+.box.src{border:1px solid var(--line);color:var(--muted);font-size:13px} .box.src h3{color:var(--muted)}
+.box.ai{border:1px solid var(--accent);background:var(--surface)} .box.ai h3{color:var(--accent)}
+.box.note{background:var(--surface-2);font-size:13.5px}
+.md p{margin:0 0 8px} .md ul,.md ol{margin:0 0 8px;padding-left:20px} .md h4{margin:10px 0 4px;font-size:14px} .md table{border-collapse:collapse;font-size:13px} .md td,.md th{border:1px solid var(--line);padding:4px 6px}
+.mdwrap{overflow-x:auto}
+.qnav{position:sticky;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);display:flex;gap:10px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);padding:8px 0;z-index:5}
+.qnav .btn{flex:1}
+.qnav .btn.icon{flex:none;min-width:52px}
+/* flashcard */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-height:260px;display:flex;flex-direction:column;gap:12px}
+.card .face{font-family:var(--f-read);font-size:calc(18px * var(--fs));line-height:1.55}
+.card .ans{border-top:1px dashed var(--line);padding-top:12px}
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rate .btn{flex-direction:column;gap:2px;font-size:13px}
+.rate small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);font-weight:400}
+/* list */
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;width:100%}
+.li:first-child{border-top:0}
+.li .t{font-family:var(--f-read);font-size:15px;line-height:1.4;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.li .m{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.li .st{font-family:var(--f-mono);font-size:11px;align-self:start}
+.st.ok{color:var(--ok)} .st.bad{color:var(--bad)} .st.no{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:28px 12px}
+.banner{border-radius:12px;padding:10px 14px;font-size:13px;background:var(--warn-soft);border:1px solid var(--warn);color:var(--ink)}
+.banner.info{background:var(--accent-soft);border-color:var(--accent)}
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;position:relative}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.badge{position:absolute;top:8px;left:calc(50% + 6px);background:var(--bad);color:#fff;font-family:var(--f-mono);font-size:10px;border-radius:999px;padding:0 5px;line-height:16px;min-width:16px}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:20px 20px 0 0;max-height:88vh;overflow:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.sheet .grab{width:42px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+.sheet-in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13.5px;z-index:50;max-width:calc(100% - 32px)}
+@media (min-width:960px){
+  :root{--nav-h:0px}
+  .shell{grid-template-columns:220px minmax(0,1fr)}
+  nav.tabs{position:sticky;top:0;height:100vh;grid-template-columns:1fr;grid-auto-rows:min-content;align-content:start;border-top:0;border-right:1px solid var(--line);padding:84px 12px 0;gap:4px;grid-row:1/span 2;grid-column:1}
+  nav.tabs button{height:46px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 14px;border-radius:12px;font-size:14px}
+  nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--ink)}
+  nav.tabs button[aria-current="page"]::before{display:none}
+  .badge{position:static;margin-left:auto}
+  .top{grid-column:2} main{grid-column:2}
+  .qnav{bottom:12px}
+  .toast{bottom:24px}
+  .sheet{left:50%;right:auto;transform:translateX(-50%);width:min(680px,100%);bottom:auto;top:10vh;border-radius:20px;max-height:80vh}
+}
+/* focus mode: hide app chrome during a session */
+body.focus .top, body.focus nav.tabs{display:none}
+body.focus main{padding-top:max(10px,env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+body.focus .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
+body.focus .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+body.focus .wrap{gap:12px}
+.fsbtn{min-width:40px;padding:0 10px}
+@media (min-width:960px){ body.focus .shell{grid-template-columns:minmax(0,1fr)} body.focus main{grid-column:1} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="top-in">
+      <div class="brand">Gabarito<i>.</i></div>
+      <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">…</span></div>
+      <button class="iconbtn" type="button" data-act="settings" aria-label="Ajustes" id="btnSettings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      </button>
+    </div>
+    <div class="ctx" id="ctx"></div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Seções"></nav>
+  <main><div class="wrap" id="view"></div></main>
+</div>
+<div id="layer"></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ---------- i18n ---------- */
+const T = {
+pt:{home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
+ discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
+ std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",
+ dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
+ answered:"Respondidas",accuracy:"Acerto",coverage:"do banco",bySub:"Desempenho por sub-bloco",last14:"Últimos 14 dias",correct:"acertos",wrong:"erros",
+ quick:"Atalhos",continueStudy:"Estudo comentado",quickSim:"Simulado rápido (10)",fcStart:"Flashcards do tema",
+ recentSims:"Simulados recentes",noSims:"Nenhum simulado ainda.",
+ studySetup:"Montar sessão",mode:"Modo",mStudy:"Estudo comentado",mStudyD:"Comentário completo após cada resposta",mSim:"Simulado",mSimD:"Cronometrado; gabarito comentado no fim",
+ sub:"Sub-bloco",origin:"Origem",oAll:"Todas",oReal:"Provas reais",oAuth:"Autorais",oGen:"Geradas por IA",
+ filter:"Filtro",fAll:"Todas",fOpen:"Não respondidas",fWrong:"Que errei",
+ count:"Quantidade",shuffleQ:"Embaralhar ordem das questões",shuffleO:"Embaralhar alternativas (exceto provas reais)",
+ start:"Começar",available:"questões disponíveis",none:"Nenhuma questão com esses filtros.",
+ q:"Questão",of:"de",prev:"Anterior",next:"Próxima",finish:"Finalizar",confirmFinish:"Toque de novo para finalizar",
+ right:"Acertou",wrongAns:"Errou · gabarito",answer:"Gabarito",whyNot:"Por que não",trueStmt:"Afirmativa verdadeira",yourAns:"Sua resposta",
+ trap:"Pegadinha / como a banca cobra",trapUs:"Trap / how it is tested",source:"Fonte",
+ explain:"Explicar mais com Claude",explaining:"Pensando…",stop:"Parar",aiTitle:"Claude · aprofundamento",
+ translate:"Traduzir com Claude",onlyIn:"Esta questão ainda não está em português. Mostrando o original em inglês.",onlyInEn:"This question is not available in English yet. Showing the Portuguese original.",
+ saveTr:"Salvar tradução no banco",trSaved:"Tradução salva",
+ simDone:"Resultado do simulado",time:"Tempo",score:"Nota",reviewList:"Revisar questões",backHome:"Voltar ao início",newSession:"Nova sessão",
+ exitSession:"Sair da sessão",sessionEmpty:"Sem sessão ativa.",
+ reviewTitle:"Revisão espaçada",reviewLede:"Questões que você errou ou acertou há tempo voltam em intervalos crescentes (1, 3, 7, 16, 35 dias).",reviewStart:"Começar revisão",upcoming:"Próximos 7 dias",
+ cardsTitle:"Flashcards",cardsLede:"Frente: enunciado. Verso: gabarito, justificativa e pegadinha. Classifique para agendar a próxima vez.",show:"Mostrar resposta",again:"Errei",hard:"Difícil",good:"Acertei",cardsDone:"Fim do baralho por hoje.",cardsDue:"cartões para hoje",cardsAllT:"Estudar todos do tema",
+ bankTitle:"Banco de questões",search:"Buscar no enunciado…",gen:"Gerar questões com Claude",exportJ:"Exportar JSON",importJ:"Importar JSON",
+ genTitle:"Gerar questões",genFocus:"Foco (opcional)",genFocusPh:"ex.: doses do sugamadex, fase II…",genQty:"Quantas",genLang:"Idioma",genStd:"Padrão",generate:"Gerar",genSave:"Salvar no banco",genDiscard:"Descartar",genSaved:"Questões salvas",genWarn:"Questões geradas por IA entram marcadas como \"não revisadas\". Confira antes de confiar.",
+ importPh:"Cole aqui um array JSON de questões no formato do banco…",importDo:"Importar",imported:"Importadas",
+ del:"Excluir",confirmDel:"Toque de novo para excluir",deleted:"Excluída",markRev:"Marcar como revisada",reviewed:"Revisada",notReviewed:"não revisada",
+ settings:"Ajustes",lang:"Idioma",theme:"Tema",tSys:"Sistema",tLight:"Claro",tDark:"Escuro",font:"Tamanho do texto",
+ howAdd:"Como entra conteúdo novo",howAddTxt:"Envie a aula (PDF/fotos) e provas antigas ao Claude e peça um pacote para o Gabarito. Ele devolve um arquivo .json; importe em Banco → Importar JSON. As questões entram no mesmo padrão: comentário por alternativa, pegadinha e fonte.",
+ resetProg:"Zerar meu progresso",confirmReset:"Toque de novo para zerar",resetDone:"Progresso zerado",
+ online:"sincronizado",offline:"cópia local",loading:"carregando",readonly:"somente leitura",
+ noDb:"Banco indisponível nesta visualização. Mostrando a última cópia salva neste aparelho.",noData:"O banco ainda está vazio.",
+ aiUnavailable:"Claude não está disponível nesta visualização.",aiDenied:"Uso do Claude não autorizado nesta visualização.",aiRate:"Muitas solicitações. Tente de novo em instantes.",aiErr:"Não deu certo. Tente de novo.",
+ min:"min",qs:"questões",step:"Etapa",days:"d",today:"hoje",tomorrow:"amanhã"},
+en:{home:"Home",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
+ discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
+ std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",
+ dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
+ answered:"Answered",accuracy:"Accuracy",coverage:"of bank",bySub:"Performance by sub-block",last14:"Last 14 days",correct:"correct",wrong:"wrong",
+ quick:"Shortcuts",continueStudy:"Tutor mode",quickSim:"Quick test (10)",fcStart:"Topic flashcards",
+ recentSims:"Recent tests",noSims:"No tests yet.",
+ studySetup:"Build a session",mode:"Mode",mStudy:"Tutor mode",mStudyD:"Full explanation after each answer",mSim:"Timed test",mSimD:"Timed; explained answer key at the end",
+ sub:"Sub-block",origin:"Source",oAll:"All",oReal:"Past exams",oAuth:"Authored",oGen:"AI-generated",
+ filter:"Filter",fAll:"All",fOpen:"Unanswered",fWrong:"Missed",
+ count:"Number",shuffleQ:"Shuffle question order",shuffleO:"Shuffle answer choices (except past exams)",
+ start:"Start",available:"questions available",none:"No questions match these filters.",
+ q:"Question",of:"of",prev:"Previous",next:"Next",finish:"Finish",confirmFinish:"Tap again to finish",
+ right:"Correct",wrongAns:"Incorrect · answer",answer:"Answer",whyNot:"Why not",trueStmt:"True statement",yourAns:"Your answer",
+ trap:"Trap / how it is tested",trapUs:"Trap / how it is tested",source:"Source",
+ explain:"Explain more with Claude",explaining:"Thinking…",stop:"Stop",aiTitle:"Claude · deep dive",
+ translate:"Translate with Claude",onlyIn:"This question is not available in Portuguese yet. Showing the English original.",onlyInEn:"This question is not available in English yet. Showing the Portuguese original.",
+ saveTr:"Save translation to bank",trSaved:"Translation saved",
+ simDone:"Test result",time:"Time",score:"Score",reviewList:"Review questions",backHome:"Back to home",newSession:"New session",
+ exitSession:"Leave session",sessionEmpty:"No active session.",
+ reviewTitle:"Spaced review",reviewLede:"Questions you missed, or got right a while ago, come back at growing intervals (1, 3, 7, 16, 35 days).",reviewStart:"Start review",upcoming:"Next 7 days",
+ cardsTitle:"Flashcards",cardsLede:"Front: stem. Back: answer, explanation and trap. Rate yourself to schedule the next showing.",show:"Show answer",again:"Missed",hard:"Hard",good:"Got it",cardsDone:"Deck finished for today.",cardsDue:"cards due today",cardsAllT:"Study all in topic",
+ bankTitle:"Question bank",search:"Search stems…",gen:"Generate questions with Claude",exportJ:"Export JSON",importJ:"Import JSON",
+ genTitle:"Generate questions",genFocus:"Focus (optional)",genFocusPh:"e.g. sugammadex dosing, phase II block…",genQty:"How many",genLang:"Language",genStd:"Standard",generate:"Generate",genSave:"Save to bank",genDiscard:"Discard",genSaved:"Questions saved",genWarn:"AI-generated questions are saved as \"not reviewed\". Check them before relying on them.",
+ importPh:"Paste a JSON array of questions in the bank format…",importDo:"Import",imported:"Imported",
+ del:"Delete",confirmDel:"Tap again to delete",deleted:"Deleted",markRev:"Mark as reviewed",reviewed:"Reviewed",notReviewed:"not reviewed",
+ settings:"Settings",lang:"Language",theme:"Theme",tSys:"System",tLight:"Light",tDark:"Dark",font:"Text size",
+ howAdd:"How new content gets in",howAddTxt:"Send the lecture (PDF/photos) and past exams to Claude and ask for a Gabarito pack. It returns a .json file; import it under Bank → Import JSON. Questions keep the same format: explanation per choice, trap and source.",
+ resetProg:"Reset my progress",confirmReset:"Tap again to reset",resetDone:"Progress reset",
+ online:"synced",offline:"local copy",loading:"loading",readonly:"read-only",
+ noDb:"Database unavailable in this view. Showing the last copy saved on this device.",noData:"The bank is still empty.",
+ aiUnavailable:"Claude is not available in this view.",aiDenied:"Claude use was not allowed in this view.",aiRate:"Too many requests. Try again shortly.",aiErr:"That did not work. Try again.",
+ min:"min",qs:"questions",step:"Step",days:"d",today:"today",tomorrow:"tomorrow"}
+};
+const L = "ABCDE";
+const ICONS = {
+ home:'<svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>',
+ study:'<svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>',
+ review:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/><path d="M12 8v4l3 2"/></svg>',
+ cards:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v10"/></svg>',
+ bank:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>'
+};
+const INTERVALS = [0,1,3,7,16,35];
+
+/* ---------- state ---------- */
+const LS_KEY = "gabarito-cache-v1";
+const S = {
+  db:null, user:null, sample:null, downloads:null, uid:null, owner:false,
+  dbState:"loading", catalog:null, qs:new Map(), qUnsub:null, catUnsub:null,
+  prog:{settings:{lang:"pt",std:"ufpr",disc:null,topic:null,theme:"sys",fs:1},q:{},fc:{},log:{},sims:[]},
+  progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, fcDeck:null, ai:{}, gen:null
+};
+function cacheLoad(){ try{ const c=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(c){ if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.prog) S.prog=mergeProg(S.prog,c.prog); } }catch(e){} }
+let cacheTimer=null;
+function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify({catalog:S.catalog, qs:[...S.qs.values()], prog:S.prog})); }catch(e){} },400); }
+function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[]}; }
+const set = () => S.prog.settings;
+const tr = k => (T[set().lang]||T.pt)[k] ?? T.pt[k] ?? k;
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function safe(html){ // allow a tiny tag set from content
+  let s = esc(html);
+  return s.replace(/&lt;(\/?)(b|i|em|strong|sub|sup|br)&gt;/g, "<$1$2>");
+}
+function md(text){ // minimal markdown for Claude answers
+  const lines = esc(text).split("\n"); let out=[], list=null, tbl=null;
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*(?!\s)(.+?)\*/g,"$1<i>$2</i>").replace(/`(.+?)`/g,'<code>$1</code>');
+  const flush=()=>{ if(list){out.push(`<${list.t}>${list.items.map(i=>`<li>${inline(i)}</li>`).join("")}</${list.t}>`);list=null;} if(tbl){out.push('<div class="mdwrap"><table>'+tbl.map((r,i)=>"<tr>"+r.map(c=>i?`<td>${inline(c)}</td>`:`<th>${inline(c)}</th>`).join("")+"</tr>").join("")+"</table></div>");tbl=null;} };
+  for(const raw of lines){ const l=raw.trim();
+    if(/^\|.*\|$/.test(l)){ if(/^\|[\s:|-]+\|$/.test(l)) continue; if(list) flush(); (tbl=tbl||[]).push(l.slice(1,-1).split("|").map(c=>c.trim())); continue; }
+    let m;
+    if((m=l.match(/^[-*•]\s+(.*)/))){ if(tbl) flush(); if(!list||list.t!=="ul"){flush();list={t:"ul",items:[]};} list.items.push(m[1]); continue; }
+    if((m=l.match(/^\d+[.)]\s+(.*)/))){ if(tbl) flush(); if(!list||list.t!=="ol"){flush();list={t:"ol",items:[]};} list.items.push(m[1]); continue; }
+    flush();
+    if(!l) continue;
+    if((m=l.match(/^#{1,6}\s+(.*)/))){ out.push(`<h4>${inline(m[1])}</h4>`); continue; }
+    out.push(`<p>${inline(l)}</p>`);
+  }
+  flush(); return out.join("");
+}
+const dayKey = (d=new Date()) => { const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); };
+const now = () => Date.now();
+const DAY = 86400000;
+function startOfDay(t){ const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function fmtTime(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60), r=s%60; return m+":"+String(r).padStart(2,"0"); }
+let toastTimer=null;
+function toast(msg){ let el=$("#toast"); if(!el){el=document.createElement("div");el.id="toast";el.className="toast";el.setAttribute("role","status");document.body.appendChild(el);} el.textContent=msg; el.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.hidden=true,2600); }
+function arm(btn, label, fn){ if(btn.dataset.armed){ delete btn.dataset.armed; fn(); return; } const old=btn.textContent; btn.dataset.armed="1"; btn.textContent=label; setTimeout(()=>{ if(btn.dataset.armed){ delete btn.dataset.armed; btn.textContent=old; } },3000); }
+function applyTheme(){ const t=set().theme; const r=document.documentElement; if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme"); r.style.setProperty("--fs", set().fs||1); }
+
+/* ---------- catalog / filters ---------- */
+function discs(){ return S.catalog?.disciplines || []; }
+function curDisc(){ const d=discs(); return d.find(x=>x.id===set().disc) || d[0] || null; }
+function curTopic(){ const d=curDisc(); if(!d) return null; return d.topics.find(x=>x.id===set().topic) || d.topics[0] || null; }
+function nm(o){ return o?.name?.[set().lang] || o?.name?.pt || o?.name?.en || o?.id || ""; }
+function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); return s? nm(s) : id; }
+function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||q.topic!==t.id) return false; const st=set().std; return st==="all" || q.standard===st; }
+function ctxQs(){ return [...S.qs.values()].filter(inCtx).sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); }
+function content(q){ // returns {c, lang, fallback}
+  const L0=set().lang, other=L0==="pt"?"en":"pt";
+  if(q.i18n?.[L0]) return {c:q.i18n[L0], lang:L0, fallback:false};
+  return {c:q.i18n?.[other], lang:other, fallback:true};
+}
+function tagsOf(q){ return q.tags?.[set().lang] || q.tags?.pt || q.tags?.en || []; }
+
+/* ---------- progress ---------- */
+function rec(id){ return S.prog.q[id]; }
+function status(id){ const r=rec(id); if(!r) return "no"; return r.ok? "ok":"bad"; }
+function record(q, picked){
+  const ok = picked===q.correct; const r = S.prog.q[q.id] || {n:0,nOk:0,box:0};
+  r.n++; if(ok) r.nOk++; r.ok=ok; r.a=picked; r.ts=now();
+  r.box = ok ? Math.min((r.box||0)+1, INTERVALS.length-1) : 0;
+  r.due = ok ? startOfDay(now()) + INTERVALS[r.box]*DAY : startOfDay(now()) + DAY;
+  S.prog.q[q.id]=r;
+  const k=dayKey(); const lg=S.prog.log[k]||{n:0,ok:0}; lg.n++; if(ok) lg.ok++; S.prog.log[k]=lg;
+  pruneLog(); saveProg(); return ok;
+}
+function rateCard(q, grade){ // 0 missed, 1 hard, 2 good
+  const r = S.prog.fc[q.id] || {box:0};
+  if(grade===0){ r.box=0; r.due=startOfDay(now())+DAY; }
+  else { r.box = grade===1 ? Math.max(1,r.box||0) : Math.min((r.box||0)+1, INTERVALS.length-1); r.due = startOfDay(now()) + INTERVALS[r.box]*DAY; }
+  r.ts=now(); S.prog.fc[q.id]=r; saveProg();
+}
+function pruneLog(){ const keys=Object.keys(S.prog.log).sort(); while(keys.length>120){ delete S.prog.log[keys.shift()]; } }
+function dueQs(){ const end=startOfDay(now())+DAY; return ctxQs().filter(q=>{ const r=rec(q.id); return r && r.due!=null && r.due < end; }); }
+function dueCards(){ const end=startOfDay(now())+DAY; return ctxQs().filter(q=>{ const r=S.prog.fc[q.id]; return !r || r.due < end; }); }
+let saveTimer=null, saving=false, saveAgain=false;
+function saveProg(){ cacheSave(); if(!S.db||!S.uid) return; clearTimeout(saveTimer); saveTimer=setTimeout(flushProg, 1200); }
+async function flushProg(){
+  if(saving){ saveAgain=true; return; } saving=true;
+  try{ await S.db.doc("data/users/"+S.uid+"/state").set(JSON.parse(JSON.stringify(S.prog))); setSync("on"); }
+  catch(e){ setSync("warn"); }
+  finally{ saving=false; if(saveAgain){ saveAgain=false; flushProg(); } }
+}
+
+/* ---------- sync indicator ---------- */
+function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.className="dot"+(s==="on"?" on":s==="warn"||s==="off"?" warn":""); t.textContent= s==="on"? tr("online") : s==="loading"? tr("loading") : tr("offline"); }
+
+/* ---------- chrome ---------- */
+function renderTabs(){
+  const due = dueQs().length;
+  $("#tabs").innerHTML = ["home","study","review","cards","bank"].map(v=>`<button type="button" data-nav="${v}" ${S.view===v?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+}
+function renderCtx(){
+  const d=curDisc(), t=curTopic();
+  const dOpts = discs().map(x=>`<option value="${esc(x.id)}" ${d&&x.id===d.id?"selected":""}>${esc(nm(x))}</option>`).join("");
+  const tOpts = (d?.topics||[]).map(x=>`<option value="${esc(x.id)}" ${t&&x.id===t.id?"selected":""}>${esc(nm(x))}</option>`).join("");
+  const st=set().std, lg=set().lang;
+  $("#ctx").innerHTML = `
+   <label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}">${dOpts||`<option>—</option>`}</select></label>
+   <label class="sel"><span class="lab">${tr("topic")}</span><select id="selTopic" aria-label="${tr("topic")}">${tOpts||`<option>—</option>`}</select></label>
+   <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>
+   <div class="seg" role="group" aria-label="${tr("lang")}">${["pt","en"].map(x=>`<button type="button" data-lang="${x}" aria-pressed="${lg===x}">${x.toUpperCase()}</button>`).join("")}</div>`;
+  $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
+  $("#selTopic").onchange=e=>{ set().topic=e.target.value; saveProg(); S.session=null; S.fcDeck=null; go(S.view); };
+}
+function go(v){ S.view=v; if(location.hash!=="#"+v){ try{ history.replaceState(null,"","#"+v); }catch(e){} } render(); window.scrollTo({top:0}); }
+function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
+function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
+  if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p>${S.owner&&S.db?`<div class="row" style="margin-top:12px"><button class="btn primary" data-act="importOpen">${tr("importJ")}</button></div>`:""}</div>`; return; }
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, bank:vBank}[S.view]||vHome)(v);
+}
+
+/* ---------- HOME ---------- */
+function vHome(v){
+  const qs=ctxQs(); const done=qs.filter(q=>rec(q.id)); const ok=done.filter(q=>rec(q.id).ok);
+  const due=dueQs().length; const t=curTopic();
+  const subs=(t?.subs||[]).map(s=>{ const list=qs.filter(q=>q.sub===s.id); const d=list.filter(q=>rec(q.id)); const o=d.filter(q=>rec(q.id).ok); return {s,list,d,o}; }).filter(x=>x.list.length);
+  const days=[...Array(14)].map((_,i)=>{ const d=new Date(now()-(13-i)*DAY); const k=dayKey(d); return {k, ...(S.prog.log[k]||{n:0,ok:0})}; });
+  const max=Math.max(4,...days.map(d=>d.n));
+  const sims=(S.prog.sims||[]).filter(s=>s.topic===(t?.id)).slice(-4).reverse();
+  v.innerHTML = `
+   <div><div class="eyebrow">${esc(nm(curDisc()))} · ${tr("std_"+set().std)}</div><h1>${esc(nm(t))}</h1></div>
+   ${S.dbState==="off"&&S.qs.size?`<div class="banner">${tr("noDb")}</div>`:""}
+   <div class="due"><div><div class="eyebrow">${tr("dueToday")}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
+     ${due?`<button class="btn primary" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
+   <div class="kpis">
+     <div class="kpi"><div class="v">${done.length}<span style="font-size:15px;color:var(--muted)">/${qs.length}</span></div><div class="l">${tr("answered")}</div></div>
+     <div class="kpi"><div class="v">${done.length?Math.round(100*ok.length/done.length)+"%":"—"}</div><div class="l">${tr("accuracy")}</div></div>
+     <div class="kpi"><div class="v">${qs.length?Math.round(100*done.length/qs.length)+"%":"—"}</div><div class="l">${tr("coverage")}</div></div>
+   </div>
+   <div class="panel"><h2>${tr("quick")}</h2><div class="grid2">
+     <button class="btn primary" data-act="quick" data-mode="study">${tr("continueStudy")}</button>
+     <button class="btn" data-act="quick" data-mode="sim">${tr("quickSim")}</button>
+     <button class="btn" data-nav="cards">${tr("fcStart")}</button></div></div>
+   <div class="panel"><h2>${tr("bySub")}</h2><div class="bars">${subs.map(x=>`
+     <div class="bar-row"><span class="n">${esc(nm(x.s))}</span><span class="p">${x.d.length}/${x.list.length} · ${x.d.length?Math.round(100*x.o.length/x.d.length)+"%":"—"}</span>
+     <div class="track" role="img" aria-label="${x.o.length} ${tr("correct")}, ${x.d.length-x.o.length} ${tr("wrong")}, ${x.list.length} total"><i class="ok" style="width:${100*x.o.length/x.list.length}%"></i><i class="bad" style="width:${100*(x.d.length-x.o.length)/x.list.length}%"></i></div></div>`).join("")||`<p class="empty">${tr("none")}</p>`}</div></div>
+   <div class="panel"><div class="row" style="justify-content:space-between"><h2>${tr("last14")}</h2><div class="legend"><span>${tr("correct")}</span><span class="b">${tr("wrong")}</span></div></div>
+     <div class="spark" role="img" aria-label="${tr("last14")}">${days.map(d=>`<div title="${d.k}: ${d.ok}/${d.n}"><i style="height:${100*d.ok/max}%"></i><i class="b" style="height:${100*(d.n-d.ok)/max}%"></i></div>`).join("")}</div>
+     <div class="spark-l"><span>${days[0].k.slice(5)}</span><span>${tr("today")}</span></div></div>
+   <div class="panel"><h2>${tr("recentSims")}</h2>${sims.length?`<div class="list">${sims.map(s=>`<div class="li" style="cursor:default"><span class="t" style="font-family:var(--f-ui)">${new Date(s.ts).toLocaleDateString(set().lang==="en"?"en-US":"pt-BR")} · ${s.n} ${tr("qs")} · ${tr("std_"+(s.std||"all"))}</span><span class="st ${s.ok/s.n>=.7?"ok":"bad"}">${Math.round(100*s.ok/s.n)}% · ${fmtTime(s.secs)}</span></div>`).join("")}</div>`:`<p class="lede">${tr("noSims")}</p>`}</div>`;
+}
+
+/* ---------- STUDY: setup ---------- */
+function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"all", count:10, shuffleQ:false, shuffleO:true}; }
+function setupPool(su){ return ctxQs().filter(q=>{
+  if(su.sub && q.sub!==su.sub) return false;
+  if(su.origin && q.origin!==su.origin) return false;
+  const st=status(q.id); if(su.filter==="open"&&st!=="no") return false; if(su.filter==="wrong"&&st!=="bad") return false; return true; }); }
+function vStudy(v){
+  if(S.session && S.session.kind!=="review") return vPlayer(v);
+  const su = S.setup || (S.setup=defaultSetup()); const t=curTopic(); const pool=setupPool(su);
+  const chip=(k,val,label)=>`<button type="button" class="chip" data-su="${k}" data-val="${val}" aria-pressed="${String(su[k])===String(val)}">${label}</button>`;
+  v.innerHTML = `
+   <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("studySetup")}</h1></div>
+   <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+    <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
+      <button type="button" class="chip" data-su="mode" data-val="study" aria-pressed="${su.mode==="study"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mStudy")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mStudyD")}</span></button>
+      <button type="button" class="chip" data-su="mode" data-val="sim" aria-pressed="${su.mode==="sim"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mSim")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mSimD")}</span></button></div></div>
+    <div class="field"><label for="suSub">${tr("sub")}</label><select id="suSub"><option value="">${tr("allSubs")}</option>${(t?.subs||[]).map(s=>`<option value="${esc(s.id)}" ${su.sub===s.id?"selected":""}>${esc(nm(s))}</option>`).join("")}</select></div>
+    <div class="field"><span class="flabel">${tr("origin")}</span><div class="chips">${chip("origin","",tr("oAll"))}${chip("origin","real",tr("oReal"))}${chip("origin","authored",tr("oAuth"))}${chip("origin","generated",tr("oGen"))}</div></div>
+    <div class="field"><span class="flabel">${tr("filter")}</span><div class="chips">${chip("filter","all",tr("fAll"))}${chip("filter","open",tr("fOpen"))}${chip("filter","wrong",tr("fWrong"))}</div></div>
+    <div class="field"><span class="flabel">${tr("count")}</span><div class="chips">${[5,10,20,40].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}</div></div>
+    <div>
+      <div class="toggle"><span>${tr("shuffleQ")}</span><button type="button" class="switch" role="switch" data-sw="shuffleQ" aria-checked="${su.shuffleQ}" aria-label="${tr("shuffleQ")}"></button></div>
+      <div class="toggle"><span>${tr("shuffleO")}</span><button type="button" class="switch" role="switch" data-sw="shuffleO" aria-checked="${su.shuffleO}" aria-label="${tr("shuffleO")}"></button></div>
+    </div>
+    <div class="row" style="justify-content:space-between"><span class="mono" style="color:var(--muted);font-size:13px">${pool.length} ${tr("available")}</span>
+      <button class="btn primary" data-act="startSession" ${pool.length?"":"disabled"}>${tr("start")}</button></div>
+   </div>`;
+  $("#suSub").onchange=e=>{ su.sub=e.target.value; render(); };
+}
+function buildSession(kind, list, su){
+  let qs = su.shuffleQ ? shuffle(list) : list.slice();
+  if(su.count) qs = qs.slice(0, su.count);
+  const items = qs.map(q=>({id:q.id, perm: (su.shuffleO && q.origin!=="real") ? shuffle([0,1,2,3,4].slice(0,(q.i18n.pt||q.i18n.en).opts.length)) : [...Array((q.i18n.pt||q.i18n.en).opts.length).keys()], pick:null}));
+  return {kind, mode: kind==="review"?"study":su.mode, items, i:0, t0:now(), done:false, std:set().std, topic:curTopic()?.id};
+}
+
+/* ---------- PLAYER ---------- */
+let timerInt=null;
+function vPlayer(v){
+  const s=S.session; clearInterval(timerInt);
+  if(!s.items.length){ v.innerHTML=`<p class="empty">${tr("sessionEmpty")}</p>`; return; }
+  if(s.done) return vResult(v);
+  const it=s.items[s.i]; const q=S.qs.get(it.id);
+  if(!q){ s.items.splice(s.i,1); s.i=Math.min(s.i,s.items.length-1); return vPlayer(v); }
+  const reveal = s.mode==="study" && it.pick!==null;
+  v.innerHTML = `
+   <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
+     <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
+     ${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}
+     ${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
+   ${questionHTML(q, it, reveal, s.mode==="sim")}
+   <div class="qnav">
+     <button class="btn icon" data-act="prev" ${s.i===0?"disabled":""} aria-label="${tr("prev")}">←</button>
+     ${s.i<s.items.length-1 ? `<button class="btn ${ (reveal || (s.mode==="sim"&&it.pick!==null)) ? "primary":""}" data-act="next">${tr("next")} →</button>`
+       : (s.mode==="sim" ? `<button class="btn primary" data-act="finish">${tr("finish")}</button>` : `<button class="btn primary" data-act="finish">${tr("finish")}</button>`)}
+   </div>`;
+  if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
+  hydrateAI(q);
+}
+function questionHTML(q, it, reveal, simMode){
+  const {c, lang, fallback} = content(q); if(!c) return "";
+  const perm = it?.perm || c.opts.map((_,i)=>i);
+  const pick = it?.pick ?? null;
+  const tags = [];
+  tags.push(`<span class="tag std">${q.standard.toUpperCase()}${q.step?" · "+esc(q.step):""}</span>`);
+  if(q.exam) tags.push(`<span class="tag real">${esc(q.exam)}</span>`);
+  if(q.origin==="generated") tags.push(`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`);
+  tagsOf(q).forEach(t=>tags.push(`<span class="tag">${esc(t)}</span>`));
+  if(q.exc) tags.push(`<span class="tag exc">${set().lang==="en"?"Except / incorrect":"Exceto / incorreta"}</span>`);
+  const opts = perm.map((orig,pos)=>{
+    const o=c.opts[orig]; let cls="opt", mark="";
+    if(reveal){ if(orig===q.correct){cls+=" correct";mark=orig===pick?tr("answer")+" · ✓":tr("answer");} else if(orig===pick){cls+=" wrong";mark=tr("yourAns");} }
+    else if(simMode && orig===pick){ cls+=" picked"; }
+    const verdict = orig===q.correct ? tr("answer") : (q.exc ? tr("trueStmt") : tr("whyNot"));
+    const why = reveal ? `<div class="why"><span class="v ${orig!==q.correct&&q.exc?"neutral":""}">${verdict}</span>${safe(o.why)}</div>` : "";
+    return `<button type="button" class="${cls}" data-pick="${orig}" ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div>${why}</button>`;
+  }).join("");
+  const fb = fallback ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
+  const after = reveal ? `
+    <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
+    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}
+    ${c.src?`<div class="box src"><h3>${tr("source")}</h3>${safe(c.src)}</div>`:""}
+    ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
+  return `<div class="tags">${tags.join("")}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`;
+}
+function vResult(v){
+  const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
+  const secs=s.secs ?? (now()-s.t0)/1000;
+  v.innerHTML = `
+   <div><div class="eyebrow">${tr("simDone")}</div><h1>${ok}/${n} · ${Math.round(100*ok/n)}%</h1><p class="lede">${tr("time")}: ${fmtTime(secs)} · ${fmtTime(secs/n)}/${set().lang==="en"?"question":"questão"}</p></div>
+   <div class="row"><button class="btn primary" data-act="newSession">${tr("newSession")}</button><button class="btn" data-nav="home">${tr("backHome")}</button></div>
+   <div class="panel"><h2>${tr("reviewList")}</h2><div class="list">${s.items.map((it,i)=>{ const q=S.qs.get(it.id); if(!q) return ""; const c=content(q).c; const good=it.pick===q.correct; return `
+     <button type="button" class="li" data-act="reviewItem" data-i="${i}"><span class="t">${i+1}. ${safe(c.stem)}</span><span class="st ${it.pick===null?"no":good?"ok":"bad"}">${it.pick===null?"—":good?"✓":"✗"}</span>
+     <span class="m">${tagsOf(q).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</span></button>`; }).join("")}</div></div>`;
+}
+
+/* ---------- REVIEW ---------- */
+function vReview(v){
+  if(S.session && S.session.kind==="review") return vPlayer(v);
+  const due=dueQs(); const t=curTopic();
+  const up=[...Array(7)].map((_,i)=>{ const a=startOfDay(now())+(i+1)*DAY; return {i, n: ctxQs().filter(q=>{const r=rec(q.id); return r&&r.due>=a&&r.due<a+DAY;}).length}; });
+  const mx=Math.max(1,...up.map(u=>u.n));
+  v.innerHTML = `
+   <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("reviewTitle")}</h1><p class="lede">${tr("reviewLede")}</p></div>
+   <div class="due"><div><div class="eyebrow">${tr("dueToday")}</div><div class="big">${due.length}</div></div>${due.length?`<button class="btn primary" data-act="startReview">${tr("reviewStart")}</button>`:""}</div>
+   ${due.length?"":`<p class="lede">${tr("dueNone")}</p>`}
+   <div class="panel"><h2>${tr("upcoming")}</h2><div class="spark" style="height:60px">${up.map(u=>`<div title="+${u.i+1}${tr("days")}: ${u.n}"><i style="height:${100*u.n/mx}%;background:var(--accent)"></i></div>`).join("")}</div>
+   <div class="spark-l"><span>${tr("tomorrow")}</span><span>+7${tr("days")}</span></div></div>
+   ${due.length?`<div class="panel"><div class="list">${due.map(q=>{const c=content(q).c; return `<div class="li" style="cursor:default"><span class="t">${safe(c.stem)}</span><span class="st ${status(q.id)}">${status(q.id)==="ok"?"✓":"✗"}</span></div>`;}).join("")}</div></div>`:""}`;
+}
+
+/* ---------- FLASHCARDS ---------- */
+function vCards(v){
+  const t=curTopic();
+  if(!S.fcDeck || S.fcDeck.topic!==t?.id || S.fcDeck.std!==set().std){
+    v.innerHTML = `<div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("cardsTitle")}</h1><p class="lede">${tr("cardsLede")}</p></div>
+      <div class="due"><div><div class="eyebrow">${tr("cardsDue")}</div><div class="big">${dueCards().length}</div></div><button class="btn primary" data-act="fcStart" data-all="0" ${dueCards().length?"":"disabled"}>${tr("start")}</button></div>
+      <button class="btn" data-act="fcStart" data-all="1">${tr("cardsAllT")} (${ctxQs().length})</button>`;
+    return;
+  }
+  const d=S.fcDeck; if(d.i>=d.ids.length){ v.innerHTML=`<div class="panel"><h2>${tr("cardsDone")}</h2><div class="row" style="margin-top:10px"><button class="btn primary" data-act="fcReset">${tr("newSession")}</button><button class="btn" data-nav="home">${tr("backHome")}</button></div></div>`; return; }
+  const q=S.qs.get(d.ids[d.i]); if(!q){ d.i++; return vCards(v); }
+  const {c}=content(q); const corr=c.opts[q.correct];
+  v.innerHTML = `
+   <div class="qtop"><span class="qnum">${d.i+1} / ${d.ids.length}</span><div class="progress"><i style="width:${100*d.i/d.ids.length}%"></i></div>${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn" data-act="fcReset" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
+   <div class="card"><div class="tags">${tagsOf(q).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+     <div class="face">${safe(c.stem)}</div>
+     ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(corr.why)}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}`:""}
+   </div>
+   <div class="qnav">${d.show?`<div class="rate" style="flex:1"><button class="btn" data-act="fcRate" data-g="0">${tr("again")}<small>1${tr("days")}</small></button><button class="btn" data-act="fcRate" data-g="1">${tr("hard")}<small>${INTERVALS[Math.max(1,(S.prog.fc[q.id]?.box||0))]}${tr("days")}</small></button><button class="btn primary" data-act="fcRate" data-g="2">${tr("good")}<small>${INTERVALS[Math.min((S.prog.fc[q.id]?.box||0)+1,5)]}${tr("days")}</small></button></div>`:`<button class="btn primary block" data-act="fcShow">${tr("show")}</button>`}</div>`;
+}
+
+/* ---------- BANK ---------- */
+function vBank(v){
+  const t=curTopic(); const f=S.bankFilter; const all=ctxQs();
+  const list=all.filter(q=>{ if(f.sub&&q.sub!==f.sub) return false; if(f.origin&&q.origin!==f.origin) return false; if(f.text){ const c=content(q).c; const hay=(c.stem+" "+tagsOf(q).join(" ")).toLowerCase(); if(!hay.includes(f.text.toLowerCase())) return false; } return true; });
+  v.innerHTML = `
+   <div><div class="eyebrow">${esc(nm(t))} · ${all.length} ${tr("qs")}</div><h1>${tr("bankTitle")}</h1></div>
+   <div class="row">
+     ${S.owner&&S.sample?`<button class="btn primary" data-act="genOpen">✦ ${tr("gen")}</button>`:""}
+     ${S.downloads?`<button class="btn" data-act="export">${tr("exportJ")}</button>`:""}
+     ${S.owner&&S.db?`<button class="btn" data-act="importOpen">${tr("importJ")}</button>`:""}
+   </div>
+   <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+     <div class="field"><label for="bkText" class="lab" style="position:absolute;left:-9999px">${tr("search")}</label><input id="bkText" type="search" placeholder="${tr("search")}" value="${esc(f.text)}"></div>
+     <div class="row">
+       <div class="field" style="flex:1;min-width:150px"><label for="bkSub">${tr("sub")}</label><select id="bkSub"><option value="">${tr("allSubs")}</option>${(t?.subs||[]).map(s=>`<option value="${esc(s.id)}" ${f.sub===s.id?"selected":""}>${esc(nm(s))}</option>`).join("")}</select></div>
+       <div class="field" style="flex:1;min-width:150px"><label for="bkOrig">${tr("origin")}</label><select id="bkOrig">${[["",tr("oAll")],["real",tr("oReal")],["authored",tr("oAuth")],["generated",tr("oGen")]].map(([k,l])=>`<option value="${k}" ${f.origin===k?"selected":""}>${l}</option>`).join("")}</select></div>
+     </div>
+   </div>
+   <div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
+     <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
+     <span class="m"><span class="tag std">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}<span class="tag">${esc(subName(q.sub))}</span><span class="tag">${Object.keys(q.i18n||{}).join("+").toUpperCase()}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
+   <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
+  const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
+  $("#bkSub").onchange=e=>{ f.sub=e.target.value; render(); };
+  $("#bkOrig").onchange=e=>{ f.origin=e.target.value; render(); };
+}
+function openSheet(html, onMount){
+  $("#layer").innerHTML = `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="sheet-in">${html}</div></div>`;
+  document.body.style.overflow="hidden"; onMount && onMount($("#layer .sheet"));
+}
+function closeSheet(){ $("#layer").innerHTML=""; document.body.style.overflow=""; S.gen=null; }
+function bankPreview(id){
+  const q=S.qs.get(id); if(!q) return;
+  const it={id, perm:[...Array(content(q).c.opts.length).keys()], pick:q.correct};
+  openSheet(`<div class="row" style="justify-content:space-between"><span class="eyebrow">${esc(q.id)}</span><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+    ${questionHTML(q,it,true,false)}
+    ${S.owner&&S.db?`<div class="row">${q.origin==="generated"&&!q.reviewed?`<button class="btn small" data-act="markRev" data-q="${esc(id)}">${tr("markRev")}</button>`:""}<button class="btn small danger" data-act="delQ" data-q="${esc(id)}">${tr("del")}</button></div>`:""}`);
+  hydrateAI(q);
+}
+
+/* ---------- SETTINGS ---------- */
+function openSettings(){
+  const st=set();
+  openSheet(`<div class="row" style="justify-content:space-between"><h2>${tr("settings")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <div class="field"><span class="flabel">${tr("lang")}</span><div class="chips">${["pt","en"].map(x=>`<button type="button" class="chip" data-setl="${x}" aria-pressed="${st.lang===x}">${x==="pt"?"Português":"English"}</button>`).join("")}</div></div>
+   <div class="field"><span class="flabel">${tr("theme")}</span><div class="chips">${[["sys",tr("tSys")],["light",tr("tLight")],["dark",tr("tDark")]].map(([k,l])=>`<button type="button" class="chip" data-sett="${k}" aria-pressed="${st.theme===k}">${l}</button>`).join("")}</div></div>
+   <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
+   <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
+   <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>
+   ${SB&&S.uid?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:12.5px;color:var(--muted)">${esc((window.__email)||"")}</span><button class="btn small" data-act="signOut">${set().lang==="en"?"Sign out":"Sair"}</button></div>`:""}
+   <button class="btn danger" data-act="resetProg">${tr("resetProg")}</button>`);
+}
+
+/* ---------- Claude (sample) ---------- */
+function aiErr(e){ const c=e?.code; return c==="not_granted"||c==="sampling_disabled"||c==="not_declared"||c==="capability_disabled"||c==="capability_removed" ? tr("aiDenied") : c==="rate_limited" ? tr("aiRate") : tr("aiErr"); }
+function hydrateAI(q){ const a=S.ai[q.id]; const el=document.getElementById("ai-"+q.id); if(a&&el) el.innerHTML=`<div class="box ai"><h3>${tr("aiTitle")}</h3><div class="md">${a.html}</div></div>`; }
+async function explain(id, btn){
+  const q=S.qs.get(id); if(!q||!S.sample) return; const {c}=content(q); const lang=set().lang;
+  const el=document.getElementById("ai-"+id); const ctl=new AbortController();
+  btn.disabled=true; el.innerHTML=`<div class="box ai"><h3>${tr("aiTitle")}</h3><div class="md" id="aiT-${id}">${tr("explaining")}</div><div class="row" style="margin-top:8px"><button class="btn small" id="aiStop-${id}">${tr("stop")}</button></div></div>`;
+  document.getElementById("aiStop-"+id).onclick=()=>ctl.abort();
+  const it=S.session?.items?.find(x=>x.id===id); const pick=it?.pick ?? null;
+  const plain=s=>String(s).replace(/<[^>]+>/g,"");
+  const prompt = (lang==="en"
+   ? "You are a tutor for a Brazilian medical student (also a federal highway police officer with little time) preparing for UFPR exams and USMLE Step 1/2 CK. Be direct, technical, dense, no greetings. Use US guidelines (AHA, ADA, IDSA etc.) when relevant. Reply in ENGLISH using exactly these sections as short bullet lists:\n**Flashcard** (Anki-style question + 1-3 line answer)\n**Don't confuse with** (the commonly confused drug/condition and the key difference)\n**Best next step** (diagnostic/therapeutic, guideline-based)\n**Source** (ONE reference: First Aid, Pathoma, Harrison, Robbins, Costanzo, UWorld/Amboss or Katzung)\n**Recall** (one question answerable in 1 line)\nIf Brazilian and USMLE nomenclature or guidelines differ, flag it in one line.\n\n"
+   : "Você é tutor de um estudante de Medicina da UFPR (também policial rodoviário federal, com pouco tempo) que estuda para a prova da UFPR e para o USMLE Step 1/2 CK. Seja direto, técnico, denso, sem saudações. Use guidelines americanos (AHA, ADA, IDSA etc.) quando pertinente. Responda em PORTUGUÊS usando exatamente estas seções, em tópicos curtos:\n**Flashcard** (pergunta estilo Anki + resposta em 1-3 linhas)\n**Não confundir com** (fármaco/condição confundida e a diferença-chave)\n**Best Next Step** (diagnóstico/terapêutico, baseado em guideline)\n**Fonte** (UMA referência: First Aid, Pathoma, Harrison, Robbins, Costanzo, UWorld/Amboss ou Katzung)\n**Recall** (uma pergunta respondível em 1 linha)\nSe nomenclatura ou guideline do Brasil e do USMLE divergirem, sinalize em uma linha.\n\n")
+   + "QUESTION:\n" + plain(c.stem) + "\n\nOPTIONS:\n" + c.opts.map((o,i)=>`${"ABCDE"[i]}) ${plain(o.t)}${i===q.correct?"  [CORRECT]":""}`).join("\n")
+   + (pick!==null && pick!==q.correct ? `\n\nThe student chose ${"ABCDE"[pick]} (wrong). Address that misconception first.` : "")
+   + "\n\nEXISTING EXPLANATION (do not repeat it, go deeper):\n" + plain(c.opts[q.correct].why);
+  try{
+    const r=await S.sample(prompt,{signal:ctl.signal,onText:({text})=>{ const t=document.getElementById("aiT-"+id); if(t) t.innerHTML=md(text); }});
+    S.ai[id]={html:md(r.text)}; hydrateAI(q);
+  }catch(e){ const t=document.getElementById("aiT-"+id); if(e.code==="cancelled"){ if(e.text){ S.ai[id]={html:md(e.text)}; hydrateAI(q);} else el.innerHTML=""; } else if(t){ t.innerHTML=(e.text?md(e.text):"")+`<p style="color:var(--bad)">${aiErr(e)}</p>`; } }
+  finally{ btn.disabled=false; const s=document.getElementById("aiStop-"+id); if(s) s.remove(); }
+}
+async function translateQ(id, btn){
+  const q=S.qs.get(id); if(!q||!S.sample) return; const target=set().lang; const srcLang=target==="pt"?"en":"pt"; const c=q.i18n[srcLang];
+  const box=document.getElementById("tr-"+id); btn.disabled=true; box.innerHTML=`<p class="mono" style="font-size:12px;margin:8px 0 0">${tr("explaining")}</p>`;
+  const prompt=`Translate this medical exam question object from ${srcLang==="en"?"English":"Brazilian Portuguese"} to ${target==="en"?"English (US medical terminology, USMLE style)":"Brazilian Portuguese (terminologia médica brasileira)"}. Keep the same JSON shape and keys, keep the order of "opts", keep any <b> tags, translate every string value. Reply with only the JSON object, plus a "tags" array translating these tags: ${JSON.stringify(q.tags?.[srcLang]||[])}.\n\n`+JSON.stringify(c);
+  try{
+    const out=await S.sample.json(prompt,{modelTier:"default"});
+    if(!out||typeof out.stem!=="string"||!Array.isArray(out.opts)||out.opts.length!==c.opts.length||out.opts.some(o=>typeof o?.t!=="string"||typeof o?.why!=="string")) throw {code:"invalid_json"};
+    const tags=Array.isArray(out.tags)?out.tags.map(String).slice(0,6):null; delete out.tags;
+    q.i18n[target]=out; if(tags){ q.tags=Object.assign({},q.tags,{[target]:tags}); }
+    if(S.owner&&S.db){ try{ await S.db.doc("questions/"+id).update({i18n:{[target]:out}, ...(tags?{tags:{[target]:tags}}:{})}); toast(tr("trSaved")); }catch(e){ toast(tr("aiErr")); } }
+    cacheSave(); render(); if($("#layer").innerHTML) bankPreview(id);
+  }catch(e){ box.innerHTML=`<p style="color:var(--bad);margin:8px 0 0">${aiErr(e)}</p>`; btn.disabled=false; }
+}
+function openGen(){
+  const t=curTopic(); const g=S.gen||(S.gen={sub:"",qty:3,lang:set().lang,std:set().std==="all"?"ufpr":set().std,focus:"",items:null,busy:false});
+  openSheet(`<div class="row" style="justify-content:space-between"><h2>${tr("genTitle")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <div class="box note">${tr("genWarn")}</div>
+   <div class="field"><label for="gSub">${tr("sub")}</label><select id="gSub">${(t?.subs||[]).map(s=>`<option value="${esc(s.id)}" ${g.sub===s.id?"selected":""}>${esc(nm(s))}</option>`).join("")}</select></div>
+   <div class="row">
+    <div class="field"><span class="flabel">${tr("genStd")}</span><div class="chips">${["ufpr","usmle"].map(x=>`<button type="button" class="chip" data-g="std" data-v="${x}" aria-pressed="${g.std===x}">${x.toUpperCase()}</button>`).join("")}</div></div>
+    <div class="field"><span class="flabel">${tr("genLang")}</span><div class="chips">${["pt","en"].map(x=>`<button type="button" class="chip" data-g="lang" data-v="${x}" aria-pressed="${g.lang===x}">${x.toUpperCase()}</button>`).join("")}</div></div>
+    <div class="field"><span class="flabel">${tr("genQty")}</span><div class="chips">${[1,3,5].map(x=>`<button type="button" class="chip" data-g="qty" data-v="${x}" aria-pressed="${g.qty===x}">${x}</button>`).join("")}</div></div>
+   </div>
+   <div class="field"><label for="gFocus">${tr("genFocus")}</label><input id="gFocus" type="text" placeholder="${tr("genFocusPh")}" value="${esc(g.focus)}"></div>
+   <button class="btn primary" data-act="genRun" ${g.busy?"disabled":""}>${g.busy?tr("explaining"):"✦ "+tr("generate")}</button>
+   <div id="genOut">${g.items?genPreview(g):""}</div>`, ()=>{
+     const ss=$("#gSub"); if(!g.sub && ss) g.sub=ss.value; ss.onchange=e=>g.sub=e.target.value; $("#gFocus").oninput=e=>g.focus=e.target.value; });
+}
+function genPreview(g){ return `<div style="display:flex;flex-direction:column;gap:14px">${g.items.map((q,i)=>`<div class="panel">${questionHTML(q,{perm:[0,1,2,3,4],pick:q.correct},true,false).replace(/<div class="row"><button class="btn" data-act="explain"[\s\S]*$/,"")}</div>`).join("")}
+  <div class="row"><button class="btn primary" data-act="genSave">${tr("genSave")} (${g.items.length})</button><button class="btn" data-act="genDiscard">${tr("genDiscard")}</button></div></div>`; }
+async function genRun(){
+  const g=S.gen; const d=curDisc(), t=curTopic(); if(!g||!S.sample) return; g.sub=g.sub||t.subs[0].id; g.busy=true; openGen();
+  const ex=ctxQs().filter(q=>q.sub===g.sub).slice(0,40).map(q=>content(q).c.stem.replace(/<[^>]+>/g,"").slice(0,160));
+  const sample = [...S.qs.values()].find(q=>q.i18n?.[g.lang] && q.standard===g.std) || [...S.qs.values()][0];
+  const styleUfpr = "Estilo da prova de Anestesiologia da UFPR: enunciado curto e conceitual (ou caso clínico breve), 5 alternativas, resposta única; inclua às vezes o formato 'EXCETO'/'assinale a INCORRETA'.";
+  const styleUs = "USMLE style: a clinical vignette (age, sex, setting, findings) ending in a single best-answer question, 5 options, testing mechanism (Step 1) or management (Step 2 CK).";
+  const prompt = `Write ${g.qty} NEW high-quality multiple-choice question(s) for medical students.
+Discipline: ${nm(d)}. Topic: ${nm(t)}. Sub-block: ${subName(g.sub)}. ${g.focus?("Focus: "+g.focus+"."):""}
+${g.std==="ufpr"?styleUfpr:styleUs}
+Language: ${g.lang==="pt"?"Brazilian Portuguese":"English"}.
+Every option needs a detailed "why": for the correct one explain the mechanism; for each wrong one explain why it is wrong AND in which question it WOULD be the answer. For EXCEPT questions, the "why" of the true statements starts with what makes them true. Use <b> for key terms only. Add "peg" (the classic trap, 1-2 sentences) and "src" (ONE standard reference, e.g. Miller's Anesthesia, Katzung, First Aid, UWorld/Amboss). Vary the position of the correct answer.
+Do not duplicate these existing stems: ${JSON.stringify(ex)}
+Reply with only a JSON array of objects shaped exactly like:
+{"exc":false,"correct":2,"step":${g.std==="usmle"?'"Step 1"':"null"},"tags":["short tag"],"stem":"...","opts":[{"t":"...","why":"..."},{"t":"...","why":"..."},{"t":"...","why":"..."},{"t":"...","why":"..."},{"t":"...","why":"..."}],"peg":"...","src":"..."}`;
+  try{
+    const arr=await S.sample.json(prompt,{modelTier:"complex"});
+    const items=(Array.isArray(arr)?arr:[]).filter(x=>x&&typeof x.stem==="string"&&Array.isArray(x.opts)&&x.opts.length===5&&x.opts.every(o=>typeof o?.t==="string"&&typeof o?.why==="string")&&Number.isInteger(x.correct)&&x.correct>=0&&x.correct<5).slice(0,5)
+      .map((x,i)=>({id:"gen-preview-"+i, discipline:d.id, topic:t.id, sub:g.sub, standard:g.std, step:g.std==="usmle"?(x.step||"Step 1"):null, origin:"generated", exam:null, exc:!!x.exc, correct:x.correct, tags:{[g.lang]:(Array.isArray(x.tags)?x.tags:[]).map(String).slice(0,4)}, i18n:{[g.lang]:{stem:x.stem, opts:x.opts.map(o=>({t:o.t,why:o.why})), peg:String(x.peg||""), src:String(x.src||"")}}, reviewed:false}));
+    if(!items.length) throw {code:"invalid_json"};
+    g.items=items;
+  }catch(e){ g.items=null; toast(aiErr(e)); }
+  finally{ g.busy=false; if(S.gen===g) openGen(); }
+}
+async function genSave(){
+  const g=S.gen; if(!g?.items||!S.db) return; const base=`${g.items[0].discipline}-${g.items[0].topic}-gen-${Date.now().toString(36)}`; let n=0;
+  for(let i=0;i<g.items.length;i++){ const q=Object.assign({},g.items[i]); delete q.id; q.order=900+Math.floor(Date.now()/1000)%100000; q.created=new Date().toISOString(); const id=base+"-"+i;
+    try{ await S.db.doc("questions/"+id).set(q); S.qs.set(id,Object.assign({id},q)); n++; }catch(e){ toast(e?.code==="quota_exceeded"?"Quota":tr("aiErr")); break; } }
+  toast(`${tr("genSaved")}: ${n}`); closeSheet(); cacheSave(); render();
+}
+/* ---------- events ---------- */
+document.addEventListener("click", async e=>{
+  const nav=e.target.closest("[data-nav]"); if(nav){ if($("#layer").innerHTML) closeSheet(); go(nav.dataset.nav); return; }
+  const stdB=e.target.closest("[data-std]"); if(stdB){ set().std=stdB.dataset.std; S.session=null; S.fcDeck=null; saveProg(); render(); return; }
+  const lgB=e.target.closest("[data-lang]"); if(lgB){ set().lang=lgB.dataset.lang; saveProg(); render(); return; }
+  const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; render(); return; }
+  const sw=e.target.closest("[data-sw]"); if(sw){ const k=sw.dataset.sw; S.setup[k]=!S.setup[k]; render(); return; }
+  const pk=e.target.closest("[data-pick]"); if(pk && !pk.disabled){ const s=S.session; if(!s) return; const it=s.items[s.i]; const q=S.qs.get(it.id); const p=Number(pk.dataset.pick);
+     if(s.mode==="study"){ it.pick=p; record(q,p); render(); const r=$(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+     else { it.pick=p; render(); }
+     return; }
+  const sl=e.target.closest("[data-setl]"); if(sl){ set().lang=sl.dataset.setl; saveProg(); render(); openSettings(); return; }
+  const stt=e.target.closest("[data-sett]"); if(stt){ set().theme=stt.dataset.sett; applyTheme(); saveProg(); openSettings(); return; }
+  const sf=e.target.closest("[data-setf]"); if(sf){ set().fs=Number(sf.dataset.setf); applyTheme(); saveProg(); openSettings(); return; }
+  const gb=e.target.closest("[data-g]"); if(gb&&S.gen){ const k=gb.dataset.g; S.gen[k]= k==="qty"?Number(gb.dataset.v):gb.dataset.v; openGen(); return; }
+  const a=e.target.closest("[data-act]"); if(!a) return; const act=a.dataset.act;
+  if(act==="settings") return openSettings();
+  if(act==="toggleFocus"){ set().focus = set().focus===false; saveProg(); render(); return openSettings(); }
+  if(act==="fs"){ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI:"hide"}); }catch(err){ toast(set().lang==="en"?"Full screen is not available here":"Tela cheia não disponível aqui"); } setTimeout(render,150); return; }
+  if(act==="signOut") return signOut();
+  if(act==="closeSheet") return closeSheet();
+  if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
+  if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",shuffle(due),{mode:"study",count:0,shuffleQ:true,shuffleO:true}); return go("review"); }
+  if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); render(); window.scrollTo({top:0}); return; }
+  if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); render(); window.scrollTo({top:0}); return; }
+  if(act==="finish"){ const s=S.session;
+    if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick)) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
+    const v=S.view; S.session=null; toast("✓"); return go(v==="review"?"review":"home"); }
+  if(act==="exit"){ clearInterval(timerInt); S.session=null; return render(); }
+  if(act==="newSession"){ S.session=null; return go("study"); }
+  if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
+  if(act==="explain") return explain(a.dataset.q, a);
+  if(act==="translate") return translateQ(a.dataset.q, a);
+  if(act==="fcStart"){ const all=a.dataset.all==="1"; const ids=shuffle((all?ctxQs():dueCards()).map(q=>q.id)); S.fcDeck={ids,i:0,show:false,topic:curTopic()?.id,std:set().std}; return render(); }
+  if(act==="fcShow"){ S.fcDeck.show=true; return render(); }
+  if(act==="fcRate"){ const d=S.fcDeck; const q=S.qs.get(d.ids[d.i]); rateCard(q,Number(a.dataset.g)); d.i++; d.show=false; render(); window.scrollTo({top:0}); return; }
+  if(act==="fcReset"){ S.fcDeck=null; return render(); }
+  if(act==="bankOpen") return bankPreview(a.dataset.q);
+  if(act==="genOpen") return openGen();
+  if(act==="genRun") return genRun();
+  if(act==="genSave") return genSave();
+  if(act==="genDiscard"){ S.gen.items=null; return openGen(); }
+  if(act==="importOpen") return openImport();
+  if(act==="importRun") return importRun();
+  if(act==="export") return exportJSON();
+  if(act==="markRev"){ const id=a.dataset.q; try{ await S.db.doc("questions/"+id).update({reviewed:true}); toast(tr("reviewed")); closeSheet(); }catch(err){ toast(tr("aiErr")); } return; }
+  if(act==="delQ"){ const id=a.dataset.q; return arm(a, tr("confirmDel"), async ()=>{ try{ await S.db.doc("questions/"+id).delete(); S.qs.delete(id); toast(tr("deleted")); closeSheet(); cacheSave(); render(); }catch(err){ toast(tr("aiErr")); } }); }
+  if(act==="resetProg"){ return arm(a, tr("confirmReset"), ()=>{ S.prog=mergeProg(S.prog,{settings:S.prog.settings}); S.session=null; S.fcDeck=null; saveProg(); closeSheet(); toast(tr("resetDone")); render(); }); }
+});
+document.addEventListener("keydown", e=>{
+  if(e.target.closest("input,textarea,select")) return;
+  if(e.key==="Escape" && $("#layer").innerHTML){ closeSheet(); return; }
+  const s=S.session; if(!s||s.done||!(S.view==="study"||S.view==="review")) return;
+  const k=e.key.toLowerCase(); const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"12345".indexOf(k);
+  if(idx>=0){ const b=document.querySelectorAll(".opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
+  if(k==="arrowright"||(k==="enter"&&!e.target.closest("button"))){ const n=document.querySelector('[data-act="next"]'); if(n){ n.click(); e.preventDefault(); } }
+  if(k==="arrowleft"){ const p=document.querySelector('[data-act="prev"]'); if(p&&!p.disabled){ p.click(); e.preventDefault(); } }
+});
+
+/* ---------- data wiring (Supabase) ---------- */
+const CFG = window.GABARITO_CONFIG || {};
+let SB = null;
+function sbReady(){ return !!(SB && S.uid); }
+function rowToQ(r){ return Object.assign({id:r.id}, r.data); }
+function qToRow(q){ const {id, ...data}=q; return {id, discipline:data.discipline, topic:data.topic, data, updated_at:new Date().toISOString()}; }
+// adapter with the subset of the artifact db API the UI uses
+const DBA = {
+  doc(path){
+    const [col,id] = path.startsWith("data/users/") ? ["progress", null] : path.split("/");
+    return {
+      async set(obj){
+        if(col==="progress"){ const {error}=await SB.from("progress").upsert({user_id:S.uid, state:obj, updated_at:new Date().toISOString()}); if(error) throw error; return; }
+        if(col==="questions"){ const {error}=await SB.from("questions").upsert(qToRow(Object.assign({id},obj))); if(error) throw error; return; }
+        if(col==="catalog"){ const {error}=await SB.from("catalog").upsert({id, data:obj, updated_at:new Date().toISOString()}); if(error) throw error; return; }
+      },
+      async update(patch){
+        if(col!=="questions") throw new Error("unsupported");
+        const cur=S.qs.get(id); if(!cur) throw new Error("missing");
+        const merged=deepMerge(JSON.parse(JSON.stringify(cur)), patch);
+        const {error}=await SB.from("questions").upsert(qToRow(merged)); if(error) throw error; S.qs.set(id, merged);
+      },
+      async delete(){ const {error}=await SB.from(col).delete().eq("id",id); if(error) throw error; }
+    };
+  }
+};
+function deepMerge(a,b){ for(const k in b){ if(b[k]&&typeof b[k]==="object"&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==="object"&&!Array.isArray(a[k])) deepMerge(a[k],b[k]); else a[k]=b[k]; } return a; }
+
+async function fetchAll(){
+  setSync("loading");
+  try{
+    const c=await SB.from("catalog").select("id,data").eq("id","main").maybeSingle();
+    if(c.error) throw c.error;
+    if(c.data) S.catalog=c.data.data;
+    const qs=new Map(); let from=0;
+    for(;;){ const r=await SB.from("questions").select("id,data").order("id").range(from, from+999); if(r.error) throw r.error; r.data.forEach(x=>qs.set(x.id,rowToQ(x))); if(r.data.length<1000) break; from+=1000; }
+    S.qs=qs;
+    const p=await SB.from("progress").select("state,updated_at").eq("user_id",S.uid).maybeSingle();
+    if(p.error) throw p.error;
+    if(p.data?.state){ const remote=p.data.state; const lt=Math.max(0,...Object.values(S.prog.q).map(r=>r.ts||0)); const rt=Math.max(0,...Object.values(remote.q||{}).map(r=>r.ts||0));
+      if(rt>=lt) S.prog=mergeProg(S.prog,remote); else saveProg(); }
+    else if(Object.keys(S.prog.q).length) saveProg();
+    applyTheme(); setSync("on"); cacheSave();
+  }catch(e){ console.error(e); setSync("off"); }
+  if(!(S.session && (S.view==="study"||S.view==="review"))) render(); else renderTabs();
+}
+
+/* login */
+function vLogin(msg){
+  $("#ctx").innerHTML=""; $("#tabs").innerHTML="";
+  $("#view").innerHTML = `
+   <div style="padding-top:6vh"><div class="eyebrow">${set().lang==="en"?"Medical study":"Estudo médico"}</div><h1 style="font-size:40px">Gabarito<span style="color:var(--accent)">.</span></h1>
+   <p class="lede">${set().lang==="en"?"Sign in to sync your progress across devices.":"Entre para sincronizar seu progresso entre aparelhos."}</p></div>
+   <form class="panel" id="loginForm" style="display:flex;flex-direction:column;gap:12px">
+     <div class="field"><label for="lgEmail">E-mail</label><input id="lgEmail" type="email" autocomplete="email" required></div>
+     <div class="field"><label for="lgPass">${set().lang==="en"?"Password":"Senha"}</label><input id="lgPass" type="password" autocomplete="current-password" minlength="6" required></div>
+     ${msg?`<div class="banner">${esc(msg)}</div>`:""}
+     <button class="btn primary" type="submit" id="lgIn">${set().lang==="en"?"Sign in":"Entrar"}</button>
+     <button class="btn" type="button" id="lgUp">${set().lang==="en"?"Create account (first time)":"Criar conta (primeiro acesso)"}</button>
+     ${S.qs.size?`<button class="btn ghost" type="button" id="lgOff">${set().lang==="en"?"Continue offline with saved copy":"Continuar offline com a cópia salva"}</button>`:""}
+   </form>`;
+  const f=$("#loginForm"), em=$("#lgEmail"), pw=$("#lgPass");
+  f.onsubmit=async e=>{ e.preventDefault(); $("#lgIn").disabled=true; const {error}=await SB.auth.signInWithPassword({email:em.value.trim(), password:pw.value}); const b=$("#lgIn"); if(b) b.disabled=false; if(error) return vLogin(error.message); };
+  $("#lgUp").onclick=async ()=>{ if(!f.reportValidity()) return; const {data,error}=await SB.auth.signUp({email:em.value.trim(), password:pw.value, options:{emailRedirectTo:location.origin+location.pathname}}); if(error) return vLogin(error.message); if(!data.session) vLogin(set().lang==="en"?"Check your e-mail to confirm the account, then sign in.":"Confira seu e-mail para confirmar a conta e depois entre."); };
+  const off=$("#lgOff"); if(off) off.onclick=()=>{ S.offlineMode=true; setSync("off"); render(); };
+}
+async function signOut(){ try{ await SB.auth.signOut(); }catch(e){} S.uid=null; S.owner=false; closeSheet(); vLogin(); }
+
+/* import / export packs */
+function openImport(){
+  openSheet(`<div class="row" style="justify-content:space-between"><h2>${tr("importJ")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <p class="lede">${set().lang==="en"?"Choose a .json content pack sent by Claude, or paste its content.":"Escolha o pacote .json enviado pelo Claude, ou cole o conteúdo."}</p>
+   <div class="field"><label for="impFile">${set().lang==="en"?"File":"Arquivo"}</label><input id="impFile" type="file" accept="application/json,.json"></div>
+   <div class="field"><label for="impTxt">JSON</label><textarea id="impTxt" placeholder="${tr("importPh")}"></textarea></div>
+   <button class="btn primary" data-act="importRun" id="impBtn">${tr("importDo")}</button>`, ()=>{
+     $("#impFile").onchange=async e=>{ const f=e.target.files[0]; if(f) $("#impTxt").value=await f.text(); };
+   });
+}
+async function importRun(){
+  let pack; try{ pack=JSON.parse($("#impTxt").value); }catch(e){ toast("JSON inválido / invalid JSON"); return; }
+  const qs = Array.isArray(pack) ? pack : (pack.questions||[]);
+  const btn=$("#impBtn"); btn.disabled=true;
+  try{
+    if(pack.catalog){ const merged=mergeCatalog(S.catalog||{disciplines:[]}, pack.catalog); const {error}=await SB.from("catalog").upsert({id:"main", data:merged, updated_at:new Date().toISOString()}); if(error) throw error; S.catalog=merged; }
+    const rows=qs.filter(q=>q&&q.id&&q.i18n&&q.discipline&&q.topic).map(qToRow);
+    for(let i=0;i<rows.length;i+=200){ const {error}=await SB.from("questions").upsert(rows.slice(i,i+200)); if(error) throw error; }
+    toast(`${tr("imported")}: ${rows.length}`); closeSheet(); await fetchAll();
+  }catch(e){ toast((e&&e.message)||tr("aiErr")); btn.disabled=false; }
+}
+function mergeCatalog(a,b){
+  const out=JSON.parse(JSON.stringify(a)); out.disciplines=out.disciplines||[];
+  for(const d of (b.disciplines||[])){ let od=out.disciplines.find(x=>x.id===d.id); if(!od){ out.disciplines.push(JSON.parse(JSON.stringify(d))); continue; } od.name=d.name||od.name; od.topics=od.topics||[];
+    for(const t of (d.topics||[])){ const i=od.topics.findIndex(x=>x.id===t.id); if(i<0) od.topics.push(t); else od.topics[i]=Object.assign({},od.topics[i],t); } }
+  out.updated=new Date().toISOString(); return out;
+}
+function exportJSON(){
+  const pack={format:"gabarito-pack",version:1,catalog:S.catalog,questions:ctxQs()};
+  const blob=new Blob([JSON.stringify(pack,null,1)],{type:"application/json"}); const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=`gabarito-${curDisc()?.id}-${curTopic()?.id}-${dayKey()}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
+}
+function subscribeQs(){ /* questions are fetched on open and when the app returns to foreground */ }
+
+async function boot(){
+  cacheLoad(); applyTheme();
+  const h=(location.hash||"").slice(1); if(["home","study","review","cards","bank"].includes(h)) S.view=h;
+  S.downloads=true; // enables the export button (plain browser download)
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+  if(!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase){ setSync("off"); render(); if(!CFG.SUPABASE_URL) toast("config.js sem Supabase"); return; }
+  SB = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, {auth:{persistSession:true, autoRefreshToken:true}});
+  S.db = DBA;
+  const {data:{session}} = await SB.auth.getSession();
+  const onSession = async sess=>{
+    if(sess?.user){ const changed=S.uid!==sess.user.id; S.uid=sess.user.id; window.__email=sess.user.email; S.owner=(sess.user.email||"").toLowerCase()===(CFG.ADMIN_EMAIL||"").toLowerCase(); if(changed){ render(); fetchAll(); } }
+    else { S.uid=null; if(!S.offlineMode) vLogin(); }
+  };
+  SB.auth.onAuthStateChange((_e,sess)=>{ onSession(sess); });
+  if(session) onSession(session); else if(navigator.onLine===false && S.qs.size){ S.offlineMode=true; setSync("off"); render(); } else vLogin();
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && sbReady()) fetchAll(); });
+  window.addEventListener("online",()=>{ if(sbReady()){ saveProg(); fetchAll(); } });
+}
+boot();
+</script>
+</body>
+</html>

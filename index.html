@@ -253,7 +253,7 @@ pt:{home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Ba
  start:"Começar",available:"questões disponíveis",none:"Nenhuma questão com esses filtros.",
  q:"Questão",of:"de",prev:"Anterior",next:"Próxima",finish:"Finalizar",confirmFinish:"Toque de novo para finalizar",
  right:"Acertou",wrongAns:"Errou · gabarito",answer:"Gabarito",whyNot:"Por que não",trueStmt:"Afirmativa verdadeira",yourAns:"Sua resposta",
- trap:"Pegadinha · memorize",trapUs:"Trap · remember",source:"Fonte",
+ more:"Detalhar justificativas",less:"Versão enxuta",alwaysDetail:"Sempre mostrar justificativas detalhadas",trap:"Pegadinha · memorize",trapUs:"Trap · remember",source:"Fonte",
  explain:"Explicar mais com Claude",explaining:"Pensando…",stop:"Parar",aiTitle:"Claude · aprofundamento",
  translate:"Traduzir com Claude",onlyIn:"Esta questão ainda não está em português. Mostrando o original em inglês.",onlyInEn:"This question is not available in English yet. Showing the Portuguese original.",
  saveTr:"Salvar tradução no banco",trSaved:"Tradução salva",
@@ -286,7 +286,7 @@ en:{home:"Home",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  start:"Start",available:"questions available",none:"No questions match these filters.",
  q:"Question",of:"of",prev:"Previous",next:"Next",finish:"Finish",confirmFinish:"Tap again to finish",
  right:"Correct",wrongAns:"Incorrect · answer",answer:"Answer",whyNot:"Why not",trueStmt:"True statement",yourAns:"Your answer",
- trap:"Trap · remember",trapUs:"Trap · remember",source:"Source",
+ more:"Show detailed explanations",less:"Concise version",alwaysDetail:"Always show detailed explanations",trap:"Trap · remember",trapUs:"Trap · remember",source:"Source",
  explain:"Explain more with Claude",explaining:"Thinking…",stop:"Stop",aiTitle:"Claude · deep dive",
  translate:"Translate with Claude",onlyIn:"This question is not available in Portuguese yet. Showing the English original.",onlyInEn:"This question is not available in English yet. Showing the Portuguese original.",
  saveTr:"Save translation to bank",trSaved:"Translation saved",
@@ -322,7 +322,7 @@ const S = {
   db:null, user:null, sample:null, downloads:null, uid:null, owner:false,
   dbState:"loading", catalog:null, qs:new Map(), qUnsub:null, catUnsub:null,
   prog:{settings:{lang:"pt",std:"ufpr",disc:null,topic:null,theme:"sys",fs:1},q:{},fc:{},log:{},sims:[]},
-  progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, fcDeck:null, ai:{}, gen:null
+  progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, detail:new Set(), fcDeck:null, ai:{}, gen:null
 };
 function cacheLoad(){ try{ const c=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(c){ if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.prog) S.prog=mergeProg(S.prog,c.prog); } }catch(e){} }
 let cacheTimer=null;
@@ -538,18 +538,21 @@ function questionHTML(q, it, reveal, simMode){
   if(q.origin==="generated") tags.push(`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`);
   tagsOf(q).forEach(t=>tags.push(`<span class="tag">${esc(t)}</span>`));
   if(q.exc) tags.push(`<span class="tag exc">${set().lang==="en"?"Except / incorrect":"Exceto / incorreta"}</span>`);
+  const hasMore = c.opts.some(o=>o.more) || !!c.pegMore;
+  const det = hasMore && (S.detail.has(q.id) ? !set().detail : !!set().detail);
   const opts = perm.map((orig,pos)=>{
     const o=c.opts[orig]; let cls="opt", mark="";
     if(reveal){ if(orig===q.correct){cls+=" correct";mark=orig===pick?tr("answer")+" · ✓":tr("answer");} else if(orig===pick){cls+=" wrong";mark=tr("yourAns");} }
     else if(simMode && orig===pick){ cls+=" picked"; }
     const verdict = orig===q.correct ? tr("answer") : (q.exc ? tr("trueStmt") : tr("whyNot"));
-    const why = reveal ? `<div class="why"><span class="v ${orig!==q.correct&&q.exc?"neutral":""}">${verdict}</span>${safe(o.why)}</div>` : "";
+    const why = reveal ? `<div class="why"><span class="v ${orig!==q.correct&&q.exc?"neutral":""}">${verdict}</span>${safe(det&&o.more?o.more:o.why)}</div>` : "";
     return `<button type="button" class="${cls}" data-pick="${orig}" ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div>${why}</button>`;
   }).join("");
   const fb = fallback ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
-    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}
+    ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
+    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore:c.peg)}</div>`:""}
     ${c.src?`<div class="box src"><h3>${tr("source")}</h3>${safe(c.src)}</div>`:""}
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   return `<div class="tags">${tags.join("")}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`;
@@ -649,6 +652,7 @@ function openSettings(){
    <div class="field"><span class="flabel">${tr("theme")}</span><div class="chips">${[["sys",tr("tSys")],["light",tr("tLight")],["dark",tr("tDark")]].map(([k,l])=>`<button type="button" class="chip" data-sett="${k}" aria-pressed="${st.theme===k}">${l}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
+   <div class="toggle"><span>${tr("alwaysDetail")}</span><button type="button" class="switch" role="switch" data-act="toggleDetail" aria-checked="${!!st.detail}" aria-label="${tr("alwaysDetail")}"></button></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>
    ${SB&&S.uid?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:12.5px;color:var(--muted)">${esc((window.__email)||"")}</span><button class="btn small" data-act="signOut">${set().lang==="en"?"Sign out":"Sair"}</button></div>`:""}
    <button class="btn danger" data-act="resetProg">${tr("resetProg")}</button>`);
@@ -767,6 +771,8 @@ document.addEventListener("click", async e=>{
   if(act==="exit"){ clearInterval(timerInt); S.session=null; return render(); }
   if(act==="newSession"){ S.session=null; return go("study"); }
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
+  if(act==="detail"){ const id=a.dataset.q; if(S.detail.has(id)) S.detail.delete(id); else S.detail.add(id); const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
+  if(act==="toggleDetail"){ set().detail=!set().detail; S.detail.clear(); saveProg(); render(); return openSettings(); }
   if(act==="explain") return explain(a.dataset.q, a);
   if(act==="translate") return translateQ(a.dataset.q, a);
   if(act==="fcStart"){ const all=a.dataset.all==="1"; const ids=shuffle((all?ctxQs():dueCards()).map(q=>q.id)); S.fcDeck={ids,i:0,show:false,topic:curTopic()?.id,std:set().std}; return render(); }

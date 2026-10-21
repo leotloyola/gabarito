@@ -368,10 +368,17 @@ function applyTheme(){ const t=set().theme; const r=document.documentElement; if
 /* ---------- catalog / filters ---------- */
 function discs(){ return S.catalog?.disciplines || []; }
 function curDisc(){ const d=discs(); return d.find(x=>x.id===set().disc) || d[0] || null; }
-function curTopic(){ const d=curDisc(); if(!d) return null; return d.topics.find(x=>x.id===set().topic) || d.topics[0] || null; }
+function examPseudo(d, exId){ const ex=(d.exams||[]).find(e=>e.id===exId); if(!ex) return null; const tps=d.topics.filter(t=>ex.all || t.exam===ex.id); const L0=set().lang;
+  return {id:"exam:"+ex.id, pseudo:true, name:{pt:(ex.name?.pt||ex.id)+" · todos os temas", en:(ex.name?.en||ex.id)+" · all topics"}, topics:tps.map(t=>t.id), subs:tps.map(t=>({id:t.id,name:t.name}))}; }
+let _ctKey=null,_ctVal=null;
+function curTopic(){ const key=(set().disc||"")+"|"+(set().topic||"")+"|"+S.qs.size+"|"+set().lang+"|"+(S.catalog?.updated||""); if(key===_ctKey) return _ctVal; _ctKey=key; return (_ctVal=curTopic0()); }
+function curTopic0(){ const d=curDisc(); if(!d) return null; const k=set().topic||""; if(k.startsWith("exam:")){ const p=examPseudo(d,k.slice(5)); if(p) return p; }
+  return d.topics.find(x=>x.id===k) || d.topics.find(x=>topicCount(x.id)>0) || d.topics[0] || null; }
+function topicCount(id){ let n=0; for(const q of S.qs.values()) if(q.topic===id) n++; return n; }
+function subOf(q){ return curTopic()?.pseudo ? q.topic : q.sub; }
 function nm(o){ return o?.name?.[set().lang] || o?.name?.pt || o?.name?.en || o?.id || ""; }
 function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); return s? nm(s) : id; }
-function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||q.topic!==t.id) return false; const st=set().std; return st==="all" || q.standard===st; }
+function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||(t.pseudo? !t.topics.includes(q.topic) : q.topic!==t.id)) return false; const st=set().std; return st==="all" || q.standard===st; }
 function ctxQs(){ return [...S.qs.values()].filter(inCtx).sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); }
 function content(q){ // returns {c, lang, fallback}
   const L0=set().lang, other=L0==="pt"?"en":"pt";
@@ -421,7 +428,13 @@ function renderTabs(){
 function renderCtx(){
   const d=curDisc(), t=curTopic();
   const dOpts = discs().map(x=>`<option value="${esc(x.id)}" ${d&&x.id===d.id?"selected":""}>${esc(nm(x))}</option>`).join("");
-  const tOpts = (d?.topics||[]).map(x=>`<option value="${esc(x.id)}" ${t&&x.id===t.id?"selected":""}>${esc(nm(x))}</option>`).join("");
+  const topt = x=>{ const n=topicCount(x.id); return `<option value="${esc(x.id)}" ${t&&x.id===t.id?"selected":""} ${n?"":"disabled"}>${esc(nm(x))}${n?"":" · "+(set().lang==="en"?"soon":"em breve")}</option>`; };
+  const exs=d?.exams||[]; let tOpts="";
+  if(exs.length){
+    for(const ex of exs){ const tps=(d.topics||[]).filter(x=>ex.all? false : x.exam===ex.id); const all=`<option value="exam:${esc(ex.id)}" ${t&&t.id==="exam:"+ex.id?"selected":""}>▸ ${esc(nm(ex))} · ${set().lang==="en"?"all topics":"todos os temas"}</option>`;
+      tOpts+=`<optgroup label="${esc(nm(ex))}">${all}${tps.map(topt).join("")}</optgroup>`; }
+    const rest=(d.topics||[]).filter(x=>!x.exam); if(rest.length) tOpts+=`<optgroup label="${set().lang==="en"?"Other":"Outros"}">${rest.map(topt).join("")}</optgroup>`;
+  } else tOpts=(d?.topics||[]).map(topt).join("");
   const st=set().std, lg=set().lang;
   $("#ctx").innerHTML = `
    <label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}">${dOpts||`<option>—</option>`}</select></label>
@@ -429,7 +442,7 @@ function renderCtx(){
    <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>
    <div class="seg" role="group" aria-label="${tr("lang")}">${["pt","en"].map(x=>`<button type="button" data-lang="${x}" aria-pressed="${lg===x}">${x.toUpperCase()}</button>`).join("")}</div>`;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
-  $("#selTopic").onchange=e=>{ set().topic=e.target.value; saveProg(); S.session=null; S.fcDeck=null; go(S.view); };
+  $("#selTopic").onchange=e=>{ set().topic=e.target.value; saveProg(); S.session=null; S.fcDeck=null; if(S.setup) S.setup.sub=""; S.bankFilter.sub=""; go(S.view); };
 }
 function go(v){ S.view=v; if(location.hash!=="#"+v){ try{ history.replaceState(null,"","#"+v); }catch(e){} } render(); window.scrollTo({top:0}); }
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
@@ -442,7 +455,7 @@ function render(){ document.body.classList.toggle("focus", !!inSession() && set(
 function vHome(v){
   const qs=ctxQs(); const done=qs.filter(q=>rec(q.id)); const ok=done.filter(q=>rec(q.id).ok);
   const due=dueQs().length; const t=curTopic();
-  const subs=(t?.subs||[]).map(s=>{ const list=qs.filter(q=>q.sub===s.id); const d=list.filter(q=>rec(q.id)); const o=d.filter(q=>rec(q.id).ok); return {s,list,d,o}; }).filter(x=>x.list.length);
+  const subs=(t?.subs||[]).map(s=>{ const list=qs.filter(q=>subOf(q)===s.id); const d=list.filter(q=>rec(q.id)); const o=d.filter(q=>rec(q.id).ok); return {s,list,d,o}; }).filter(x=>x.list.length);
   const days=[...Array(14)].map((_,i)=>{ const d=new Date(now()-(13-i)*DAY); const k=dayKey(d); return {k, ...(S.prog.log[k]||{n:0,ok:0})}; });
   const max=Math.max(4,...days.map(d=>d.n));
   const sims=(S.prog.sims||[]).filter(s=>s.topic===(t?.id)).slice(-4).reverse();
@@ -472,7 +485,7 @@ function vHome(v){
 /* ---------- STUDY: setup ---------- */
 function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"all", count:10, shuffleQ:false, shuffleO:true}; }
 function setupPool(su){ return ctxQs().filter(q=>{
-  if(su.sub && q.sub!==su.sub) return false;
+  if(su.sub && subOf(q)!==su.sub) return false;
   if(su.origin && q.origin!==su.origin) return false;
   const st=status(q.id); if(su.filter==="open"&&st!=="no") return false; if(su.filter==="wrong"&&st!=="bad") return false; return true; }); }
 function vStudy(v){
@@ -607,11 +620,11 @@ function vCards(v){
 /* ---------- BANK ---------- */
 function vBank(v){
   const t=curTopic(); const f=S.bankFilter; const all=ctxQs();
-  const list=all.filter(q=>{ if(f.sub&&q.sub!==f.sub) return false; if(f.origin&&q.origin!==f.origin) return false; if(f.text){ const c=content(q).c; const hay=(c.stem+" "+tagsOf(q).join(" ")).toLowerCase(); if(!hay.includes(f.text.toLowerCase())) return false; } return true; });
+  const list=all.filter(q=>{ if(f.sub&&subOf(q)!==f.sub) return false; if(f.origin&&q.origin!==f.origin) return false; if(f.text){ const c=content(q).c; const hay=(c.stem+" "+tagsOf(q).join(" ")).toLowerCase(); if(!hay.includes(f.text.toLowerCase())) return false; } return true; });
   v.innerHTML = `
    <div><div class="eyebrow">${esc(nm(t))} · ${all.length} ${tr("qs")}</div><h1>${tr("bankTitle")}</h1></div>
    <div class="row">
-     ${S.owner&&S.sample?`<button class="btn primary" data-act="genOpen">✦ ${tr("gen")}</button>`:""}
+     ${S.owner&&S.sample&&!t?.pseudo?`<button class="btn primary" data-act="genOpen">✦ ${tr("gen")}</button>`:""}
      ${S.downloads?`<button class="btn" data-act="export">${tr("exportJ")}</button>`:""}
      ${S.owner&&S.db?`<button class="btn" data-act="importOpen">${tr("importJ")}</button>`:""}
    </div>
@@ -624,7 +637,7 @@ function vBank(v){
    </div>
    <div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
      <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
-     <span class="m"><span class="tag std">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}<span class="tag">${esc(subName(q.sub))}</span><span class="tag">${Object.keys(q.i18n||{}).join("+").toUpperCase()}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
+     <span class="m"><span class="tag std">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span><span class="tag">${Object.keys(q.i18n||{}).join("+").toUpperCase()}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
   const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
   $("#bkSub").onchange=e=>{ f.sub=e.target.value; render(); };
@@ -892,7 +905,7 @@ async function importRun(){
 }
 function mergeCatalog(a,b){
   const out=JSON.parse(JSON.stringify(a)); out.disciplines=out.disciplines||[];
-  for(const d of (b.disciplines||[])){ let od=out.disciplines.find(x=>x.id===d.id); if(!od){ out.disciplines.push(JSON.parse(JSON.stringify(d))); continue; } od.name=d.name||od.name; od.topics=od.topics||[];
+  for(const d of (b.disciplines||[])){ let od=out.disciplines.find(x=>x.id===d.id); if(!od){ out.disciplines.push(JSON.parse(JSON.stringify(d))); continue; } Object.keys(d).forEach(k=>{ if(k!=='topics') od[k]=d[k]; }); od.topics=od.topics||[];
     for(const t of (d.topics||[])){ const i=od.topics.findIndex(x=>x.id===t.id); if(i<0) od.topics.push(t); else od.topics[i]=Object.assign({},od.topics[i],t); } }
   out.updated=new Date().toISOString(); return out;
 }

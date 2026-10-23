@@ -228,7 +228,7 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .tag.old{background:var(--bad-soft);color:var(--bad);box-shadow:0 0 0 1px var(--bad-bar) inset}
 .banner.info{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset}
 /* nav */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:500;letter-spacing:.01em;color:var(--subtle);cursor:pointer;position:relative;transition:color .15s ease}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current="page"]{color:var(--ink)}
@@ -288,7 +288,7 @@ body.focus .wrap{gap:12px}
 <script>
 /* ---------- i18n ---------- */
 const T = {
-pt:{home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
+pt:{stats:"Números",home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
@@ -321,7 +321,7 @@ pt:{home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Ba
  noDb:"Banco indisponível nesta visualização. Mostrando a última cópia salva neste aparelho.",noData:"O banco ainda está vazio.",
  aiUnavailable:"Claude não está disponível nesta visualização.",aiDenied:"Uso do Claude não autorizado nesta visualização.",aiRate:"Muitas solicitações. Tente de novo em instantes.",aiErr:"Não deu certo. Tente de novo.",
  min:"min",qs:"questões",step:"Etapa",days:"d",today:"hoje",tomorrow:"amanhã"},
-en:{home:"Home",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
+en:{stats:"Stats",home:"Home",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
@@ -359,6 +359,7 @@ const L = "ABCDE";
 const ICONS = {
  home:'<svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>',
  study:'<svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>',
+  stats:'<svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>',
  review:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/><path d="M12 8v4l3 2"/></svg>',
  cards:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v10"/></svg>',
  bank:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
@@ -441,9 +442,12 @@ function tagsOf(q){ return q.tags?.[set().lang] || q.tags?.pt || q.tags?.en || [
 /* ---------- progress ---------- */
 function rec(id){ return S.prog.q[id]; }
 function status(id){ const r=rec(id); if(!r) return "no"; return r.ok? "ok":"bad"; }
-function record(q, picked){
+function record(q, picked, ctx={}){
   const ok = picked===q.correct; const r = S.prog.q[q.id] || {n:0,nOk:0,box:0};
+  if(r.first==null) r.first = r.n===0 ? ok : (r.n===1 ? !!r.ok : null);
   r.n++; if(ok) r.nOk++; r.ok=ok; r.a=picked; r.ts=now();
+  // registro de cada resposta: [ts(s), id, acerto, revisão, segundos(-1 = n/d)]
+  S.prog.ev=(S.prog.ev||[]); S.prog.ev.push([Math.round(now()/1000), q.id, ok?1:0, ctx.rev?1:0, ctx.ms!=null?Math.min(3600,Math.round(ctx.ms/1000)):-1]); if(S.prog.ev.length>20000) S.prog.ev.splice(0,S.prog.ev.length-20000);
   r.box = ok ? Math.min((r.box||0)+1, INTERVALS.length-1) : 0;
   r.due = ok ? startOfDay(now()) + INTERVALS[r.box]*DAY : startOfDay(now()) + DAY;
   S.prog.q[q.id]=r;
@@ -481,7 +485,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length;
-  $("#tabs").innerHTML = ["home","study","review","cards","bank"].map(v=>`<button type="button" data-nav="${v}" ${S.view===v?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+  $("#tabs").innerHTML = ["home","study","review","cards","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${S.view===v?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
 }
 function renderCtx(){
   const d=curDisc(), t=curTopic();
@@ -506,7 +510,7 @@ function go(v){ S.view=v; if(location.hash!=="#"+v){ try{ history.replaceState(n
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p>${S.owner&&S.db?`<div class="row" style="margin-top:12px"><button class="btn primary" data-act="importOpen">${tr("importJ")}</button></div>`:""}</div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, bank:vBank}[S.view]||vHome)(v);
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank}[S.view]||vHome)(v);
 }
 
 /* ---------- HOME ---------- */
@@ -585,6 +589,7 @@ function vPlayer(v){
   const it=s.items[s.i]; const q=S.qs.get(it.id);
   if(!q){ s.items.splice(s.i,1); s.i=Math.min(s.i,s.items.length-1); return vPlayer(v); }
   const reveal = s.mode==="study" && it.pick!==null;
+  if(it.t0==null && it.pick===null) it.t0=now();
   v.innerHTML = `
    <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
      <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
@@ -641,6 +646,71 @@ function vResult(v){
      <span class="m">${tagsOf(q).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</span></button>`; }).join("")}</div></div>`;
 }
 
+/* ---------- STATS (banco inteiro) ---------- */
+const T2=(pt,en)=>set().lang==="en"?en:pt;
+const MES={jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11};
+function examDate(ex){ if(ex.date) return startOfDay(new Date(ex.date+"T12:00:00").getTime()); const m=(ex.name?.pt||"").match(/(\d{1,2})(?:[–-]\d{1,2})?\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i); if(!m) return null;
+  const y=new Date(now()).getFullYear(); return startOfDay(new Date(y, MES[m[2].toLowerCase()], Number(m[1]), 12).getTime()); }
+function stdOk(q){ const st=set().std; return st==="all"||q.standard===st; }
+function pct(a,b){ return b?Math.round(100*a/b)+"%":"—"; }
+function leechList(){ return [...S.qs.values()].filter(q=>stdOk(q)&&rec(q.id)&&(rec(q.id).n-rec(q.id).nOk)>=2).sort((a,b)=>((rec(b.id).n-rec(b.id).nOk)-(rec(a.id).n-rec(a.id).nOk))||((rec(a.id).ok?1:0)-(rec(b.id).ok?1:0))); }
+function vStats(v){
+  const today=startOfDay(now()), end=today+DAY; const ds=discs(); const allQ=[...S.qs.values()].filter(stdOk);
+  const recs=allQ.map(q=>[q,rec(q.id)]).filter(x=>x[1]);
+  const okN=recs.filter(x=>x[1].ok).length;
+  let streak=0; for(let i=0;i<400;i++){ const k=dayKey(new Date(today-i*DAY)); if(S.prog.log[k]?.n) streak++; else if(i>0) break; }
+  // 1) prontidão por prova
+  const exams=[]; for(const d of ds){ const tps=d.topics||[]; for(const ex of (d.exams||[])){ const dt=examDate(ex); if(dt==null||dt<today) continue;
+      const tids=new Set(tps.filter(t=>ex.all||t.exam===ex.id).map(t=>t.id)); const qs=allQ.filter(q=>q.discipline===d.id&&tids.has(q.topic)); if(!qs.length) continue;
+      const seen=qs.filter(q=>rec(q.id)), ok=seen.filter(q=>rec(q.id).ok), due=qs.filter(q=>{const r=rec(q.id); return r&&r.due!=null&&r.due<end;}).length;
+      const days=Math.max(1,Math.round((dt-today)/DAY)); const unseen=qs.length-seen.length;
+      exams.push({d,ex,dt,days,n:qs.length,seen:seen.length,ok:ok.length,due,unseen,meta:Math.ceil(unseen/days)}); } }
+  exams.sort((a,b)=>a.dt-b.dt);
+  // 2) temas fracos (último resultado de cada questão)
+  const weak=[]; for(const d of ds) for(const t of (d.topics||[])){ const r=recs.filter(([q])=>q.discipline===d.id&&q.topic===t.id); if(r.length<5) continue; const o=r.filter(x=>x[1].ok).length; weak.push({d,t,n:r.length,o,acc:o/r.length}); }
+  weak.sort((a,b)=>a.acc-b.acc);
+  // 3) retenção: 1ª tentativa × revisões (últimos 30 dias) e tempo médio
+  const fr=recs.filter(x=>x[1].first!=null||x[1].n===1).map(x=>x[1].first!=null?x[1].first:x[1].ok); const frOk=fr.filter(Boolean).length;
+  const since=Math.round((now()-30*DAY)/1000); const ev=(S.prog.ev||[]).filter(e=>e[0]>=since && S.qs.has(e[1]) && stdOk(S.qs.get(e[1])));
+  const rv=ev.filter(e=>e[3]===1), rvOk=rv.filter(e=>e[2]===1).length; const tm=ev.filter(e=>e[4]>=0); const secs=tm.length?Math.round(tm.reduce((a,e)=>a+e[4],0)/tm.length):null;
+  // 4) sanguessugas
+  const leech=leechList();
+  // 5) carga futura
+  const load=[...Array(30)].map((_,i)=>{ const a=today+(i+1)*DAY; const by={}; recs.forEach(([q,r])=>{ if(r.due>=a&&r.due<a+DAY) by[q.discipline]=(by[q.discipline]||0)+1; }); return {i,by,n:Object.values(by).reduce((x,y)=>x+y,0)}; });
+  const lmax=Math.max(1,...load.map(l=>l.n)); const week=ds.map(d=>({d,n:load.slice(0,7).reduce((a,l)=>a+(l.by[d.id]||0),0)})).filter(x=>x.n);
+  const dueNow=recs.filter(([q,r])=>r.due!=null&&r.due<end).length;
+  const tname=(d,id)=>nm((d.topics||[]).find(t=>t.id===id))||id;
+  const fmtS=s=>s==null?"—":(s>=60?Math.floor(s/60)+"m"+String(s%60).padStart(2,"0"):s+"s");
+  v.innerHTML = `
+   <div><div class="eyebrow">${T2("Banco inteiro","Whole bank")} · ${tr("std_"+set().std)}</div><h1>${T2("Seus números","Your stats")}</h1></div>
+   <div class="kpis">
+     <div class="kpi"><div class="v">${recs.length}<small>/${allQ.length}</small></div><div class="l">${tr("answered")}</div></div>
+     <div class="kpi"><div class="v">${pct(okN,recs.length)}</div><div class="l">${tr("accuracy")}</div></div>
+     <div class="kpi"><div class="v">${streak}</div><div class="l">${T2("dias seguidos","day streak")}</div></div>
+   </div>
+   <div class="panel"><h2>${T2("Prontidão para as provas","Exam readiness")}</h2>
+     ${exams.length?`<div class="list">${exams.map(x=>`<div class="li" style="cursor:default;display:block">
+       <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><b style="font-size:14px">${esc(nm(x.d))} · ${esc(nm(x.ex))}</b><span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
+       <div class="track" style="margin:10px 0 8px" role="img" aria-label="${x.seen}/${x.n}"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
+       <div style="font-size:12.5px;color:var(--muted);line-height:1.5">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.due?` · ${x.due} ${T2("para revisar","due")}`:""}<br>
+       ${x.unseen?`${T2("Meta","Goal")}: <b>${x.meta} ${T2("novas/dia","new/day")}</b> ${T2("para ver tudo até a prova","to see everything by the exam")}`:`<b>${T2("Banco da prova completo","All exam questions seen")}</b>`}</div></div>`).join("")}</div>`:`<p class="empty">${T2("Nenhuma prova futura com questões no banco.","No upcoming exams with questions.")}</p>`}</div>
+   <div class="panel"><h2>${T2("Temas mais fracos","Weakest topics")}</h2><p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Último resultado de cada questão; temas com 5 ou mais respondidas.","Latest result per question; topics with at least 5 answered.")}</p>
+     <div class="bars">${weak.slice(0,6).map(x=>`<div class="bar-row"><span class="n">${esc(nm(x.t))}<small style="color:var(--subtle)"> · ${esc(nm(x.d))}</small></span><span class="p">${x.o}/${x.n}&ensp;<b>${Math.round(100*x.acc)}%</b></span>
+       <div class="track"><i class="ok" style="width:${100*x.acc}%"></i><i class="bad" style="width:${100*(1-x.acc)}%"></i></div></div>`).join("")||`<p class="empty">${T2("Responda ao menos 5 questões de um tema.","Answer at least 5 questions in a topic.")}</p>`}</div></div>
+   <div class="panel"><h2>${T2("Retenção","Retention")}</h2>
+     <div class="kpis" style="margin-top:6px">
+       <div class="kpi"><div class="v">${pct(frOk,fr.length)}</div><div class="l">${T2("1ª tentativa","first try")}</div></div>
+       <div class="kpi"><div class="v">${pct(rvOk,rv.length)}</div><div class="l">${T2("revisões 30d","reviews 30d")}</div></div>
+       <div class="kpi"><div class="v">${fmtS(secs)}</div><div class="l">${T2("por questão","per question")}</div></div></div>
+     <p class="lede" style="margin:10px 0 0;font-size:12.5px">${rv.length?(rvOk/rv.length<0.8?T2("Retenção abaixo de 80%: revise com mais frequência ou releia os temas fracos.","Retention below 80%: review more often or reread weak topics."):T2("Boa retenção: o que você aprende está ficando.","Good retention: what you learn is sticking.")):T2("A retenção aparece depois das primeiras revisões.","Retention shows after your first reviews.")}</p></div>
+   <div class="panel"><div class="row" style="justify-content:space-between"><h2>${T2("Questões-sanguessuga","Leeches")}</h2>${leech.length?`<button class="btn small" data-act="leechStudy">${T2("Estudar","Study")} ${Math.min(leech.length,20)}</button>`:""}</div>
+     <p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Erradas 2 vezes ou mais. Releia o assunto antes de tentar de novo.","Missed twice or more. Reread the topic before retrying.")}</p>
+     ${leech.length?`<div class="list">${leech.slice(0,8).map(q=>{const r=rec(q.id); return `<div class="li" style="cursor:default"><span class="t">${safe(content(q).c?.stem||"")}<br><small style="color:var(--subtle)">${esc(tname(ds.find(d=>d.id===q.discipline)||{},q.topic))}</small></span><span class="st bad">✗${r.n-r.nOk}</span></div>`;}).join("")}</div>`:`<p class="empty">${T2("Nenhuma por enquanto.","None so far.")}</p>`}</div>
+   <div class="panel"><div class="row" style="justify-content:space-between"><h2>${T2("Revisões nos próximos 30 dias","Reviews, next 30 days")}</h2><span class="mono" style="font-size:12px;color:var(--muted)">${T2("hoje","today")}: ${dueNow}</span></div>
+     <div class="spark" style="height:70px">${load.map(l=>`<div title="+${l.i+1}${tr("days")}: ${l.n}"><i style="height:${100*l.n/lmax}%;background:var(--accent)"></i></div>`).join("")}</div>
+     <div class="spark-l"><span>${tr("tomorrow")}</span><span>+30${tr("days")}</span></div>
+     ${week.length?`<p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2("Próximos 7 dias","Next 7 days")}: ${week.map(x=>`${esc(nm(x.d))} <b>${x.n}</b>`).join(" · ")}</p>`:""}</div>`;
+}
 /* ---------- REVIEW ---------- */
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);
@@ -823,7 +893,7 @@ document.addEventListener("click", async e=>{
   const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; render(); return; }
   const sw=e.target.closest("[data-sw]"); if(sw){ const k=sw.dataset.sw; S.setup[k]=!S.setup[k]; render(); return; }
   const pk=e.target.closest("[data-pick]"); if(pk && !pk.disabled){ const s=S.session; if(!s) return; const it=s.items[s.i]; const q=S.qs.get(it.id); const p=Number(pk.dataset.pick);
-     if(s.mode==="study"){ it.pick=p; record(q,p); render(); const r=$(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+     if(s.mode==="study"){ it.pick=p; record(q,p,{rev:s.kind==="review", ms:it.t0?now()-it.t0:null}); render(); const r=$(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); }
      else { it.pick=p; render(); }
      return; }
   const sl=e.target.closest("[data-setl]"); if(sl){ set().lang=sl.dataset.setl; saveProg(); render(); openSettings(); return; }
@@ -838,12 +908,13 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="leechStudy"){ const qs=leechList().slice(0,20); if(!qs.length) return; S.setup=Object.assign(defaultSetup(),{mode:"study",count:0}); S.session=buildSession("study",shuffle(qs),S.setup); return go("study"); }
   if(act==="revScope"){ set().revScope=a.dataset.val; saveProg(); return render(); }
   if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",shuffle(due),{mode:"study",count:0,shuffleQ:true,shuffleO:true}); return go("review"); }
   if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); render(); window.scrollTo({top:0}); return; }
   if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); render(); window.scrollTo({top:0}); return; }
   if(act==="finish"){ const s=S.session;
-    if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick)) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
+    if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick,{rev:false})) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
     const v=S.view; S.session=null; toast("✓"); return go(v==="review"?"review":"home"); }
   if(act==="exit"){ clearInterval(timerInt); S.session=null; return render(); }
   if(act==="newSession"){ S.session=null; return go("study"); }
@@ -982,7 +1053,7 @@ function subscribeQs(){ /* questions are fetched on open and when the app return
 
 async function boot(){
   cacheLoad(); applyTheme();
-  const h=(location.hash||"").slice(1); if(["home","study","review","cards","bank"].includes(h)) S.view=h;
+  const h=(location.hash||"").slice(1); if(["home","study","review","cards","stats","bank"].includes(h)) S.view=h;
   S.downloads=true; // enables the export button (plain browser download)
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
   if(!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase){ setSync("off"); render(); if(!CFG.SUPABASE_URL) toast("config.js sem Supabase"); return; }

@@ -293,7 +293,7 @@ pt:{home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Ba
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
  answered:"Respondidas",accuracy:"Acerto",coverage:"do banco",bySub:"Desempenho por sub-bloco",last14:"Últimos 14 dias",correct:"acertos",wrong:"erros",
- quick:"Atalhos",scStudyD:"Comentário após cada resposta",scSimD:"Cronometrado, gabarito no fim",scFcD:"Revisão espaçada do tema",continueStudy:"Estudo comentado",quickSim:"Simulado rápido (10)",fcStart:"Flashcards do tema",
+ quick:"Atalhos",scStudyD:"Comentário após cada resposta",scSimD:"Cronometrado, gabarito no fim",scFcD:"Revisões da disciplina + novos do tema",continueStudy:"Estudo comentado",quickSim:"Simulado rápido (10)",fcStart:"Flashcards do tema",
  recentSims:"Simulados recentes",noSims:"Nenhum simulado ainda.",
  studySetup:"Montar sessão",mode:"Modo",mStudy:"Estudo comentado",mStudyD:"Comentário completo após cada resposta",mSim:"Simulado",mSimD:"Cronometrado; gabarito comentado no fim",
  sub:"Sub-bloco",origin:"Origem",oAll:"Todas",oReal:"Provas reais",oAuth:"Autorais",oGen:"Geradas por IA",
@@ -326,7 +326,7 @@ en:{home:"Home",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
  answered:"Answered",accuracy:"Accuracy",coverage:"of bank",bySub:"Performance by sub-block",last14:"Last 14 days",correct:"correct",wrong:"wrong",
- quick:"Shortcuts",scStudyD:"Explanation after each answer",scSimD:"Timed, answers at the end",scFcD:"Spaced repetition for this topic",continueStudy:"Tutor mode",quickSim:"Quick test (10)",fcStart:"Topic flashcards",
+ quick:"Shortcuts",scStudyD:"Explanation after each answer",scSimD:"Timed, answers at the end",scFcD:"Discipline reviews + new from topic",continueStudy:"Tutor mode",quickSim:"Quick test (10)",fcStart:"Topic flashcards",
  recentSims:"Recent tests",noSims:"No tests yet.",
  studySetup:"Build a session",mode:"Mode",mStudy:"Tutor mode",mStudyD:"Full explanation after each answer",mSim:"Timed test",mSimD:"Timed; explained answer key at the end",
  sub:"Sub-block",origin:"Source",oAll:"All",oReal:"Past exams",oAuth:"Authored",oGen:"AI-generated",
@@ -457,8 +457,15 @@ function rateCard(q, grade){ // 0 missed, 1 hard, 2 good
   r.ts=now(); S.prog.fc[q.id]=r; saveProg();
 }
 function pruneLog(){ const keys=Object.keys(S.prog.log).sort(); while(keys.length>120){ delete S.prog.log[keys.shift()]; } }
-function dueQs(){ const end=startOfDay(now())+DAY; return ctxQs().filter(q=>{ const r=rec(q.id); return r && r.due!=null && r.due < end; }); }
-function dueCards(){ const end=startOfDay(now())+DAY; return ctxQs().filter(q=>{ const r=S.prog.fc[q.id]; return !r || r.due < end; }); }
+// revisão espaçada = baralho da disciplina inteira (como no Anki); "ctx" restringe ao tema/prova escolhido
+function discQs(){ const d=curDisc(); if(!d) return []; const st=set().std; return [...S.qs.values()].filter(q=>q.discipline===d.id && (st==="all"||q.standard===st)); }
+function revPool(){ return set().revScope==="ctx" ? ctxQs() : discQs(); }
+function dueQs(){ const end=startOfDay(now())+DAY; return revPool().filter(q=>{ const r=rec(q.id); return r && r.due!=null && r.due < end; }); }
+// cards: revisões vencidas do baralho + cards novos (nunca vistos) só do tema atual
+function dueCards(){ const end=startOfDay(now())+DAY; const seen=revPool().filter(q=>{ const r=S.prog.fc[q.id]; return r && r.due < end; }); const ids=new Set(seen.map(q=>q.id)); const fresh=ctxQs().filter(q=>!S.prog.fc[q.id] && !ids.has(q.id)); return seen.concat(fresh); }
+function scopeChips(){ const sc=set().revScope==="ctx"?"ctx":"disc"; const t=curTopic(); const b=(v,l)=>`<button type="button" class="chip" data-act="revScope" data-val="${v}" aria-pressed="${sc===v}">${l}</button>`;
+  return `<div class="chips">${b("disc",(set().lang==="en"?"Whole discipline":"Disciplina inteira"))}${b("ctx",(set().lang==="en"?"Only ":"Só ")+esc(nm(t)))}</div>`; }
+function scopeLabel(){ return set().revScope==="ctx" ? nm(curTopic()) : nm(curDisc()); }
 let saveTimer=null, saving=false, saveAgain=false;
 function saveProg(){ cacheSave(); if(!S.db||!S.uid) return; clearTimeout(saveTimer); saveTimer=setTimeout(flushProg, 1200); }
 async function flushProg(){
@@ -513,7 +520,7 @@ function vHome(v){
   v.innerHTML = `
    <div><div class="eyebrow">${esc(nm(curDisc()))} · ${tr("std_"+set().std)}</div><h1>${esc(nm(t))}</h1></div>
    ${S.dbState==="off"&&S.qs.size?`<div class="banner">${tr("noDb")}</div>`:""}
-   <div class="due"><div><div class="eyebrow">${tr("dueToday")}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
+   <div class="due"><div><div class="eyebrow">${tr("dueToday")} · ${esc(scopeLabel())}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
    <div class="kpis">
      <div class="kpi"><div class="v">${done.length}<small>/${qs.length}</small></div><div class="l">${tr("answered")}</div></div>
@@ -638,10 +645,11 @@ function vResult(v){
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);
   const due=dueQs(); const t=curTopic();
-  const up=[...Array(7)].map((_,i)=>{ const a=startOfDay(now())+(i+1)*DAY; return {i, n: ctxQs().filter(q=>{const r=rec(q.id); return r&&r.due>=a&&r.due<a+DAY;}).length}; });
+  const up=[...Array(7)].map((_,i)=>{ const a=startOfDay(now())+(i+1)*DAY; return {i, n: revPool().filter(q=>{const r=rec(q.id); return r&&r.due>=a&&r.due<a+DAY;}).length}; });
   const mx=Math.max(1,...up.map(u=>u.n));
   v.innerHTML = `
-   <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("reviewTitle")}</h1><p class="lede">${tr("reviewLede")}</p></div>
+   <div><div class="eyebrow">${esc(scopeLabel())}</div><h1>${tr("reviewTitle")}</h1><p class="lede">${tr("reviewLede")}</p></div>
+   ${scopeChips()}
    <div class="due"><div><div class="eyebrow">${tr("dueToday")}</div><div class="big">${due.length}</div></div>${due.length?`<button class="btn primary" data-act="startReview">${tr("reviewStart")}</button>`:""}</div>
    ${due.length?"":`<p class="lede">${tr("dueNone")}</p>`}
    <div class="panel"><h2>${tr("upcoming")}</h2><div class="spark" style="height:60px">${up.map(u=>`<div title="+${u.i+1}${tr("days")}: ${u.n}"><i style="height:${100*u.n/mx}%;background:var(--accent)"></i></div>`).join("")}</div>
@@ -653,8 +661,10 @@ function vReview(v){
 function vCards(v){
   const t=curTopic();
   if(!S.fcDeck || S.fcDeck.topic!==t?.id || S.fcDeck.std!==set().std){
-    v.innerHTML = `<div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("cardsTitle")}</h1><p class="lede">${tr("cardsLede")}</p></div>
-      <div class="due"><div><div class="eyebrow">${tr("cardsDue")}</div><div class="big">${dueCards().length}</div></div><button class="btn primary" data-act="fcStart" data-all="0" ${dueCards().length?"":"disabled"}>${tr("start")}</button></div>
+    const dc=dueCards(), nNew=dc.filter(q=>!S.prog.fc[q.id]).length;
+    v.innerHTML = `<div><div class="eyebrow">${esc(scopeLabel())}</div><h1>${tr("cardsTitle")}</h1><p class="lede">${tr("cardsLede")}</p></div>
+      ${scopeChips()}
+      <div class="due"><div><div class="eyebrow">${tr("cardsDue")}</div><div class="big">${dc.length}</div><div class="lede" style="margin-top:6px">${dc.length-nNew} ${set().lang==="en"?"reviews":"revisões"} · ${nNew} ${set().lang==="en"?"new from":"novos de"} ${esc(nm(t))}</div></div><button class="btn primary" data-act="fcStart" data-all="0" ${dc.length?"":"disabled"}>${tr("start")}</button></div>
       <button class="btn" data-act="fcStart" data-all="1">${tr("cardsAllT")} (${ctxQs().length})</button>`;
     return;
   }
@@ -828,6 +838,7 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="revScope"){ set().revScope=a.dataset.val; saveProg(); return render(); }
   if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",shuffle(due),{mode:"study",count:0,shuffleQ:true,shuffleO:true}); return go("review"); }
   if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); render(); window.scrollTo({top:0}); return; }
   if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); render(); window.scrollTo({top:0}); return; }

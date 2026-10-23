@@ -316,7 +316,7 @@ pt:{stats:"Números",home:"Início",study:"Estudar",review:"Revisão",cards:"Fla
  importPh:"Cole aqui um array JSON de questões no formato do banco…",importDo:"Importar",imported:"Importadas",
  del:"Excluir",confirmDel:"Toque de novo para excluir",deleted:"Excluída",markRev:"Marcar como revisada",reviewed:"Revisada",notReviewed:"não revisada",
  settings:"Ajustes",lang:"Idioma",theme:"Tema",tSys:"Sistema",tLight:"Claro",tDark:"Escuro",font:"Tamanho do texto",
- howAdd:"Como entra conteúdo novo",howAddTxt:"Envie a aula (PDF/fotos) e provas antigas ao Claude e peça um pacote para o Gabarito. Ele devolve um arquivo .json; importe em Banco → Importar JSON. As questões entram no mesmo padrão: comentário por alternativa, pegadinha e fonte.",
+ howAdd:"Como entra conteúdo novo",howAddTxt:"Envie a aula (PDF/fotos) e provas antigas ao Claude e peça um pacote para o Gabarito. As questões entram no repositório de conteúdo e aparecem aqui sozinhas na próxima abertura do app. As questões entram no mesmo padrão: comentário por alternativa, pegadinha e fonte.",
  resetProg:"Zerar meu progresso",confirmReset:"Toque de novo para zerar",resetDone:"Progresso zerado",
  online:"sincronizado",offline:"cópia local",loading:"carregando",readonly:"somente leitura",
  noDb:"Banco indisponível nesta visualização. Mostrando a última cópia salva neste aparelho.",noData:"O banco ainda está vazio.",
@@ -349,7 +349,7 @@ en:{stats:"Stats",home:"Home",study:"Study",review:"Review",cards:"Flashcards",b
  importPh:"Paste a JSON array of questions in the bank format…",importDo:"Import",imported:"Imported",
  del:"Delete",confirmDel:"Tap again to delete",deleted:"Deleted",markRev:"Mark as reviewed",reviewed:"Reviewed",notReviewed:"not reviewed",
  settings:"Settings",lang:"Language",theme:"Theme",tSys:"System",tLight:"Light",tDark:"Dark",font:"Text size",
- howAdd:"How new content gets in",howAddTxt:"Send the lecture (PDF/photos) and past exams to Claude and ask for a Gabarito pack. It returns a .json file; import it under Bank → Import JSON. Questions keep the same format: explanation per choice, trap and source.",
+ howAdd:"How new content gets in",howAddTxt:"Send the lecture (PDF/photos) and past exams to Claude and ask for a Gabarito pack. Questions go into the content repository and show up here automatically the next time you open the app. Questions keep the same format: explanation per choice, trap and source.",
  resetProg:"Reset my progress",confirmReset:"Tap again to reset",resetDone:"Progress reset",
  online:"synced",offline:"local copy",loading:"loading",readonly:"read-only",
  noDb:"Database unavailable in this view. Showing the last copy saved on this device.",noData:"The bank is still empty.",
@@ -511,7 +511,7 @@ function renderCtx(){
 function go(v){ S.view=v; if(location.hash!=="#"+v){ try{ history.replaceState(null,"","#"+v); }catch(e){} } render(); window.scrollTo({top:0}); }
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
-  if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p>${S.owner&&S.db?`<div class="row" style="margin-top:12px"><button class="btn primary" data-act="importOpen">${tr("importJ")}</button></div>`:""}</div>`; return; }
+  if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
   ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank}[S.view]||vHome)(v);
 }
 
@@ -824,8 +824,6 @@ function vBank(v){
    <div><div class="eyebrow">${esc(nm(t))} · ${all.length} ${tr("qs")}</div><h1>${tr("bankTitle")}</h1></div>
    <div class="row">
      ${S.owner&&S.sample&&!t?.pseudo?`<button class="btn primary" data-act="genOpen">✦ ${tr("gen")}</button>`:""}
-     ${S.downloads?`<button class="btn" data-act="export">${tr("exportJ")}</button>`:""}
-     ${S.owner&&S.db?`<button class="btn" data-act="importOpen">${tr("importJ")}</button>`:""}
    </div>
    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
      <div class="field"><label for="bkText" class="lab" style="position:absolute;left:-9999px">${tr("search")}</label><input id="bkText" type="search" placeholder="${tr("search")}" value="${esc(f.text)}"></div>

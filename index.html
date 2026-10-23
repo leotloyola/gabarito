@@ -28,6 +28,7 @@
   --line:#E4E4E7;          /* zinc-200 */
   --hair:rgba(24,24,27,.06);
   --accent:#0F766E;        /* teal-700 */
+  --usmle:#4338CA; --usmle-soft:#EEF2FF; --usmle-line:#C7D2FE;  /* indigo 700/50/200 */
   --accent-ink:#FFFFFF;
   --accent-soft:#F0FDFA;   /* teal-50 */
   --ok:#059669; --ok-soft:#ECFDF5; --ok-bar:#6EE7B7;     /* emerald 600/50/300 */
@@ -46,7 +47,7 @@
 }
 :root[data-theme="dark"]{
   --bg:#09090B; --surface:#18181B; --surface-2:#27272A; --pill:rgba(63,63,70,.5); --ink:#F4F4F5; --ink-2:#E4E4E7; --muted:#A1A1AA; --subtle:#71717A; --line:#27272A; --hair:rgba(255,255,255,.06);
-  --accent:#5EEAD4; --accent-ink:#042F2E; --accent-soft:#042F2E;
+  --accent:#5EEAD4; --accent-ink:#042F2E; --accent-soft:#042F2E; --usmle:#A5B4FC; --usmle-soft:#1E1B4B; --usmle-line:#3730A3;
   --ok:#34D399; --ok-soft:#022C22; --ok-bar:#10B981; --bad:#FB7185; --bad-soft:#2A0A12; --bad-bar:#E11D48; --warn:#FCD34D; --warn-soft:#271A04; --warn-line:#78350F;
   --shadow:none; --shadow-md:none; --glass:linear-gradient(135deg,rgba(19,78,74,.55),rgba(6,78,59,.35)); color-scheme:dark}
 *{box-sizing:border-box}
@@ -80,6 +81,9 @@ button{font:inherit;color:inherit}
 .seg{display:inline-flex;background:var(--pill);border-radius:999px;padding:3px;flex:none}
 .seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);letter-spacing:.02em}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(24,24,27,.08)}
+.seg button[data-std="usmle"][aria-pressed="true"]{color:var(--usmle);box-shadow:0 0 0 1px var(--usmle-line) inset,0 1px 3px rgba(67,56,202,.12)}
+.tag.std.usmle{background:var(--usmle-soft);color:var(--usmle);box-shadow:0 0 0 1px var(--usmle-line) inset}
+.ddot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
 /* main */
 main{padding-block:14px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0}
 .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
@@ -237,7 +241,7 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .lesson .call .ct{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
 .lesson .call.prova{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset} .lesson .call.prova .ct{color:var(--accent)}
 .lesson .call.alerta{background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset} .lesson .call.alerta .ct{color:var(--warn)}
-.lesson .call.usmle{background:#EEF2FF;box-shadow:0 0 0 1px #C7D2FE inset} .lesson .call.usmle .ct{color:#4338CA}
+.lesson .call.usmle{background:var(--usmle-soft);box-shadow:0 0 0 1px var(--usmle-line) inset} .lesson .call.usmle .ct{color:var(--usmle)}
 :root[data-theme="dark"] .lesson .call.usmle{background:#1E1B4B;box-shadow:0 0 0 1px #3730A3 inset} :root[data-theme="dark"] .lesson .call.usmle .ct{color:#A5B4FC}
 .lesson .call p:first-of-type{margin-top:0} .lesson .call ul{margin:4px 0}
 .lesson ol.flow{list-style:none;padding:0;margin:12px 0;counter-reset:f}
@@ -529,7 +533,7 @@ function renderCtx(){
   const st=set().std, lg=set().lang;
   if(S.view==="lesson"){ $("#ctx").innerHTML=""; return; }
   $("#ctx").innerHTML = `
-   ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}">${dOpts||`<option>—</option>`}</select></label>
+   ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}" style="box-shadow:inset 4px 0 0 ${discColor(d)}">${dOpts||`<option>—</option>`}</select></label>
    <label class="sel"><span class="lab">${tr("topic")}</span><select id="selTopic" aria-label="${tr("topic")}">${tOpts||`<option>—</option>`}</select></label>`}
    <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
   if(S.view==="stats") return;
@@ -656,7 +660,7 @@ function questionHTML(q, it, reveal, simMode){
   const perm = it?.perm || c.opts.map((_,i)=>i);
   const pick = it?.pick ?? null;
   const tags = [];
-  tags.push(`<span class="tag std">${q.standard.toUpperCase()}${q.step?" · "+esc(q.step):""}</span>`);
+  tags.push(`<span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}${q.step?" · "+esc(q.step):""}</span>`);
   if(q.exam) tags.push(`<span class="tag real">${esc(q.exam)}</span>`);
   if(q.origin==="generated") tags.push(`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`);
   tagsOf(q).forEach(t=>tags.push(`<span class="tag">${esc(t)}</span>`));
@@ -672,7 +676,7 @@ function questionHTML(q, it, reveal, simMode){
     const why = reveal ? `<div class="why"><span class="v ${orig!==q.correct&&q.exc?"neutral":""}">${verdict}</span>${safe(det&&o.more?o.more:o.why)}</div>` : "";
     return `<button type="button" class="${cls}" data-pick="${orig}" ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div>${why}</button>`;
   }).join("");
-  const fb = fallback ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
+  const fb = (fallback && q.standard!=="usmle") ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
     ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
@@ -703,13 +707,17 @@ function examReadiness(onlyDisc){ const today=startOfDay(now()), end=today+DAY; 
       exams.push({d,ex,dt,days,n:qs.length,seen:seen.length,ok:ok.length,due,unseen,meta:Math.ceil(unseen/days)}); } }
   return exams.sort((a,b)=>a.dt-b.dt); }
 function nextExamHTML(){ const d=curDisc(); if(!d) return ""; const x=examReadiness(d.id)[0]; if(!x) return "";
-  return `<div class="panel" style="padding:16px 18px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><div><div class="eyebrow">${T2("Próxima prova","Next exam")}</div><b style="font-size:15px">${esc(nm(x.ex))}</b></div>
+  return `<div class="panel" style="padding:16px 18px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><div><div class="eyebrow">${ddot(x.d)}${T2("Próxima prova","Next exam")}</div><b style="font-size:15px">${esc(nm(x.ex))}</b></div>
     <span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
     <div class="track" style="margin:12px 0 8px"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
     <div class="row" style="justify-content:space-between;gap:8px"><span style="font-size:12.5px;color:var(--muted)">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.unseen?` · ${T2("meta","goal")} <b>${x.meta}/${T2("dia","day")}</b>`:""}</span>
     <button class="btn small" data-act="examStudy" data-ex="${esc(x.ex.id)}">${T2("Estudar","Study")} ${esc(x.ex.all?T2("tudo","all"):x.ex.id)}</button></div></div>`; }
 
 const T2=(pt,en)=>set().lang==="en"?en:pt;
+// cor-marcador por disciplina: d.color no catálogo, senão posição dentro do período (as cores se repetem entre períodos)
+const DCOL=["#7C3AED","#0284C7","#EA580C","#C026D3","#2563EB","#DB2777","#65A30D","#A16207","#0891B2","#57534E"];
+function discColor(d){ if(!d) return "var(--subtle)"; if(d.color) return d.color; const same=discs().filter(x=>(x.period??null)===(d.period??null)); const i=Math.max(0,same.findIndex(x=>x.id===d.id)); return DCOL[i%DCOL.length]; }
+const ddot=d=>`<i class="ddot" style="background:${discColor(d)}" aria-hidden="true"></i>`;
 const MES={jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11};
 function examDate(ex){ if(ex.date) return startOfDay(new Date(ex.date+"T12:00:00").getTime()); const m=(ex.name?.pt||"").match(/(\d{1,2})(?:[–-]\d{1,2})?\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i); if(!m) return null;
   const y=new Date(now()).getFullYear(); return startOfDay(new Date(y, MES[m[2].toLowerCase()], Number(m[1]), 12).getTime()); }
@@ -750,7 +758,7 @@ function vStats(v){
    </div>
    ${radarHTML()}
    <div class="panel"><h2>${T2("Temas mais fracos","Weakest topics")}</h2><p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Último resultado de cada questão; temas com 5 ou mais respondidas.","Latest result per question; topics with at least 5 answered.")}</p>
-     <div class="bars">${weak.slice(0,6).map(x=>`<div class="bar-row"><span class="n">${esc(nm(x.t))}<small style="color:var(--subtle)"> · ${esc(nm(x.d))}</small></span><span class="p">${x.o}/${x.n}&ensp;<b>${Math.round(100*x.acc)}%</b></span>
+     <div class="bars">${weak.slice(0,6).map(x=>`<div class="bar-row"><span class="n">${esc(nm(x.t))}<small style="color:var(--subtle)"> · ${ddot(x.d)}${esc(nm(x.d))}</small></span><span class="p">${x.o}/${x.n}&ensp;<b>${Math.round(100*x.acc)}%</b></span>
        <div class="track"><i class="ok" style="width:${100*x.acc}%"></i><i class="bad" style="width:${100*(1-x.acc)}%"></i></div></div>`).join("")||`<p class="empty">${T2("Responda ao menos 5 questões de um tema.","Answer at least 5 questions in a topic.")}</p>`}</div></div>
    <div class="panel"><h2>${T2("Retenção","Retention")}</h2>
      <div class="kpis" style="margin-top:6px">
@@ -767,7 +775,7 @@ function vStats(v){
      ${week.length?`<p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2("Próximos 7 dias","Next 7 days")}: ${week.map(x=>`${esc(nm(x.d))} <b>${x.n}</b>`).join(" · ")}</p>`:""}</div>`:""}${tab==="provas"?`
    <div class="panel"><h2>${T2("Prontidão para as provas","Exam readiness")}</h2>
      ${exams.length?`<div class="list">${exams.map(x=>`<div class="li" style="cursor:default;display:block">
-       <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><b style="font-size:14px">${esc(nm(x.d))} · ${esc(nm(x.ex))}</b><span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
+       <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><b style="font-size:14px">${ddot(x.d)}${esc(nm(x.d))} · ${esc(nm(x.ex))}</b><span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
        <div class="track" style="margin:10px 0 8px" role="img" aria-label="${x.seen}/${x.n}"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
        <div style="font-size:12.5px;color:var(--muted);line-height:1.5">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.due?` · ${x.due} ${T2("para revisar","due")}`:""}<br>
        ${x.unseen?`${T2("Meta","Goal")}: <b>${x.meta} ${T2("novas/dia","new/day")}</b> ${T2("para ver tudo até a prova","to see everything by the exam")}`:`<b>${T2("Banco da prova completo","All exam questions seen")}</b>`}</div></div>`).join("")}</div>`:`<p class="empty">${T2("Nenhuma prova futura com questões no banco.","No upcoming exams with questions.")}</p>`}</div>
@@ -807,7 +815,7 @@ function incidenceHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>
   const exSel=exs.find(e=>e.id===S.incExam)?S.incExam:"";
   const {rows,total}=incidence(cur.id, exSel); const mx=Math.max(1,...rows.map(r=>r.n));
   return `<div class="panel"><h2>${T2("Mais cobrados nas provas da UFPR","Most tested in UFPR exams")}</h2>
-   <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${esc(nm(d))}</button>`).join("")}</div>
+   <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${ddot(d)}${esc(nm(d))}</button>`).join("")}</div>
    ${exs.length>1?`<div class="seg" role="group" style="margin:0 0 12px">${[["",T2("Todas","All")],...exs.map(e=>[e.id,e.id])].map(([id,l])=>`<button type="button" data-act="incExam" data-val="${esc(id)}" aria-pressed="${exSel===id}">${esc(l)}</button>`).join("")}</div>`:""}
    <div class="bars">${rows.map(r=>{ const ex=(cur.exams||[]).find(e=>e.id===r.t.exam); return `<button type="button" class="bar-row" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(r.t.id)}" style="all:unset;display:block;cursor:pointer;width:100%">
      <span class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><span class="n">${esc(nm(r.t))}${ex?`<small style="color:var(--subtle)"> · ${esc(r.t.exam)}</small>`:""}</span><span class="p">${r.n}&ensp;<b>${Math.round(100*r.n/total)}%</b></span></span>
@@ -825,20 +833,20 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
   const ring=v=>`<polygon points="${tps.map((_,i)=>pt(i,v).map(n=>n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--line)" stroke-width="1"/>`;
   const axes=tps.map((x,i)=>{ const [a,b]=pt(i,1), [lx,ly]=pt(i,1.13); const weak=x.seen<5;
     return `<line x1="${C}" y1="${C}" x2="${a.toFixed(1)}" y2="${b.toFixed(1)}" stroke="var(--line)" ${weak?'stroke-dasharray="3 3"':""}/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="600" fill="${weak?"var(--subtle)":"var(--ink-2)"}">${i+1}</text>`; }).join("");
-  const dots=tps.map((x,i)=>{ if(!x.seen) return ""; const [a,b]=pt(i,x.acc); return `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="3.5" fill="${x.seen>=5?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="1.5"/>`; }).join("");
+  const dots=tps.map((x,i)=>{ if(!x.seen) return ""; const [a,b]=pt(i,x.acc); return `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="3.5" fill="${x.seen>=5?discColor(cur):"var(--surface)"}" stroke="${discColor(cur)}" stroke-width="1.5"/>`; }).join("");
   const ref=`<polygon points="${tps.map((_,i)=>pt(i,.7).map(n=>n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--warn)" stroke-width="1" stroke-dasharray="4 3" opacity=".7"/>`;
   const svg=`<svg viewBox="0 0 ${W} ${W}" width="100%" style="max-width:360px;display:block;margin:0 auto" role="img" aria-label="${T2("Radar de acerto e cobertura por tema","Accuracy and coverage radar by topic")}">
     ${[.25,.5,.75,1].map(ring).join("")}${axes}
     <polygon points="${poly(x=>x.cov)}" fill="var(--accent)" fill-opacity=".10" stroke="none"/>${ref}
-    <polygon points="${poly(x=>x.seen?x.acc:0)}" fill="var(--accent)" fill-opacity=".18" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>${dots}</svg>`;
+    <polygon points="${poly(x=>x.seen?x.acc:0)}" fill="${discColor(cur)}" fill-opacity=".16" stroke="${discColor(cur)}" stroke-width="2" stroke-linejoin="round"/>${dots}</svg>`;
   const leg=tps.map((x,i)=>`<button type="button" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(x.t.id)}" style="all:unset;cursor:pointer;display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px">
      <b style="min-width:18px;color:${x.seen<5?"var(--subtle)":"var(--ink)"}">${i+1}</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)">${esc(nm(x.t))}</span>
      <span class="mono" style="color:var(--muted)">${x.seen?`<b style="color:${x.seen<5?"var(--subtle)":x.acc>=.7?"var(--ok)":"var(--bad)"}">${Math.round(100*x.acc)}%</b>`:"—"} · ${Math.round(100*x.cov)}%</span></button>`).join("");
   return `<div class="panel"><h2>${T2("Mapa da disciplina","Discipline map")}</h2>
-   <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${esc(nm(d))}</button>`).join("")}</div>
+   <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${ddot(d)}${esc(nm(d))}</button>`).join("")}</div>
    ${svg}
    <div style="display:flex;justify-content:center;gap:16px;margin:4px 0 10px;font-size:11.5px;color:var(--muted);align-items:center">
-     <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;height:3px;border-radius:2px;background:var(--accent)"></i>${T2("acerto","accuracy")}</span>
+     <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;height:3px;border-radius:2px;background:${discColor(cur)}"></i>${T2("acerto","accuracy")}</span>
      <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:12px;height:12px;border-radius:3px;background:var(--accent);opacity:.18"></i>${T2("cobertura","coverage")}</span>
      <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;border-top:1.5px dashed var(--warn)"></i>70%</span></div>
    <div style="display:grid;grid-template-columns:1fr;column-gap:20px" class="radar-leg">${leg}</div>
@@ -850,7 +858,7 @@ function lessonsOf(dId){ const d=discs().find(x=>x.id===dId); const order=(d?.to
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
 function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id); const read=S.prog.read||{};
   if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>`;
-  return `<div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }
+  return `<div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }
 function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; return vStudy(v); }
   const d=discs().find(x=>x.id===l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const isRead=!!(S.prog.read||{})[l.id];
@@ -919,7 +927,7 @@ function vBank(v){
    </div>
    <div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
      <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
-     <span class="m"><span class="tag std">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
+     <span class="m"><span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
   const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
   $("#bkSub").onchange=e=>{ f.sub=e.target.value; render(); };

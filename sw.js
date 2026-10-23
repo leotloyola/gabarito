@@ -1,5 +1,5 @@
 // Gabarito service worker — app shell offline; banco (Supabase) sempre pela rede
-const CACHE = "gabarito-v20";
+const CACHE = "gabarito-v21";
 const SHELL = ["./", "index.html", "config.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

@@ -13,7 +13,7 @@ function fixture(){
   for(const d of ["da","db"]) for(const t of ["t1","t2","t3","t4"]) for(let i=0;i<6;i++){ k++;
     const usmle=i===5; const opts=[0,1,2,3,4].map(j=>({t:`Alternativa ${j} da questão ${k}`,why:j===i%5?"<b>Correta</b> porque sim.":"Errada.",more:"Detalhe."}));
     const L={stem:`Enunciado ${k} (${d}/${t})`,opts,peg:"<b>Memorize:</b> x",pegMore:"mais",src:"Fixture"};
-    qs.push({id:`${d}-${t}-${usmle?"usmle":"ufpr"}-${i}`,discipline:d,topic:t,sub:i%2?"s2":"s1",standard:usmle?"usmle":"ufpr",step:usmle?"Step 1":null,origin:i<3&&!usmle?"real":"authored",exam:i<3&&!usmle?`P${t<"t3"?1:2} 23.1 · Q${k} · 22.2 · Q${k+1}`:null,exc:i===4,correct:i%5,tags:{pt:["Tag"],en:["Tag"]},i18n:usmle?{en:L}:{pt:Object.assign({},L,i===2?{outdated:"Mudou."}:{}),en:L},reviewed:true,order:i});
+    qs.push({id:`${d}-${t}-${usmle?"usmle":"ufpr"}-${i}`,discipline:d,topic:t,sub:i%2?"s2":"s1",standard:usmle?"usmle":"ufpr",step:usmle?"Step 1":null,origin:i<3&&!usmle?"real":"authored",exam:i<3&&!usmle?`P${t<"t3"?1:2} 23.1 · Q${k} · 22.2 · Q${k+1}`:null,exc:i===4,correct:i%5,tags:{pt:["Tag"],en:["Tag"]},i18n:usmle?{en:L}:{pt:Object.assign({},L,i===2?{outdated:"Mudou."}:{}),en:L},reviewed:true,order:i,...(k===1?{img:{url:"icons/icon-192.png",alt:"Imagem de teste"}}:{})});
   }
   const lessons=[{id:"lesson:da:t1",kind:"lesson",discipline:"da",topic:"t1",title:"Lição de teste",minutes:5,sources:["Fixture"],html:'<aside class="call prova"><div class="ct">O que cai</div><p>x</p></aside><h2>1. Seção</h2><div class="tbl"><table class="stack"><thead><tr><th>A</th><th>B</th><th>C</th></tr></thead><tbody><tr><td data-label="A">a</td><td data-label="B">b</td><td data-label="C">c</td></tr></tbody></table></div><ol class="flow"><li>um</li><li class="stop">fim</li></ol>'}];
   return {cat,qs,lessons};
@@ -35,6 +35,7 @@ function fixture(){
     for(const v of ["home","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
     for(const t of ["geral","provas","cobrados"]) await step("stats "+t, ()=>p.evaluate(t=>{ S.statsTab=t; go("stats"); render(); },t));
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
+    await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
     await step("report sheet", async()=>{ await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
     await step("lesson from question", async()=>{ await p.click('.tags [data-act="lesson"]'); await p.waitForSelector(".lesson"); await p.goBack(); });
     await step("full exam sim", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="full"; go("study"); }); await p.click('[data-act="fullExam"][data-mode="sim"]'); await p.click('[data-pick="1"]'); });

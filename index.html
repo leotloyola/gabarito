@@ -261,6 +261,10 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
   .lesson table.stack tr{display:block;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset}
   .lesson table.stack td{display:block;border:0;padding:3px 0;min-width:0} .lesson table.stack td::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
   .lesson table.stack td:first-child{font-weight:600;color:var(--ink)} .lesson table.stack td:first-child::before{display:none} .lesson .tbl{overflow:visible;margin:10px 0} }
+.qimg{margin:4px 0 14px} .qimg button{all:unset;display:block;cursor:zoom-in;width:100%}
+.qimg img{display:block;max-width:100%;max-height:52vh;margin:0 auto;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line)}
+.qimg figcaption{font-size:12px;color:var(--muted);margin-top:6px;text-align:center}
+.zoomwrap{overflow:auto;touch-action:pinch-zoom pan-x pan-y;border-radius:12px;background:#fff;max-height:70vh} .zoomwrap img{display:block;width:100%;height:auto}
 details.adv{border-top:1px solid var(--line);padding-top:10px}
 details.adv summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);list-style:none;padding:4px 0}
 details.adv summary::-webkit-details-marker{display:none}
@@ -706,7 +710,7 @@ function questionHTML(q, it, reveal, simMode){
     <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
-  return `<div class="tags">${tags.join("")}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`;
+  return `<div class="tags">${tags.join("")}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`;
 }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
@@ -890,6 +894,10 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; }
+/* ---------- IMAGENS DAS QUESTÕES ---------- */
+function qImg(q){ const im=q.img; if(!im||!im.url) return ""; return `<figure class="qimg"><button type="button" data-act="imgZoom" data-q="${esc(q.id)}" aria-label="${T2("Ampliar imagem","Zoom image")}"><img src="${esc(im.url)}" alt="${esc(im.alt||"")}" loading="lazy" decoding="async"></button>${im.alt?`<figcaption>${esc(im.alt)}</figcaption>`:""}</figure>`; }
+function openImg(qid){ const q=S.qs.get(qid); if(!q?.img?.url) return; openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Imagem","Image")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+  <div class="zoomwrap"><img src="${esc(q.img.url)}" alt="${esc(q.img.alt||"")}"></div>${q.img.alt?`<p class="lede" style="font-size:13px">${esc(q.img.alt)}</p>`:""}<p class="lede" style="font-size:12px">${T2("Use o gesto de pinça para ampliar.","Pinch to zoom.")}</p>`); }
 /* ---------- CONTESTAR GABARITO ---------- */
 const REP_KINDS=[["key",["Gabarito errado","Wrong answer key"]],["text",["Erro no enunciado/alternativa","Error in stem/option"]],["expl",["Comentário errado ou confuso","Wrong/unclear explanation"]],["old",["Desatualizada","Outdated"]],["other",["Outro","Other"]]];
 function repResolved(r){ return S.catalog?.resolved?.[r.id]||null; }
@@ -941,7 +949,7 @@ function vCards(v){
   v.innerHTML = `
    <div class="qtop"><span class="qnum">${d.i+1} / ${d.ids.length}</span><div class="progress"><i style="width:${100*d.i/d.ids.length}%"></i></div>${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn" data-act="fcReset" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
    <div class="card"><div class="tags">${tagsOf(q).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
-     <div class="face">${safe(c.stem)}</div>
+     <div class="face">${safe(c.stem)}</div>${qImg(q)}
      ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(corr.why)}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}`:""}
    </div>
    <div class="qnav">${d.show?`<div class="rate" style="flex:1"><button class="btn" data-act="fcRate" data-g="0">${tr("again")}<small>1${tr("days")}</small></button><button class="btn" data-act="fcRate" data-g="1">${tr("hard")}<small>${INTERVALS[Math.max(1,(S.prog.fc[q.id]?.box||0))]}${tr("days")}</small></button><button class="btn primary" data-act="fcRate" data-g="2">${tr("good")}<small>${INTERVALS[Math.min((S.prog.fc[q.id]?.box||0)+1,5)]}${tr("days")}</small></button></div>`:`<button class="btn primary block" data-act="fcShow">${tr("show")}</button>`}</div>`;
@@ -1106,6 +1114,7 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="imgZoom"){ return openImg(a.dataset.q); }
   if(act==="report"){ return openReport(a.dataset.q); }
   if(act==="repKind"){ S.rep.kind=a.dataset.val; if(S.rep.kind!=="key") S.rep.alt=null; return S.repDraw(); }
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }

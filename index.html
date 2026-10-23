@@ -499,10 +499,11 @@ function renderCtx(){
   } else tOpts=(d?.topics||[]).map(topt).join("");
   const st=set().std, lg=set().lang;
   $("#ctx").innerHTML = `
-   <label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}">${dOpts||`<option>—</option>`}</select></label>
-   <label class="sel"><span class="lab">${tr("topic")}</span><select id="selTopic" aria-label="${tr("topic")}">${tOpts||`<option>—</option>`}</select></label>
+   ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}">${dOpts||`<option>—</option>`}</select></label>
+   <label class="sel"><span class="lab">${tr("topic")}</span><select id="selTopic" aria-label="${tr("topic")}">${tOpts||`<option>—</option>`}</select></label>`}
    <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>
    <div class="seg" role="group" aria-label="${tr("lang")}">${["pt","en"].map(x=>`<button type="button" data-lang="${x}" aria-pressed="${lg===x}">${x.toUpperCase()}</button>`).join("")}</div>`;
+  if(S.view==="stats") return;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
   $("#selTopic").onchange=e=>{ set().topic=e.target.value; saveProg(); S.session=null; S.fcDeck=null; if(S.setup) S.setup.sub=""; S.bankFilter.sub=""; go(S.view); };
 }

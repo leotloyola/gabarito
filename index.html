@@ -353,7 +353,7 @@ pt:{stats:"Números",home:"Início",study:"Estudar",review:"Revisão",cards:"Fla
  saveTr:"Salvar tradução no banco",trSaved:"Tradução salva",
  simDone:"Resultado do simulado",time:"Tempo",score:"Nota",reviewList:"Revisar questões",backHome:"Voltar ao início",newSession:"Nova sessão",
  exitSession:"Sair da sessão",sessionEmpty:"Sem sessão ativa.",
- reviewTitle:"Revisão espaçada",reviewLede:"Questões que você errou ou acertou há tempo voltam em intervalos crescentes (1, 3, 7, 16, 35 dias).",reviewStart:"Começar revisão",upcoming:"Próximos 7 dias",
+ reviewTitle:"Revisão espaçada",reviewLede:"As questões voltam no momento em que você estaria perto de esquecê-las (algoritmo FSRS, meta de 90% de retenção). Errou, volta amanhã; acertou, o intervalo cresce conforme a sua memória.",reviewStart:"Começar revisão",upcoming:"Próximos 7 dias",
  cardsTitle:"Flashcards",cardsLede:"Frente: enunciado. Verso: gabarito, justificativa e pegadinha. Classifique para agendar a próxima vez.",show:"Mostrar resposta",again:"Errei",hard:"Difícil",good:"Acertei",cardsDone:"Fim do baralho por hoje.",cardsDue:"cartões para hoje",cardsAllT:"Estudar todos do tema",
  bankTitle:"Banco de questões",search:"Buscar no enunciado…",gen:"Gerar questões com Claude",exportJ:"Exportar JSON",importJ:"Importar JSON",
  genTitle:"Gerar questões",genFocus:"Foco (opcional)",genFocusPh:"ex.: doses do sugamadex, fase II…",genQty:"Quantas",genLang:"Idioma",genStd:"Padrão",generate:"Gerar",genSave:"Salvar no banco",genDiscard:"Descartar",genSaved:"Questões salvas",genWarn:"Questões geradas por IA entram marcadas como \"não revisadas\". Confira antes de confiar.",
@@ -386,7 +386,7 @@ en:{stats:"Stats",home:"Home",study:"Study",review:"Review",cards:"Flashcards",b
  saveTr:"Save translation to bank",trSaved:"Translation saved",
  simDone:"Test result",time:"Time",score:"Score",reviewList:"Review questions",backHome:"Back to home",newSession:"New session",
  exitSession:"Leave session",sessionEmpty:"No active session.",
- reviewTitle:"Spaced review",reviewLede:"Questions you missed, or got right a while ago, come back at growing intervals (1, 3, 7, 16, 35 days).",reviewStart:"Start review",upcoming:"Next 7 days",
+ reviewTitle:"Spaced review",reviewLede:"Questions come back right before you'd forget them (FSRS algorithm, 90% target retention). Miss it and it returns tomorrow; get it right and the interval grows with your memory.",reviewStart:"Start review",upcoming:"Next 7 days",
  cardsTitle:"Flashcards",cardsLede:"Front: stem. Back: answer, explanation and trap. Rate yourself to schedule the next showing.",show:"Show answer",again:"Missed",hard:"Hard",good:"Got it",cardsDone:"Deck finished for today.",cardsDue:"cards due today",cardsAllT:"Study all in topic",
  bankTitle:"Question bank",search:"Search stems…",gen:"Generate questions with Claude",exportJ:"Export JSON",importJ:"Import JSON",
  genTitle:"Generate questions",genFocus:"Focus (optional)",genFocusPh:"e.g. sugammadex dosing, phase II block…",genQty:"How many",genLang:"Language",genStd:"Standard",generate:"Generate",genSave:"Save to bank",genDiscard:"Discard",genSaved:"Questions saved",genWarn:"AI-generated questions are saved as \"not reviewed\". Check them before relying on them.",
@@ -411,7 +411,28 @@ const ICONS = {
  timer:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>'
 };
 const CHEV='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
-const INTERVALS = [0,1,3,7,16,35];
+const INTERVALS = [0,1,3,7,16,35]; // legado: só para converter registros antigos
+/* FSRS-5 (parâmetros padrão): estabilidade S (dias), dificuldade D (1–10); retenção desejada 90% */
+const FSRS={ w:[0.40255,1.18385,3.173,15.69105,7.1949,0.5345,1.4604,0.0046,1.54575,0.1192,1.01925,1.9395,0.11,0.29605,2.2698,0.2315,2.9898,0.51655,0.6621],
+  F:19/81, DEC:-0.5, R:0.9, MAX:365,
+  clampD(d){ return Math.min(10,Math.max(1,d)); },
+  d0(g){ const w=this.w; return this.clampD(w[4]-Math.exp(w[5]*(g-1))+1); },
+  ret(t,s){ return Math.pow(1+this.F*t/s, this.DEC); },
+  ivl(s){ return Math.min(this.MAX, Math.max(1, Math.round(s/this.F*(Math.pow(this.R,1/this.DEC)-1)))); },
+  // r: registro existente (pode ser legado, com box/due), g: 1 errei · 2 difícil · 3 acertei/bom · 4 fácil; t: agora
+  next(r, g, t){ const w=this.w; let s=r.s, d=r.d; const last=r.lr||r.ts;
+    if(s==null && r.box!=null && last){ s=Math.max(0.5, INTERVALS[r.box]||0.5); d=5; } // migração do sistema antigo
+    if(s==null){ s=w[g-1]; d=this.d0(g); }
+    else { const el=Math.max(0,(t-last)/DAY);
+      if(el<1){ s=s*Math.exp(w[17]*(g-3+w[18])); }
+      else { const R=this.ret(el,s);
+        if(g===1){ s=Math.min(s, w[11]*Math.pow(d,-w[12])*(Math.pow(s+1,w[13])-1)*Math.exp(w[14]*(1-R))); }
+        else { s=s*(Math.exp(w[8])*(11-d)*Math.pow(s,-w[9])*(Math.exp(w[10]*(1-R))-1)*(g===2?w[15]:1)*(g===4?w[16]:1)+1); } }
+      const dd=d+(-w[6]*(g-3))*(10-d)/9; d=this.clampD(w[7]*this.d0(4)+(1-w[7])*dd); }
+    s=Math.max(0.1,s); const days=g===1?1:this.ivl(s);
+    return {s, d, days}; } };
+function schedule(r, g){ const t=now(); const n=FSRS.next(r,g,t); r.s=+n.s.toFixed(3); r.d=+n.d.toFixed(3); r.lr=t; r.due=startOfDay(t)+n.days*DAY; r.ivl=n.days; return r; }
+function previewDays(r, g){ return FSRS.next(Object.assign({},r||{}), g, now()).days; }
 
 /* ---------- state ---------- */
 const LS_KEY = "gabarito-cache-v1";
@@ -499,21 +520,19 @@ function tagsOf(q){ return q.tags?.[set().lang] || q.tags?.pt || q.tags?.en || [
 function rec(id){ return S.prog.q[id]; }
 function status(id){ const r=rec(id); if(!r) return "no"; return r.ok? "ok":"bad"; }
 function record(q, picked, ctx={}){
-  const ok = picked===q.correct; const r = S.prog.q[q.id] || {n:0,nOk:0,box:0};
+  const ok = picked===q.correct; const r = S.prog.q[q.id] || {n:0,nOk:0};
   if(r.first==null) r.first = r.n===0 ? ok : (r.n===1 ? !!r.ok : null);
   r.n++; if(ok) r.nOk++; r.ok=ok; r.a=picked; r.ts=now();
   // registro de cada resposta: [ts(s), id, acerto, revisão, segundos(-1 = n/d)]
   S.prog.ev=(S.prog.ev||[]); S.prog.ev.push([Math.round(now()/1000), q.id, ok?1:0, ctx.rev?1:0, ctx.ms!=null?Math.min(3600,Math.round(ctx.ms/1000)):-1]); if(S.prog.ev.length>20000) S.prog.ev.splice(0,S.prog.ev.length-20000);
-  r.box = ok ? Math.min((r.box||0)+1, INTERVALS.length-1) : 0;
-  r.due = ok ? startOfDay(now()) + INTERVALS[r.box]*DAY : startOfDay(now()) + DAY;
+  schedule(r, ok?3:1); delete r.box;
   S.prog.q[q.id]=r;
   const k=dayKey(); const lg=S.prog.log[k]||{n:0,ok:0}; lg.n++; if(ok) lg.ok++; S.prog.log[k]=lg;
   pruneLog(); saveProg(); return ok;
 }
-function rateCard(q, grade){ // 0 missed, 1 hard, 2 good
-  const r = S.prog.fc[q.id] || {box:0};
-  if(grade===0){ r.box=0; r.due=startOfDay(now())+DAY; }
-  else { r.box = grade===1 ? Math.max(1,r.box||0) : Math.min((r.box||0)+1, INTERVALS.length-1); r.due = startOfDay(now()) + INTERVALS[r.box]*DAY; }
+function rateCard(q, grade){ // 0 errei, 1 difícil, 2 acertei → FSRS 1, 2, 3
+  const r = S.prog.fc[q.id] || {};
+  schedule(r, [1,2,3][grade]); delete r.box;
   r.ts=now(); S.prog.fc[q.id]=r; saveProg();
 }
 function pruneLog(){ const keys=Object.keys(S.prog.log).sort(); while(keys.length>120){ delete S.prog.log[keys.shift()]; } }
@@ -952,7 +971,7 @@ function vCards(v){
      <div class="face">${safe(c.stem)}</div>${qImg(q)}
      ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(corr.why)}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}`:""}
    </div>
-   <div class="qnav">${d.show?`<div class="rate" style="flex:1"><button class="btn" data-act="fcRate" data-g="0">${tr("again")}<small>1${tr("days")}</small></button><button class="btn" data-act="fcRate" data-g="1">${tr("hard")}<small>${INTERVALS[Math.max(1,(S.prog.fc[q.id]?.box||0))]}${tr("days")}</small></button><button class="btn primary" data-act="fcRate" data-g="2">${tr("good")}<small>${INTERVALS[Math.min((S.prog.fc[q.id]?.box||0)+1,5)]}${tr("days")}</small></button></div>`:`<button class="btn primary block" data-act="fcShow">${tr("show")}</button>`}</div>`;
+   <div class="qnav">${d.show?`<div class="rate" style="flex:1"><button class="btn" data-act="fcRate" data-g="0">${tr("again")}<small>${previewDays(S.prog.fc[q.id],1)}${tr("days")}</small></button><button class="btn" data-act="fcRate" data-g="1">${tr("hard")}<small>${previewDays(S.prog.fc[q.id],2)}${tr("days")}</small></button><button class="btn primary" data-act="fcRate" data-g="2">${tr("good")}<small>${previewDays(S.prog.fc[q.id],3)}${tr("days")}</small></button></div>`:`<button class="btn primary block" data-act="fcShow">${tr("show")}</button>`}</div>`;
 }
 
 /* ---------- BANK ---------- */

@@ -571,7 +571,8 @@ function vStudy(v){
     </div>
     <div class="row" style="justify-content:space-between"><span class="mono" style="color:var(--muted);font-size:13px">${pool.length} ${tr("available")}</span>
       <button class="btn primary" data-act="startSession" ${pool.length?"":"disabled"}>${tr("start")}</button></div>
-   </div>`;
+   </div>
+   ${fullExamsHTML()}`;
   $("#suSub").onchange=e=>{ su.sub=e.target.value; render(); };
 }
 function buildSession(kind, list, su){
@@ -695,6 +696,7 @@ function vStats(v){
        <div class="track" style="margin:10px 0 8px" role="img" aria-label="${x.seen}/${x.n}"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
        <div style="font-size:12.5px;color:var(--muted);line-height:1.5">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.due?` · ${x.due} ${T2("para revisar","due")}`:""}<br>
        ${x.unseen?`${T2("Meta","Goal")}: <b>${x.meta} ${T2("novas/dia","new/day")}</b> ${T2("para ver tudo até a prova","to see everything by the exam")}`:`<b>${T2("Banco da prova completo","All exam questions seen")}</b>`}</div></div>`).join("")}</div>`:`<p class="empty">${T2("Nenhuma prova futura com questões no banco.","No upcoming exams with questions.")}</p>`}</div>
+   ${incidenceHTML()}
    <div class="panel"><h2>${T2("Temas mais fracos","Weakest topics")}</h2><p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Último resultado de cada questão; temas com 5 ou mais respondidas.","Latest result per question; topics with at least 5 answered.")}</p>
      <div class="bars">${weak.slice(0,6).map(x=>`<div class="bar-row"><span class="n">${esc(nm(x.t))}<small style="color:var(--subtle)"> · ${esc(nm(x.d))}</small></span><span class="p">${x.o}/${x.n}&ensp;<b>${Math.round(100*x.acc)}%</b></span>
        <div class="track"><i class="ok" style="width:${100*x.acc}%"></i><i class="bad" style="width:${100*(1-x.acc)}%"></i></div></div>`).join("")||`<p class="empty">${T2("Responda ao menos 5 questões de um tema.","Answer at least 5 questions in a topic.")}</p>`}</div></div>
@@ -712,6 +714,38 @@ function vStats(v){
      <div class="spark-l"><span>${tr("tomorrow")}</span><span>+30${tr("days")}</span></div>
      ${week.length?`<p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2("Próximos 7 dias","Next 7 days")}: ${week.map(x=>`${esc(nm(x.d))} <b>${x.n}</b>`).join(" · ")}</p>`:""}</div>`;
 }
+/* ---------- PROVAS NA ÍNTEGRA + INCIDÊNCIA ---------- */
+// "P2 20.2 · Q33 · 22.2 · Q14" → [{ex:"P2 20.2",n:33},{ex:"P2 22.2",n:14}]
+function examPairs(label){ const out=[]; let cur=null, pre="";
+  for(const tok of String(label||"").split(" · ").map(x=>x.trim())){ const m=tok.match(/^Q(\d+)$/i); if(m){ if(cur) out.push({ex:cur,n:Number(m[1])}); continue; }
+    if(/^\d{2,4}(\.\d)?$/.test(tok)) cur=(pre?pre+" ":"")+tok; else { cur=tok; const p=tok.match(/^(.*?)\s*\d{2,4}(\.\d)?$/); pre=p?p[1]:""; } }
+  return out; }
+function fullExams(dId){ const map=new Map();
+  for(const q of S.qs.values()){ if(q.discipline!==dId||!q.exam) continue; for(const {ex,n} of examPairs(q.exam)){ if(!map.has(ex)) map.set(ex,[]); map.get(ex).push({q,n}); } }
+  const yr=ex=>{ const m=ex.match(/(\d{2,4})(?:\.(\d))?$/); if(!m) return 0; let y=Number(m[1]); if(y<100) y+=2000; return y*10+Number(m[2]||0); };
+  return [...map.entries()].map(([ex,list])=>({ex, list:list.sort((a,b)=>a.n-b.n)})).sort((a,b)=>a.ex.split(" ")[0].localeCompare(b.ex.split(" ")[0]) || yr(b.ex)-yr(a.ex)); }
+function fullExamsHTML(){ const d=curDisc(); if(!d||set().std==="usmle") return ""; const L=fullExams(d.id); if(!L.length) return "";
+  const last=ex=>(S.prog.sims||[]).filter(s=>s.exam===ex).slice(-1)[0];
+  return `<div class="panel"><h2>${T2("Provas na íntegra","Full past exams")}</h2><p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Questões reais na ordem original. Questões com figura ou anuladas ficaram de fora.","Real questions in the original order. Figure-based or voided items were left out.")}</p>
+   <div class="list">${L.map(x=>{ const l=last(x.ex); return `<div class="li" style="cursor:default;align-items:center"><span class="t"><b>${esc(x.ex)}</b><br><small style="color:var(--subtle)">${x.list.length} ${T2("questões","questions")}${l?` · ${T2("última","last")}: ${l.ok}/${l.n}`:""}</small></span>
+     <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="study">${T2("Comentada","Tutor")}</button><button class="btn small primary" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="sim">${T2("Simulado","Timed")}</button></span></div>`; }).join("")}</div></div>`; }
+function startFullExam(ex, mode){ const d=curDisc(); const x=fullExams(d.id).find(e=>e.ex===ex); if(!x) return;
+  const qs=x.list.map(i=>i.q); const su=Object.assign(defaultSetup(),{mode, count:0, shuffleQ:false, shuffleO:false}); S.setup=su;
+  S.session=buildSession("study", qs, su); S.session.exam=ex; go("study"); }
+// incidência: cada aparição em prova (questão repetida em anos diferentes conta de novo)
+function incidence(dId){ const d=discs().find(x=>x.id===dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
+  for(const q of S.qs.values()){ if(q.discipline!==dId||!q.exam) continue; const k=examPairs(q.exam).length||1; by[q.topic]=(by[q.topic]||0)+k; total+=k; }
+  const rows=(d.topics||[]).filter(t=>by[t.id]).map(t=>{ const r=[...S.qs.values()].filter(q=>q.discipline===dId&&q.topic===t.id&&rec(q.id)); const o=r.filter(q=>rec(q.id).ok).length; return {t,n:by[t.id],seen:r.length,o}; }).sort((a,b)=>b.n-a.n);
+  return {rows,total,d}; }
+function incidenceHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.discipline===d.id&&q.exam)); if(!ds.length) return "";
+  const cur=ds.find(d=>d.id===S.incDisc)||ds.find(d=>d.id===curDisc()?.id)||ds[0]; const {rows,total}=incidence(cur.id); const mx=Math.max(1,...rows.map(r=>r.n));
+  return `<div class="panel"><h2>${T2("Mais cobrados nas provas da UFPR","Most tested in UFPR exams")}</h2>
+   <div class="chips" style="margin:2px 0 12px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${esc(nm(d))}</button>`).join("")}</div>
+   <div class="bars">${rows.map(r=>{ const ex=(cur.exams||[]).find(e=>e.id===r.t.exam); return `<button type="button" class="bar-row" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(r.t.id)}" style="all:unset;display:block;cursor:pointer;width:100%">
+     <span class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><span class="n">${esc(nm(r.t))}${ex?`<small style="color:var(--subtle)"> · ${esc(r.t.exam)}</small>`:""}</span><span class="p">${r.n}&ensp;<b>${Math.round(100*r.n/total)}%</b></span></span>
+     <div class="track" style="margin-top:6px"><i style="width:${100*r.n/mx}%;background:var(--accent)"></i></div>
+     <small style="color:var(--subtle);font-size:11.5px">${r.seen?`${T2("seu acerto","your accuracy")}: ${Math.round(100*r.o/r.seen)}% (${r.seen})`:T2("ainda não estudado","not studied yet")}</small></button>`; }).join("")}</div>
+   <p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2(`${total} aparições em provas antigas. Toque num tema para estudá-lo.`,`${total} appearances in past exams. Tap a topic to study it.`)}</p></div>`; }
 /* ---------- REVIEW ---------- */
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);
@@ -909,13 +943,16 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }
+  if(act==="incDisc"){ S.incDisc=a.dataset.val; return render(); }
+  if(act==="incTopic"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; saveProg(); return go("study"); }
   if(act==="leechStudy"){ const qs=leechList().slice(0,20); if(!qs.length) return; S.setup=Object.assign(defaultSetup(),{mode:"study",count:0}); S.session=buildSession("study",shuffle(qs),S.setup); return go("study"); }
   if(act==="revScope"){ set().revScope=a.dataset.val; saveProg(); return render(); }
   if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",shuffle(due),{mode:"study",count:0,shuffleQ:true,shuffleO:true}); return go("review"); }
   if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); render(); window.scrollTo({top:0}); return; }
   if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); render(); window.scrollTo({top:0}); return; }
   if(act==="finish"){ const s=S.session;
-    if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick,{rev:false})) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
+    if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick,{rev:false})) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std,exam:s.exam||null}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
     const v=S.view; S.session=null; toast("✓"); return go(v==="review"?"review":"home"); }
   if(act==="exit"){ clearInterval(timerInt); S.session=null; return render(); }
   if(act==="newSession"){ S.session=null; return go("study"); }

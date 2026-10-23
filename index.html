@@ -225,6 +225,30 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .empty{color:var(--subtle);text-align:center;padding:28px 12px;font-size:14px}
 .banner{border-radius:16px;padding:12px 16px;font-size:13px;background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset;color:var(--ink-2)}
 @media (min-width:700px){ .radar-leg{grid-template-columns:1fr 1fr !important} }
+.lesson{background:var(--surface);border-radius:20px;padding:18px 18px 8px;box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.04));font-size:calc(15px * var(--fs));line-height:1.6;color:var(--ink-2)}
+.lesson h2{font-size:calc(17px * var(--fs));margin:22px 0 8px} .lesson h2:first-child{margin-top:4px} .lesson h3{font-size:calc(15px * var(--fs));margin:16px 0 6px}
+.lesson p{margin:8px 0} .lesson ul,.lesson ol{margin:8px 0;padding-left:20px} .lesson li{margin:4px 0} .lesson b{color:var(--ink)}
+.lesson code{font-family:var(--f-mono,ui-monospace,monospace);font-size:.9em;background:var(--pill);padding:1px 5px;border-radius:6px}
+.lesson .tbl{overflow-x:auto;margin:10px -4px;-webkit-overflow-scrolling:touch}
+.lesson table{border-collapse:collapse;width:100%;font-size:calc(13px * var(--fs));line-height:1.45}
+.lesson th{text-align:left;font-weight:600;color:var(--ink);background:var(--surface-2,var(--pill));padding:8px 10px;border-bottom:1px solid var(--line)}
+.lesson td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;min-width:96px}
+.lesson .call{border-radius:14px;padding:12px 14px;margin:12px 0;font-size:calc(14px * var(--fs));background:var(--pill)}
+.lesson .call .ct{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.lesson .call.prova{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset} .lesson .call.prova .ct{color:var(--accent)}
+.lesson .call.alerta{background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset} .lesson .call.alerta .ct{color:var(--warn)}
+.lesson .call.usmle{background:#EEF2FF;box-shadow:0 0 0 1px #C7D2FE inset} .lesson .call.usmle .ct{color:#4338CA}
+:root[data-theme="dark"] .lesson .call.usmle{background:#1E1B4B;box-shadow:0 0 0 1px #3730A3 inset} :root[data-theme="dark"] .lesson .call.usmle .ct{color:#A5B4FC}
+.lesson .call p:first-of-type{margin-top:0} .lesson .call ul{margin:4px 0}
+.lesson ol.flow{list-style:none;padding:0;margin:12px 0;counter-reset:f}
+.lesson ol.flow li{counter-increment:f;position:relative;padding:10px 12px 10px 44px;margin:0 0 10px;border-radius:12px;background:var(--surface-2,var(--pill));box-shadow:0 0 0 1px var(--line) inset}
+.lesson ol.flow li::before{content:counter(f);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.lesson ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
+.lesson ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .lesson ol.flow li.stop::before{background:var(--bad)}
+@media (max-width:600px){ .lesson table.stack thead{display:none} .lesson table.stack,.lesson table.stack tbody{display:block}
+  .lesson table.stack tr{display:block;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset}
+  .lesson table.stack td{display:block;border:0;padding:3px 0;min-width:0} .lesson table.stack td::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
+  .lesson table.stack td:first-child{font-weight:600;color:var(--ink)} .lesson table.stack td:first-child::before{display:none} .lesson .tbl{overflow:visible;margin:10px 0} }
 details.adv{border-top:1px solid var(--line);padding-top:10px}
 details.adv summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);list-style:none;padding:4px 0}
 details.adv summary::-webkit-details-marker{display:none}
@@ -377,14 +401,14 @@ const INTERVALS = [0,1,3,7,16,35];
 const LS_KEY = "gabarito-cache-v1";
 const S = {
   db:null, user:null, sample:null, downloads:null, uid:null, owner:false,
-  dbState:"loading", catalog:null, qs:new Map(), qUnsub:null, catUnsub:null,
+  dbState:"loading", catalog:null, qs:new Map(), lessons:new Map(), lessonId:null, qUnsub:null, catUnsub:null,
   prog:{settings:{lang:"pt",std:"ufpr",disc:null,topic:null,theme:"sys",fs:1},q:{},fc:{},log:{},sims:[]},
   progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, detail:new Set(), fcDeck:null, ai:{}, gen:null
 };
-function cacheLoad(){ try{ const c=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(c){ if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.prog) S.prog=mergeProg(S.prog,c.prog); } }catch(e){} }
+function cacheLoad(){ try{ const c=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(c){ if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); if(c.prog) S.prog=mergeProg(S.prog,c.prog); } }catch(e){} }
 let cacheTimer=null;
-function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify({catalog:S.catalog, qs:[...S.qs.values()], prog:S.prog})); }catch(e){} },400); }
-function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[]}; }
+function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify({catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()], prog:S.prog})); }catch(e){} },400); }
+function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], read:Object.assign({},base.read||{},p.read||{})}; }
 const set = () => S.prog.settings;
 const tr = k => (T[set().lang]||T.pt)[k] ?? T.pt[k] ?? k;
 
@@ -490,7 +514,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length;
-  $("#tabs").innerHTML = ["home","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+  $("#tabs").innerHTML = ["home","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
 }
 function renderCtx(){
   const d=curDisc(), t=curTopic();
@@ -515,7 +539,7 @@ function go(v){ S.view=v; if(location.hash!=="#"+v){ try{ history.replaceState(n
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank}[S.view]||vHome)(v);
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, lesson:vLesson}[S.view]||vHome)(v);
 }
 
 /* ---------- HOME ---------- */
@@ -531,6 +555,7 @@ function vHome(v){
    ${S.dbState==="off"&&S.qs.size?`<div class="banner">${tr("noDb")}</div>`:""}
    <div class="due"><div><div class="eyebrow">${tr("dueToday")} · ${esc(scopeLabel())}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
+   ${(()=>{ const t=curTopic(); return t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id)}</div>`:""; })()}
    ${nextExamHTML()}
    <div class="kpis">
      <div class="kpi"><div class="v">${done.length}<small>/${qs.length}</small></div><div class="l">${tr("answered")}</div></div>
@@ -560,13 +585,15 @@ function vStudy(v){
   if(S.session && S.session.kind!=="review") return vPlayer(v);
   const su = S.setup || (S.setup=defaultSetup()); const t=curTopic(); const pool=setupPool(su);
   const chip=(k,val,label)=>`<button type="button" class="chip" data-su="${k}" data-val="${val}" aria-pressed="${String(su[k])===String(val)}">${label}</button>`;
-  const hasFull=!!fullExamsHTML(); const tab=(hasFull&&S.studyTab==="full")?"full":"build";
+  const hasFull=!!fullExamsHTML(); const hasL=!!lessonsOf(curDisc()?.id).length; const tab=(hasFull&&S.studyTab==="full")?"full":(hasL&&S.studyTab==="lessons")?"lessons":"build";
   const hasGen=ctxQs().some(q=>q.origin==="generated");
-  const segS=hasFull?`<div class="seg" role="group" style="align-self:flex-start"><button type="button" data-act="studyTab" data-val="build" aria-pressed="${tab==="build"}">${T2("Montar sessão","Build session")}</button><button type="button" data-act="studyTab" data-val="full" aria-pressed="${tab==="full"}">${T2("Provas na íntegra","Full exams")}</button></div>`:"";
+  const segS=(hasFull||hasL)?`<div class="seg" role="group" style="align-self:flex-start"><button type="button" data-act="studyTab" data-val="build" aria-pressed="${tab==="build"}">${T2("Sessão","Session")}</button>${hasFull?`<button type="button" data-act="studyTab" data-val="full" aria-pressed="${tab==="full"}">${T2("Provas","Exams")}</button>`:""}${hasL?`<button type="button" data-act="studyTab" data-val="lessons" aria-pressed="${tab==="lessons"}">${T2("Lições","Lessons")}</button>`:""}</div>`:"";
+  if(tab==="lessons"){ v.innerHTML=`${segS}<div><div class="eyebrow">${esc(nm(curDisc()))}</div><h1>${T2("Lições","Lessons")}</h1><p class="lede">${T2("Resumos de alto rendimento: o que cai na UFPR, pegadinhas, algoritmos e o que muda no USMLE.","High-yield summaries: what UFPR tests, traps, algorithms and USMLE notes.")}</p></div>${lessonsListHTML()}`; return; }
   if(tab==="full"){ v.innerHTML=`${segS}<div><div class="eyebrow">${esc(nm(curDisc()))}</div><h1>${T2("Provas na íntegra","Full past exams")}</h1></div>${fullExamsHTML()}`; return; }
   v.innerHTML = `
    ${segS}
    <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("studySetup")}</h1></div>
+   ${t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id,true)}</div>`:""}
    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
       <button type="button" class="chip" data-su="mode" data-val="study" aria-pressed="${su.mode==="study"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mStudy")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mStudyD")}</span></button>
@@ -639,6 +666,7 @@ function questionHTML(q, it, reveal, simMode){
   const fb = fallback ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
+    ${pick!==q.correct&&lessonOf(q.discipline,q.topic)?`<div class="row">${lessonBtn(q.discipline,q.topic,true)}</div>`:""}
     ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore:c.peg)}</div>`:""}
@@ -807,6 +835,22 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
    <div style="display:grid;grid-template-columns:1fr;column-gap:20px" class="radar-leg">${leg}</div>
    <p class="lede" style="margin:8px 0 0;font-size:12px">${T2("Acerto · cobertura. Eixo tracejado = menos de 5 respondidas (pouco confiável). Toque num tema para estudá-lo.","Accuracy · coverage. Dashed axis = fewer than 5 answered. Tap a topic to study it.")}</p></div>`; }
 function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="group" aria-label="${T2("Tipo de revisão","Review type")}" style="align-self:flex-start"><button type="button" data-nav="review" aria-pressed="${!fc}">${T2("Questões","Questions")}${dueQs().length?` · ${dueQs().length}`:""}</button><button type="button" data-nav="cards" aria-pressed="${fc}">Flashcards${dueCards().length?` · ${dueCards().length}`:""}</button></div>`; }
+/* ---------- LIÇÕES ---------- */
+function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
+function lessonsOf(dId){ const d=discs().find(x=>x.id===dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
+function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
+function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id); const read=S.prog.read||{};
+  if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>`;
+  return `<div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }
+function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; return vStudy(v); }
+  const d=discs().find(x=>x.id===l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
+  S.prog.read=S.prog.read||{}; if(!S.prog.read[l.id]){ S.prog.read[l.id]=now(); saveProg(); }
+  const nQ=[...S.qs.values()].filter(q=>q.discipline===l.discipline&&q.topic===l.topic&&stdOk(q)).length;
+  v.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${T2("Voltar","Back")}</button>${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}</div>
+   <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
+   <article class="lesson" lang="pt-BR">${l.html}</article>
+   ${nQ?`<div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">${T2("Começar","Start")}</button></div>`:""}
+   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; }
 /* ---------- REVIEW ---------- */
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);
@@ -1003,6 +1047,9 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="lesson"){ S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; return go("lesson"); }
+  if(act==="lessonBack"){ return go(S.lessonBack&&S.lessonBack!=="lesson"?S.lessonBack:"study"); }
+  if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="statsTab"){ S.statsTab=a.dataset.val; render(); window.scrollTo({top:0}); return; }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
@@ -1085,9 +1132,9 @@ async function fetchAll(){
     const c=await SB.from("catalog").select("id,data").eq("id","main").maybeSingle();
     if(c.error) throw c.error;
     if(c.data) S.catalog=c.data.data;
-    const qs=new Map(); let from=0;
-    for(;;){ const r=await SB.from("questions").select("id,data").order("id").range(from, from+999); if(r.error) throw r.error; r.data.forEach(x=>qs.set(x.id,rowToQ(x))); if(r.data.length<1000) break; from+=1000; }
-    S.qs=qs;
+    const qs=new Map(), ls=new Map(); let from=0;
+    for(;;){ const r=await SB.from("questions").select("id,data").order("id").range(from, from+999); if(r.error) throw r.error; r.data.forEach(x=>{ const o=rowToQ(x); if(o.kind==="lesson") ls.set(o.id,o); else qs.set(o.id,o); }); if(r.data.length<1000) break; from+=1000; }
+    S.qs=qs; S.lessons=ls;
     const p=await SB.from("progress").select("state,updated_at").eq("user_id",S.uid).maybeSingle();
     if(p.error) throw p.error;
     if(p.data?.state){ const remote=p.data.state; const lt=Math.max(0,...Object.values(S.prog.q).map(r=>r.ts||0)); const rt=Math.max(0,...Object.values(remote.q||{}).map(r=>r.ts||0));

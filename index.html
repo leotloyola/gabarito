@@ -417,10 +417,21 @@ const S = {
   prog:{settings:{lang:"pt",std:"ufpr",disc:null,topic:null,theme:"sys",fs:1},q:{},fc:{},log:{},sims:[]},
   progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, detail:new Set(), fcDeck:null, ai:{}, gen:null
 };
-function cacheLoad(){ try{ const c=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(c){ if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); if(c.prog) S.prog=mergeProg(S.prog,c.prog); } }catch(e){} }
-let cacheTimer=null;
-function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify({catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()], prog:S.prog})); }catch(e){} },400); }
-function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], read:Object.assign({},base.read||{},p.read||{})}; }
+// cache local em IndexedDB (sem o limite de ~5 MB do localStorage). Chaves: "content" (catálogo, questões, lições) e "prog".
+const IDB={ db:null,
+  open(){ if(this.db) return Promise.resolve(this.db); return new Promise((res,rej)=>{ try{ const r=indexedDB.open("gabarito",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{ this.db=r.result; res(this.db); }; r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); },
+  async get(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction("kv").objectStore("kv").get(k); t.onsuccess=()=>res(t.result); t.onerror=()=>rej(t.error); }); },
+  async set(k,v){ const db=await this.open(); return new Promise((res,rej)=>{ const tx=db.transaction("kv","readwrite"); tx.objectStore("kv").put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); } };
+function applyContent(c){ if(!c) return; if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); }
+async function cacheLoad(){
+  try{ applyContent(await IDB.get("content")); const pr=await IDB.get("prog"); if(pr) S.prog=mergeProg(S.prog,pr); }catch(e){}
+  // migração do cache antigo (localStorage) — uma vez
+  try{ const old=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(old){ if(!S.qs.size) applyContent(old); if(old.prog&&!Object.keys(S.prog.q).length) S.prog=mergeProg(S.prog,old.prog); localStorage.removeItem(LS_KEY); cacheSave(); } }catch(e){}
+}
+let cacheTimer=null, progTimer=null;
+function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ IDB.set("content",{catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()]}).catch(()=>{}); cacheSaveProg(); },400); }
+function cacheSaveProg(){ clearTimeout(progTimer); progTimer=setTimeout(()=>{ IDB.set("prog",JSON.parse(JSON.stringify(S.prog))).catch(()=>{}); },300); }
+function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], reports:p.reports||base.reports||[], read:Object.assign({},base.read||{},p.read||{})}; }
 const set = () => S.prog.settings;
 const tr = k => (T[set().lang]||T.pt)[k] ?? T.pt[k] ?? k;
 
@@ -512,7 +523,7 @@ function scopeChips(){ const sc=set().revScope==="ctx"?"ctx":"disc"; const t=cur
   return `<div class="chips">${b("disc",(set().lang==="en"?"Whole discipline":"Disciplina inteira"))}${b("ctx",(set().lang==="en"?"Only ":"Só ")+esc(nm(t)))}</div>`; }
 function scopeLabel(){ return set().revScope==="ctx" ? nm(curTopic()) : nm(curDisc()); }
 let saveTimer=null, saving=false, saveAgain=false;
-function saveProg(){ cacheSave(); if(!S.db||!S.uid) return; clearTimeout(saveTimer); saveTimer=setTimeout(flushProg, 1200); }
+function saveProg(){ cacheSaveProg(); if(!S.db||!S.uid) return; clearTimeout(saveTimer); saveTimer=setTimeout(flushProg, 1200); }
 async function flushProg(){
   if(saving){ saveAgain=true; return; } saving=true;
   try{ await S.db.doc("data/users/"+S.uid+"/state").set(JSON.parse(JSON.stringify(S.prog))); setSync("on"); }
@@ -672,6 +683,7 @@ function questionHTML(q, it, reveal, simMode){
   if(q.exam) tags.push(`<span class="tag real">${esc(q.exam)}</span>`);
   if(q.origin==="generated") tags.push(`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`);
   tagsOf(q).forEach(t=>tags.push(`<span class="tag">${esc(t)}</span>`));
+  if(openReports(q).length) tags.push(`<span class="tag old" title="${T2("Você contestou esta questão","You reported this question")}">⚑ ${T2("Contestada","Reported")}</span>`);
   if(c.outdated) tags.push(`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`);
   if(q.exc) tags.push(`<span class="tag exc">${set().lang==="en"?"Except / incorrect":"Exceto / incorreta"}</span>`);
   const hasMore = c.opts.some(o=>o.more) || !!c.pegMore;
@@ -691,6 +703,7 @@ function questionHTML(q, it, reveal, simMode){
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore:c.peg)}</div>`:""}
     ${c.src?`<div class="box src"><h3>${tr("source")}</h3>${safe(c.src)}</div>`:""}
+    <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   return `<div class="tags">${tags.join("")}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`;
@@ -877,6 +890,23 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; }
+/* ---------- CONTESTAR GABARITO ---------- */
+const REP_KINDS=[["key",["Gabarito errado","Wrong answer key"]],["text",["Erro no enunciado/alternativa","Error in stem/option"]],["expl",["Comentário errado ou confuso","Wrong/unclear explanation"]],["old",["Desatualizada","Outdated"]],["other",["Outro","Other"]]];
+function repResolved(r){ return S.catalog?.resolved?.[r.id]||null; }
+function openReports(q){ return (S.prog.reports||[]).filter(r=>r.qid===q.id&&!repResolved(r)); }
+function openReport(qid){ const q=S.qs.get(qid); if(!q) return; const c=content(q).c; S.rep={qid,kind:"key",alt:null};
+  const draw=()=>{ const r=S.rep; const n=c.opts.length;
+    openSheet(`<div class="row" style="justify-content:space-between"><h2>⚑ ${T2("Contestar questão","Report question")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+     <p class="lede" style="font-size:13px;margin:0">${esc(q.exam||q.id)} · ${T2("gabarito atual","current key")}: <b>${L[q.correct]}</b></p>
+     <div class="field"><span class="flabel">${T2("Problema","Issue")}</span><div class="chips">${REP_KINDS.map(([k,l])=>`<button type="button" class="chip" data-act="repKind" data-val="${k}" aria-pressed="${r.kind===k}">${T2(l[0],l[1])}</button>`).join("")}</div></div>
+     ${r.kind==="key"?`<div class="field"><span class="flabel">${T2("A correta seria","Correct answer should be")}</span><div class="chips">${[...Array(n).keys()].map(i=>`<button type="button" class="chip" data-act="repAlt" data-val="${i}" aria-pressed="${r.alt===i}" ${i===q.correct?"disabled":""}>${L[i]}</button>`).join("")}</div></div>`:""}
+     <div class="field"><label for="repTxt">${T2("Observação (fonte, aula, página…)","Note (source, lecture, page…)")}</label><textarea id="repTxt" rows="3" style="width:100%;border-radius:12px;border:1px solid var(--line);padding:10px;font:inherit;background:var(--surface);color:var(--ink)">${esc(r.text||"")}</textarea></div>
+     <button class="btn primary" data-act="repSend">${T2("Enviar","Send")}</button>
+     <p class="lede" style="font-size:12px;margin:0">${T2("Vai para a lista de correções do Claude no repositório de conteúdo (exportada todo dia de madrugada; corrigida, aparece aqui como resolvida).","Goes to Claude's correction list in the content repository.")}</p>`,
+     sh=>{ const ta=sh.querySelector("#repTxt"); ta.oninput=()=>{ S.rep.text=ta.value; }; }); };
+  S.repDraw=draw; draw(); }
+function reportsHTML(){ const R=(S.prog.reports||[]); if(!R.length) return ""; const open=R.filter(r=>!repResolved(r));
+  return `<div class="box note"><h3>⚑ ${T2("Minhas contestações","My reports")} · ${open.length} ${T2(open.length===1?"aberta":"abertas","open")}</h3>${R.slice(-6).reverse().map(r=>{ const q=S.qs.get(r.qid); return `<div style="font-size:12.5px;margin-top:6px">${esc(q?.exam||r.qid)} — ${esc(T2(...(REP_KINDS.find(k=>k[0]===r.kind)||["",["",""]])[1]))}${r.alt!=null?` → ${L[r.alt]}`:""} · <b>${repResolved(r)?T2("resolvida","resolved"):T2("aberta","open")}</b>${repResolved(r)?.reply?`<br><span style="color:var(--muted)">${esc(repResolved(r).reply)}</span>`:""}</div>`; }).join("")}</div>`; }
 /* ---------- REVIEW ---------- */
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);
@@ -936,6 +966,7 @@ function vBank(v){
    <div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
      <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
      <span class="m"><span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
+   ${reportsHTML()}
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
   const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
   $("#bkSub").onchange=e=>{ f.sub=e.target.value; render(); };
@@ -1075,6 +1106,11 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="report"){ return openReport(a.dataset.q); }
+  if(act==="repKind"){ S.rep.kind=a.dataset.val; if(S.rep.kind!=="key") S.rep.alt=null; return S.repDraw(); }
+  if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
+  if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
+    S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
   if(act==="lesson"){ S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); } return go("lesson"); }
   if(act==="lessonRead"){ S.prog.read=S.prog.read||{}; if(S.prog.read[S.lessonId]) delete S.prog.read[S.lessonId]; else S.prog.read[S.lessonId]=now(); saveProg(); return render(); }
   if(act==="lessonBack"){ if(history.state&&history.state.v==="lesson"&&history.length>1){ history.back(); return; } return go(S.lessonBack&&S.lessonBack!=="lesson"?S.lessonBack:"study"); }
@@ -1230,7 +1266,7 @@ function exportJSON(){
 function subscribeQs(){ /* questions are fetched on open and when the app returns to foreground */ }
 
 async function boot(){
-  cacheLoad(); applyTheme();
+  await cacheLoad(); applyTheme();
   const h=(location.hash||"").slice(1); if(["home","study","review","cards","stats","bank"].includes(h)) S.view=h;
   try{ history.replaceState({v:S.view},"","#"+S.view); }catch(e){}
   S.downloads=true; // enables the export button (plain browser download)

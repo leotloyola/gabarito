@@ -735,19 +735,24 @@ function startFullExam(ex, mode){ const d=curDisc(); const x=fullExams(d.id).fin
   const qs=x.list.map(i=>i.q); const su=Object.assign(defaultSetup(),{mode, count:0, shuffleQ:false, shuffleO:false}); S.setup=su;
   S.session=buildSession("study", qs, su); S.session.exam=ex; go("study"); }
 // incidência: cada aparição em prova (questão repetida em anos diferentes conta de novo)
-function incidence(dId){ const d=discs().find(x=>x.id===dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
-  for(const q of S.qs.values()){ if(q.discipline!==dId||!q.exam) continue; const k=examPairs(q.exam).length||1; by[q.topic]=(by[q.topic]||0)+k; total+=k; }
+function incidence(dId, exId){ const d=discs().find(x=>x.id===dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
+  const okT=new Set((d.topics||[]).filter(t=>!exId||t.exam===exId).map(t=>t.id));
+  for(const q of S.qs.values()){ if(q.discipline!==dId||!q.exam||!okT.has(q.topic)) continue; const k=examPairs(q.exam).length||1; by[q.topic]=(by[q.topic]||0)+k; total+=k; }
   const rows=(d.topics||[]).filter(t=>by[t.id]).map(t=>{ const r=[...S.qs.values()].filter(q=>q.discipline===dId&&q.topic===t.id&&rec(q.id)); const o=r.filter(q=>rec(q.id).ok).length; return {t,n:by[t.id],seen:r.length,o}; }).sort((a,b)=>b.n-a.n);
   return {rows,total,d}; }
 function incidenceHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.discipline===d.id&&q.exam)); if(!ds.length) return "";
-  const cur=ds.find(d=>d.id===S.incDisc)||ds.find(d=>d.id===curDisc()?.id)||ds[0]; const {rows,total}=incidence(cur.id); const mx=Math.max(1,...rows.map(r=>r.n));
+  const cur=ds.find(d=>d.id===S.incDisc)||ds.find(d=>d.id===curDisc()?.id)||ds[0];
+  const exs=(cur.exams||[]).filter(e=>!e.all&&(cur.topics||[]).some(t=>t.exam===e.id&&[...S.qs.values()].some(q=>q.discipline===cur.id&&q.topic===t.id&&q.exam)));
+  const exSel=exs.find(e=>e.id===S.incExam)?S.incExam:"";
+  const {rows,total}=incidence(cur.id, exSel); const mx=Math.max(1,...rows.map(r=>r.n));
   return `<div class="panel"><h2>${T2("Mais cobrados nas provas da UFPR","Most tested in UFPR exams")}</h2>
-   <div class="chips" style="margin:2px 0 12px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${esc(nm(d))}</button>`).join("")}</div>
+   <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${esc(nm(d))}</button>`).join("")}</div>
+   ${exs.length>1?`<div class="seg" role="group" style="margin:0 0 12px">${[["",T2("Todas","All")],...exs.map(e=>[e.id,e.id])].map(([id,l])=>`<button type="button" data-act="incExam" data-val="${esc(id)}" aria-pressed="${exSel===id}">${esc(l)}</button>`).join("")}</div>`:""}
    <div class="bars">${rows.map(r=>{ const ex=(cur.exams||[]).find(e=>e.id===r.t.exam); return `<button type="button" class="bar-row" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(r.t.id)}" style="all:unset;display:block;cursor:pointer;width:100%">
      <span class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><span class="n">${esc(nm(r.t))}${ex?`<small style="color:var(--subtle)"> · ${esc(r.t.exam)}</small>`:""}</span><span class="p">${r.n}&ensp;<b>${Math.round(100*r.n/total)}%</b></span></span>
      <div class="track" style="margin-top:6px"><i style="width:${100*r.n/mx}%;background:var(--accent)"></i></div>
      <small style="color:var(--subtle);font-size:11.5px">${r.seen?`${T2("seu acerto","your accuracy")}: ${Math.round(100*r.o/r.seen)}% (${r.seen})`:T2("ainda não estudado","not studied yet")}</small></button>`; }).join("")}</div>
-   <p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2(`${total} aparições em provas antigas. Toque num tema para estudá-lo.`,`${total} appearances in past exams. Tap a topic to study it.`)}</p></div>`; }
+   <p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2(`${total} aparições em provas antigas${exSel?` (temas da ${exSel})`:""}. Toque num tema para estudá-lo.`,`${total} appearances in past exams${exSel?` (${exSel} topics)`:""}. Tap a topic to study it.`)}</p></div>`; }
 /* ---------- RADAR por disciplina (eixos = temas) ---------- */
 function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.discipline===d.id&&stdOk(q))); if(!ds.length) return "";
   const cur=ds.find(d=>d.id===S.incDisc)||ds.find(d=>d.id===curDisc()?.id)||ds[0];
@@ -973,6 +978,7 @@ document.addEventListener("click", async e=>{
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
   if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }
+  if(act==="incExam"){ S.incExam=a.dataset.val; return render(); }
   if(act==="incDisc"){ S.incDisc=a.dataset.val; return render(); }
   if(act==="incTopic"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; saveProg(); return go("study"); }
   if(act==="leechStudy"){ const qs=leechList().slice(0,20); if(!qs.length) return; S.setup=Object.assign(defaultSetup(),{mode:"study",count:0}); S.session=buildSession("study",shuffle(qs),S.setup); return go("study"); }

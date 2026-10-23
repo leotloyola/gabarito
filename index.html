@@ -224,6 +224,7 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .st.ok{color:var(--ok)} .st.bad{color:var(--bad)} .st.no{color:var(--subtle)}
 .empty{color:var(--subtle);text-align:center;padding:28px 12px;font-size:14px}
 .banner{border-radius:16px;padding:12px 16px;font-size:13px;background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset;color:var(--ink-2)}
+@media (min-width:700px){ .radar-leg{grid-template-columns:1fr 1fr !important} }
 .banner.old{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset;margin:12px 0}
 .tag.old{background:var(--bad-soft);color:var(--bad);box-shadow:0 0 0 1px var(--bad-bar) inset}
 .banner.info{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset}
@@ -690,6 +691,7 @@ function vStats(v){
      <div class="kpi"><div class="v">${pct(okN,recs.length)}</div><div class="l">${tr("accuracy")}</div></div>
      <div class="kpi"><div class="v">${streak}</div><div class="l">${T2("dias seguidos","day streak")}</div></div>
    </div>
+   ${radarHTML()}
    <div class="panel"><h2>${T2("Prontidão para as provas","Exam readiness")}</h2>
      ${exams.length?`<div class="list">${exams.map(x=>`<div class="li" style="cursor:default;display:block">
        <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><b style="font-size:14px">${esc(nm(x.d))} · ${esc(nm(x.ex))}</b><span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
@@ -746,6 +748,35 @@ function incidenceHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>
      <div class="track" style="margin-top:6px"><i style="width:${100*r.n/mx}%;background:var(--accent)"></i></div>
      <small style="color:var(--subtle);font-size:11.5px">${r.seen?`${T2("seu acerto","your accuracy")}: ${Math.round(100*r.o/r.seen)}% (${r.seen})`:T2("ainda não estudado","not studied yet")}</small></button>`; }).join("")}</div>
    <p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2(`${total} aparições em provas antigas. Toque num tema para estudá-lo.`,`${total} appearances in past exams. Tap a topic to study it.`)}</p></div>`; }
+/* ---------- RADAR por disciplina (eixos = temas) ---------- */
+function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.discipline===d.id&&stdOk(q))); if(!ds.length) return "";
+  const cur=ds.find(d=>d.id===S.incDisc)||ds.find(d=>d.id===curDisc()?.id)||ds[0];
+  const tps=(cur.topics||[]).map(t=>{ const qs=[...S.qs.values()].filter(q=>q.discipline===cur.id&&q.topic===t.id&&stdOk(q)); const seen=qs.filter(q=>rec(q.id)); const ok=seen.filter(q=>rec(q.id).ok).length;
+    return {t,n:qs.length,seen:seen.length,ok,acc:seen.length?ok/seen.length:0,cov:qs.length?seen.length/qs.length:0}; }).filter(x=>x.n);
+  if(tps.length<3) return "";
+  const W=320,C=W/2,R=118,N=tps.length; const ang=i=>-Math.PI/2+2*Math.PI*i/N; const pt=(i,v)=>[C+R*v*Math.cos(ang(i)),C+R*v*Math.sin(ang(i))];
+  const poly=f=>tps.map((x,i)=>pt(i,f(x)).map(n=>n.toFixed(1)).join(",")).join(" ");
+  const ring=v=>`<polygon points="${tps.map((_,i)=>pt(i,v).map(n=>n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--line)" stroke-width="1"/>`;
+  const axes=tps.map((x,i)=>{ const [a,b]=pt(i,1), [lx,ly]=pt(i,1.13); const weak=x.seen<5;
+    return `<line x1="${C}" y1="${C}" x2="${a.toFixed(1)}" y2="${b.toFixed(1)}" stroke="var(--line)" ${weak?'stroke-dasharray="3 3"':""}/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="600" fill="${weak?"var(--subtle)":"var(--ink-2)"}">${i+1}</text>`; }).join("");
+  const dots=tps.map((x,i)=>{ if(!x.seen) return ""; const [a,b]=pt(i,x.acc); return `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="3.5" fill="${x.seen>=5?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="1.5"/>`; }).join("");
+  const ref=`<polygon points="${tps.map((_,i)=>pt(i,.7).map(n=>n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--warn)" stroke-width="1" stroke-dasharray="4 3" opacity=".7"/>`;
+  const svg=`<svg viewBox="0 0 ${W} ${W}" width="100%" style="max-width:360px;display:block;margin:0 auto" role="img" aria-label="${T2("Radar de acerto e cobertura por tema","Accuracy and coverage radar by topic")}">
+    ${[.25,.5,.75,1].map(ring).join("")}${axes}
+    <polygon points="${poly(x=>x.cov)}" fill="var(--accent)" fill-opacity=".10" stroke="none"/>${ref}
+    <polygon points="${poly(x=>x.seen?x.acc:0)}" fill="var(--accent)" fill-opacity=".18" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>${dots}</svg>`;
+  const leg=tps.map((x,i)=>`<button type="button" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(x.t.id)}" style="all:unset;cursor:pointer;display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px">
+     <b style="min-width:18px;color:${x.seen<5?"var(--subtle)":"var(--ink)"}">${i+1}</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)">${esc(nm(x.t))}</span>
+     <span class="mono" style="color:var(--muted)">${x.seen?`<b style="color:${x.seen<5?"var(--subtle)":x.acc>=.7?"var(--ok)":"var(--bad)"}">${Math.round(100*x.acc)}%</b>`:"—"} · ${Math.round(100*x.cov)}%</span></button>`).join("");
+  return `<div class="panel"><h2>${T2("Mapa da disciplina","Discipline map")}</h2>
+   <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${esc(nm(d))}</button>`).join("")}</div>
+   ${svg}
+   <div style="display:flex;justify-content:center;gap:16px;margin:4px 0 10px;font-size:11.5px;color:var(--muted);align-items:center">
+     <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;height:3px;border-radius:2px;background:var(--accent)"></i>${T2("acerto","accuracy")}</span>
+     <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:12px;height:12px;border-radius:3px;background:var(--accent);opacity:.18"></i>${T2("cobertura","coverage")}</span>
+     <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;border-top:1.5px dashed var(--warn)"></i>70%</span></div>
+   <div style="display:grid;grid-template-columns:1fr;column-gap:20px" class="radar-leg">${leg}</div>
+   <p class="lede" style="margin:8px 0 0;font-size:12px">${T2("Acerto · cobertura. Eixo tracejado = menos de 5 respondidas (pouco confiável). Toque num tema para estudá-lo.","Accuracy · coverage. Dashed axis = fewer than 5 answered. Tap a topic to study it.")}</p></div>`; }
 /* ---------- REVIEW ---------- */
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);

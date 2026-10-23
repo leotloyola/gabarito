@@ -59,7 +59,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .mono{font-variant-numeric:tabular-nums}
-.shell{display:grid;grid-template-columns:minmax(0,1fr);min-height:100%}
+.shell{display:grid;grid-template-columns:minmax(0,1fr);min-height:100%;align-content:start}
 .top,main{min-width:0}
 /* top bar */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px)}
@@ -225,11 +225,15 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .empty{color:var(--subtle);text-align:center;padding:28px 12px;font-size:14px}
 .banner{border-radius:16px;padding:12px 16px;font-size:13px;background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset;color:var(--ink-2)}
 @media (min-width:700px){ .radar-leg{grid-template-columns:1fr 1fr !important} }
+details.adv{border-top:1px solid var(--line);padding-top:10px}
+details.adv summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);list-style:none;padding:4px 0}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::before{content:"+ ";} details.adv[open] summary::before{content:"− ";}
 .banner.old{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset;margin:12px 0}
 .tag.old{background:var(--bad-soft);color:var(--bad);box-shadow:0 0 0 1px var(--bad-bar) inset}
 .banner.info{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset}
 /* nav */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:500;letter-spacing:.01em;color:var(--subtle);cursor:pointer;position:relative;transition:color .15s ease}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current="page"]{color:var(--ink)}
@@ -244,7 +248,7 @@ nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;font-size:13px;z-index:50;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(24,24,27,.18)}
 @media (min-width:960px){
   :root{--nav-h:0px}
-  .shell{grid-template-columns:232px minmax(0,1fr)}
+  .shell{grid-template-columns:232px minmax(0,1fr);grid-template-rows:auto 1fr}
   nav.tabs{position:sticky;top:0;height:100vh;grid-template-columns:1fr;grid-auto-rows:min-content;align-content:start;box-shadow:4px 0 24px rgba(0,0,0,.03);padding:88px 14px 0;gap:4px;grid-row:1/span 2;grid-column:1}
   nav.tabs button{height:44px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 14px;border-radius:999px;font-size:14px;color:var(--muted)}
   nav.tabs button:hover{background:var(--surface-2)}
@@ -293,7 +297,7 @@ pt:{stats:"Números",home:"Início",study:"Estudar",review:"Revisão",cards:"Fla
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
- answered:"Respondidas",accuracy:"Acerto",coverage:"do banco",bySub:"Desempenho por sub-bloco",last14:"Últimos 14 dias",correct:"acertos",wrong:"erros",
+ answered:"Respondidas",accuracy:"Acerto",coverage:"cobertura",bySub:"Desempenho por sub-bloco",last14:"Últimos 14 dias",correct:"acertos",wrong:"erros",
  quick:"Atalhos",scStudyD:"Comentário após cada resposta",scSimD:"Cronometrado, gabarito no fim",scFcD:"Revisões da disciplina + novos do tema",continueStudy:"Estudo comentado",quickSim:"Simulado rápido (10)",fcStart:"Flashcards do tema",
  recentSims:"Simulados recentes",noSims:"Nenhum simulado ainda.",
  studySetup:"Montar sessão",mode:"Modo",mStudy:"Estudo comentado",mStudyD:"Comentário completo após cada resposta",mSim:"Simulado",mSimD:"Cronometrado; gabarito comentado no fim",
@@ -326,7 +330,7 @@ en:{stats:"Stats",home:"Home",study:"Study",review:"Review",cards:"Flashcards",b
  discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
- answered:"Answered",accuracy:"Accuracy",coverage:"of bank",bySub:"Performance by sub-block",last14:"Last 14 days",correct:"correct",wrong:"wrong",
+ answered:"Answered",accuracy:"Accuracy",coverage:"coverage",bySub:"Performance by sub-block",last14:"Last 14 days",correct:"correct",wrong:"wrong",
  quick:"Shortcuts",scStudyD:"Explanation after each answer",scSimD:"Timed, answers at the end",scFcD:"Discipline reviews + new from topic",continueStudy:"Tutor mode",quickSim:"Quick test (10)",fcStart:"Topic flashcards",
  recentSims:"Recent tests",noSims:"No tests yet.",
  studySetup:"Build a session",mode:"Mode",mStudy:"Tutor mode",mStudyD:"Full explanation after each answer",mSim:"Timed test",mSimD:"Timed; explained answer key at the end",
@@ -486,7 +490,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length;
-  $("#tabs").innerHTML = ["home","study","review","cards","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${S.view===v?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+  $("#tabs").innerHTML = ["home","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
 }
 function renderCtx(){
   const d=curDisc(), t=curTopic();
@@ -502,8 +506,7 @@ function renderCtx(){
   $("#ctx").innerHTML = `
    ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}">${dOpts||`<option>—</option>`}</select></label>
    <label class="sel"><span class="lab">${tr("topic")}</span><select id="selTopic" aria-label="${tr("topic")}">${tOpts||`<option>—</option>`}</select></label>`}
-   <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>
-   <div class="seg" role="group" aria-label="${tr("lang")}">${["pt","en"].map(x=>`<button type="button" data-lang="${x}" aria-pressed="${lg===x}">${x.toUpperCase()}</button>`).join("")}</div>`;
+   <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
   if(S.view==="stats") return;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
   $("#selTopic").onchange=e=>{ set().topic=e.target.value; saveProg(); S.session=null; S.fcDeck=null; if(S.setup) S.setup.sub=""; S.bankFilter.sub=""; go(S.view); };
@@ -528,6 +531,7 @@ function vHome(v){
    ${S.dbState==="off"&&S.qs.size?`<div class="banner">${tr("noDb")}</div>`:""}
    <div class="due"><div><div class="eyebrow">${tr("dueToday")} · ${esc(scopeLabel())}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
+   ${nextExamHTML()}
    <div class="kpis">
      <div class="kpi"><div class="v">${done.length}<small>/${qs.length}</small></div><div class="l">${tr("answered")}</div></div>
      <div class="kpi"><div class="v">${done.length?Math.round(100*ok.length/done.length)+"%":"—"}</div><div class="l">${tr("accuracy")}</div></div>
@@ -556,24 +560,28 @@ function vStudy(v){
   if(S.session && S.session.kind!=="review") return vPlayer(v);
   const su = S.setup || (S.setup=defaultSetup()); const t=curTopic(); const pool=setupPool(su);
   const chip=(k,val,label)=>`<button type="button" class="chip" data-su="${k}" data-val="${val}" aria-pressed="${String(su[k])===String(val)}">${label}</button>`;
+  const hasFull=!!fullExamsHTML(); const tab=(hasFull&&S.studyTab==="full")?"full":"build";
+  const hasGen=ctxQs().some(q=>q.origin==="generated");
+  const segS=hasFull?`<div class="seg" role="group" style="align-self:flex-start"><button type="button" data-act="studyTab" data-val="build" aria-pressed="${tab==="build"}">${T2("Montar sessão","Build session")}</button><button type="button" data-act="studyTab" data-val="full" aria-pressed="${tab==="full"}">${T2("Provas na íntegra","Full exams")}</button></div>`:"";
+  if(tab==="full"){ v.innerHTML=`${segS}<div><div class="eyebrow">${esc(nm(curDisc()))}</div><h1>${T2("Provas na íntegra","Full past exams")}</h1></div>${fullExamsHTML()}`; return; }
   v.innerHTML = `
+   ${segS}
    <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("studySetup")}</h1></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
       <button type="button" class="chip" data-su="mode" data-val="study" aria-pressed="${su.mode==="study"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mStudy")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mStudyD")}</span></button>
       <button type="button" class="chip" data-su="mode" data-val="sim" aria-pressed="${su.mode==="sim"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mSim")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mSimD")}</span></button></div></div>
     <div class="field"><label for="suSub">${tr("sub")}</label><select id="suSub"><option value="">${tr("allSubs")}</option>${(t?.subs||[]).map(s=>`<option value="${esc(s.id)}" ${su.sub===s.id?"selected":""}>${esc(nm(s))}</option>`).join("")}</select></div>
-    <div class="field"><span class="flabel">${tr("origin")}</span><div class="chips">${chip("origin","",tr("oAll"))}${chip("origin","real",tr("oReal"))}${chip("origin","authored",tr("oAuth"))}${chip("origin","generated",tr("oGen"))}</div></div>
+    <div class="field"><span class="flabel">${tr("origin")}</span><div class="chips">${chip("origin","",tr("oAll"))}${chip("origin","real",tr("oReal"))}${chip("origin","authored",tr("oAuth"))}${hasGen?chip("origin","generated",tr("oGen")):""}</div></div>
     <div class="field"><span class="flabel">${tr("filter")}</span><div class="chips">${chip("filter","all",tr("fAll"))}${chip("filter","open",tr("fOpen"))}${chip("filter","wrong",tr("fWrong"))}</div></div>
     <div class="field"><span class="flabel">${tr("count")}</span><div class="chips">${[5,10,20,40].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}</div></div>
-    <div>
+    <details class="adv"${S.advOpen?" open":""} ontoggle="S.advOpen=this.open"><summary>${T2("Opções avançadas","Advanced options")}</summary>
       <div class="toggle"><span>${tr("shuffleQ")}</span><button type="button" class="switch" role="switch" data-sw="shuffleQ" aria-checked="${su.shuffleQ}" aria-label="${tr("shuffleQ")}"></button></div>
       <div class="toggle"><span>${tr("shuffleO")}</span><button type="button" class="switch" role="switch" data-sw="shuffleO" aria-checked="${su.shuffleO}" aria-label="${tr("shuffleO")}"></button></div>
-    </div>
+    </details>
     <div class="row" style="justify-content:space-between"><span class="mono" style="color:var(--muted);font-size:13px">${pool.length} ${tr("available")}</span>
       <button class="btn primary" data-act="startSession" ${pool.length?"":"disabled"}>${tr("start")}</button></div>
-   </div>
-   ${fullExamsHTML()}`;
+   </div>`;
   $("#suSub").onchange=e=>{ su.sub=e.target.value; render(); };
 }
 function buildSession(kind, list, su){
@@ -650,6 +658,20 @@ function vResult(v){
 }
 
 /* ---------- STATS (banco inteiro) ---------- */
+function examReadiness(onlyDisc){ const today=startOfDay(now()), end=today+DAY; const allQ=[...S.qs.values()].filter(stdOk); const exams=[];
+  for(const d of discs()){ if(onlyDisc&&d.id!==onlyDisc) continue; const tps=d.topics||[]; for(const ex of (d.exams||[])){ const dt=examDate(ex); if(dt==null||dt<today) continue;
+      const tids=new Set(tps.filter(t=>ex.all||t.exam===ex.id).map(t=>t.id)); const qs=allQ.filter(q=>q.discipline===d.id&&tids.has(q.topic)); if(!qs.length) continue;
+      const seen=qs.filter(q=>rec(q.id)), ok=seen.filter(q=>rec(q.id).ok), due=qs.filter(q=>{const r=rec(q.id); return r&&r.due!=null&&r.due<end;}).length;
+      const days=Math.max(1,Math.round((dt-today)/DAY)); const unseen=qs.length-seen.length;
+      exams.push({d,ex,dt,days,n:qs.length,seen:seen.length,ok:ok.length,due,unseen,meta:Math.ceil(unseen/days)}); } }
+  return exams.sort((a,b)=>a.dt-b.dt); }
+function nextExamHTML(){ const d=curDisc(); if(!d) return ""; const x=examReadiness(d.id)[0]; if(!x) return "";
+  return `<div class="panel" style="padding:16px 18px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><div><div class="eyebrow">${T2("Próxima prova","Next exam")}</div><b style="font-size:15px">${esc(nm(x.ex))}</b></div>
+    <span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
+    <div class="track" style="margin:12px 0 8px"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
+    <div class="row" style="justify-content:space-between;gap:8px"><span style="font-size:12.5px;color:var(--muted)">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.unseen?` · ${T2("meta","goal")} <b>${x.meta}/${T2("dia","day")}</b>`:""}</span>
+    <button class="btn small" data-act="examStudy" data-ex="${esc(x.ex.id)}">${T2("Estudar","Study")} ${esc(x.ex.all?T2("tudo","all"):x.ex.id)}</button></div></div>`; }
+
 const T2=(pt,en)=>set().lang==="en"?en:pt;
 const MES={jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11};
 function examDate(ex){ if(ex.date) return startOfDay(new Date(ex.date+"T12:00:00").getTime()); const m=(ex.name?.pt||"").match(/(\d{1,2})(?:[–-]\d{1,2})?\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i); if(!m) return null;
@@ -663,12 +685,7 @@ function vStats(v){
   const okN=recs.filter(x=>x[1].ok).length;
   let streak=0; for(let i=0;i<400;i++){ const k=dayKey(new Date(today-i*DAY)); if(S.prog.log[k]?.n) streak++; else if(i>0) break; }
   // 1) prontidão por prova
-  const exams=[]; for(const d of ds){ const tps=d.topics||[]; for(const ex of (d.exams||[])){ const dt=examDate(ex); if(dt==null||dt<today) continue;
-      const tids=new Set(tps.filter(t=>ex.all||t.exam===ex.id).map(t=>t.id)); const qs=allQ.filter(q=>q.discipline===d.id&&tids.has(q.topic)); if(!qs.length) continue;
-      const seen=qs.filter(q=>rec(q.id)), ok=seen.filter(q=>rec(q.id).ok), due=qs.filter(q=>{const r=rec(q.id); return r&&r.due!=null&&r.due<end;}).length;
-      const days=Math.max(1,Math.round((dt-today)/DAY)); const unseen=qs.length-seen.length;
-      exams.push({d,ex,dt,days,n:qs.length,seen:seen.length,ok:ok.length,due,unseen,meta:Math.ceil(unseen/days)}); } }
-  exams.sort((a,b)=>a.dt-b.dt);
+  const exams=examReadiness();
   // 2) temas fracos (último resultado de cada questão)
   const weak=[]; for(const d of ds) for(const t of (d.topics||[])){ const r=recs.filter(([q])=>q.discipline===d.id&&q.topic===t.id); if(r.length<5) continue; const o=r.filter(x=>x[1].ok).length; weak.push({d,t,n:r.length,o,acc:o/r.length}); }
   weak.sort((a,b)=>a.acc-b.acc);
@@ -728,9 +745,11 @@ function fullExams(dId){ const map=new Map();
   return [...map.entries()].map(([ex,list])=>({ex, list:list.sort((a,b)=>a.n-b.n)})).sort((a,b)=>a.ex.split(" ")[0].localeCompare(b.ex.split(" ")[0]) || yr(b.ex)-yr(a.ex)); }
 function fullExamsHTML(){ const d=curDisc(); if(!d||set().std==="usmle") return ""; const L=fullExams(d.id); if(!L.length) return "";
   const last=ex=>(S.prog.sims||[]).filter(s=>s.exam===ex).slice(-1)[0];
-  return `<div class="panel"><h2>${T2("Provas na íntegra","Full past exams")}</h2><p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Questões reais na ordem original. Questões com figura ou anuladas ficaram de fora.","Real questions in the original order. Figure-based or voided items were left out.")}</p>
-   <div class="list">${L.map(x=>{ const l=last(x.ex); return `<div class="li" style="cursor:default;align-items:center"><span class="t"><b>${esc(x.ex)}</b><br><small style="color:var(--subtle)">${x.list.length} ${T2("questões","questions")}${l?` · ${T2("última","last")}: ${l.ok}/${l.n}`:""}</small></span>
-     <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="study">${T2("Comentada","Tutor")}</button><button class="btn small primary" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="sim">${T2("Simulado","Timed")}</button></span></div>`; }).join("")}</div></div>`; }
+  const grp=x=>(x.ex.match(/^(P\d|FINAL|Final)/i)||[T2("Outras","Other")])[0].toUpperCase();
+  const groups=[...new Set(L.map(grp))];
+  return `<p class="lede" style="margin:0;font-size:13px">${T2("Questões reais na ordem original. Questões com figura ou anuladas ficaram de fora.","Real questions in the original order. Figure-based or voided items were left out.")}</p>
+   ${groups.map(g=>`<div class="panel"><h2>${esc(g)}</h2><div class="list">${L.filter(x=>grp(x)===g).map(x=>{ const l=last(x.ex); return `<div class="li" style="cursor:default;align-items:center"><span class="t" style="font-family:var(--f-ui)"><b>${esc(x.ex)}</b><br><small style="color:var(--subtle)">${x.list.length} ${T2("questões","questions")}${l?` · ${T2("última","last")}: ${l.ok}/${l.n}`:""}</small></span>
+     <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="study">${T2("Comentada","Tutor")}</button><button class="btn small primary" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="sim">${T2("Simulado","Timed")}</button></span></div>`; }).join("")}</div></div>`).join("")}`; }
 function startFullExam(ex, mode){ const d=curDisc(); const x=fullExams(d.id).find(e=>e.ex===ex); if(!x) return;
   const qs=x.list.map(i=>i.q); const su=Object.assign(defaultSetup(),{mode, count:0, shuffleQ:false, shuffleO:false}); S.setup=su;
   S.session=buildSession("study", qs, su); S.session.exam=ex; go("study"); }
@@ -782,6 +801,7 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
      <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;border-top:1.5px dashed var(--warn)"></i>70%</span></div>
    <div style="display:grid;grid-template-columns:1fr;column-gap:20px" class="radar-leg">${leg}</div>
    <p class="lede" style="margin:8px 0 0;font-size:12px">${T2("Acerto · cobertura. Eixo tracejado = menos de 5 respondidas (pouco confiável). Toque num tema para estudá-lo.","Accuracy · coverage. Dashed axis = fewer than 5 answered. Tap a topic to study it.")}</p></div>`; }
+function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="group" aria-label="${T2("Tipo de revisão","Review type")}" style="align-self:flex-start"><button type="button" data-nav="review" aria-pressed="${!fc}">${T2("Questões","Questions")}${dueQs().length?` · ${dueQs().length}`:""}</button><button type="button" data-nav="cards" aria-pressed="${fc}">Flashcards${dueCards().length?` · ${dueCards().length}`:""}</button></div>`; }
 /* ---------- REVIEW ---------- */
 function vReview(v){
   if(S.session && S.session.kind==="review") return vPlayer(v);
@@ -789,6 +809,7 @@ function vReview(v){
   const up=[...Array(7)].map((_,i)=>{ const a=startOfDay(now())+(i+1)*DAY; return {i, n: revPool().filter(q=>{const r=rec(q.id); return r&&r.due>=a&&r.due<a+DAY;}).length}; });
   const mx=Math.max(1,...up.map(u=>u.n));
   v.innerHTML = `
+   ${revSeg()}
    <div><div class="eyebrow">${esc(scopeLabel())}</div><h1>${tr("reviewTitle")}</h1><p class="lede">${tr("reviewLede")}</p></div>
    ${scopeChips()}
    <div class="due"><div><div class="eyebrow">${tr("dueToday")}</div><div class="big">${due.length}</div></div>${due.length?`<button class="btn primary" data-act="startReview">${tr("reviewStart")}</button>`:""}</div>
@@ -803,7 +824,7 @@ function vCards(v){
   const t=curTopic();
   if(!S.fcDeck || S.fcDeck.topic!==t?.id || S.fcDeck.std!==set().std){
     const dc=dueCards(), nNew=dc.filter(q=>!S.prog.fc[q.id]).length;
-    v.innerHTML = `<div><div class="eyebrow">${esc(scopeLabel())}</div><h1>${tr("cardsTitle")}</h1><p class="lede">${tr("cardsLede")}</p></div>
+    v.innerHTML = `${revSeg()}<div><div class="eyebrow">${esc(scopeLabel())}</div><h1>${tr("cardsTitle")}</h1><p class="lede">${tr("cardsLede")}</p></div>
       ${scopeChips()}
       <div class="due"><div><div class="eyebrow">${tr("cardsDue")}</div><div class="big">${dc.length}</div><div class="lede" style="margin-top:6px">${dc.length-nNew} ${set().lang==="en"?"reviews":"revisões"} · ${nNew} ${set().lang==="en"?"new from":"novos de"} ${esc(nm(t))}</div></div><button class="btn primary" data-act="fcStart" data-all="0" ${dc.length?"":"disabled"}>${tr("start")}</button></div>
       <button class="btn" data-act="fcStart" data-all="1">${tr("cardsAllT")} (${ctxQs().length})</button>`;
@@ -839,7 +860,7 @@ function vBank(v){
    </div>
    <div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
      <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
-     <span class="m"><span class="tag std">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span><span class="tag">${Object.keys(q.i18n||{}).join("+").toUpperCase()}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
+     <span class="m"><span class="tag std">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
   const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
   $("#bkSub").onchange=e=>{ f.sub=e.target.value; render(); };
@@ -977,6 +998,8 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
+  if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
   if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }
   if(act==="incExam"){ S.incExam=a.dataset.val; return render(); }
   if(act==="incDisc"){ S.incDisc=a.dataset.val; return render(); }

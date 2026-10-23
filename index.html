@@ -680,6 +680,7 @@ function stdOk(q){ const st=set().std; return st==="all"||q.standard===st; }
 function pct(a,b){ return b?Math.round(100*a/b)+"%":"—"; }
 function leechList(){ return [...S.qs.values()].filter(q=>stdOk(q)&&rec(q.id)&&(rec(q.id).n-rec(q.id).nOk)>=2).sort((a,b)=>((rec(b.id).n-rec(b.id).nOk)-(rec(a.id).n-rec(a.id).nOk))||((rec(a.id).ok?1:0)-(rec(b.id).ok?1:0))); }
 function vStats(v){
+  const tab=["geral","provas","cobrados"].includes(S.statsTab)?S.statsTab:"geral";
   const today=startOfDay(now()), end=today+DAY; const ds=discs(); const allQ=[...S.qs.values()].filter(stdOk);
   const recs=allQ.map(q=>[q,rec(q.id)]).filter(x=>x[1]);
   const okN=recs.filter(x=>x[1].ok).length;
@@ -702,20 +703,15 @@ function vStats(v){
   const tname=(d,id)=>nm((d.topics||[]).find(t=>t.id===id))||id;
   const fmtS=s=>s==null?"—":(s>=60?Math.floor(s/60)+"m"+String(s%60).padStart(2,"0"):s+"s");
   v.innerHTML = `
+   <div class="seg" role="group" style="align-self:flex-start">${[["geral",T2("Desempenho","Performance")],["provas",T2("Provas","Exams")],["cobrados",T2("Mais cobrados","Most tested")]].map(([k,l])=>`<button type="button" data-act="statsTab" data-val="${k}" aria-pressed="${tab===k}">${l}</button>`).join("")}</div>
    <div><div class="eyebrow">${T2("Banco inteiro","Whole bank")} · ${tr("std_"+set().std)}</div><h1>${T2("Seus números","Your stats")}</h1></div>
+   ${tab==="geral"?`
    <div class="kpis">
      <div class="kpi"><div class="v">${recs.length}<small>/${allQ.length}</small></div><div class="l">${tr("answered")}</div></div>
      <div class="kpi"><div class="v">${pct(okN,recs.length)}</div><div class="l">${tr("accuracy")}</div></div>
      <div class="kpi"><div class="v">${streak}</div><div class="l">${T2("dias seguidos","day streak")}</div></div>
    </div>
    ${radarHTML()}
-   <div class="panel"><h2>${T2("Prontidão para as provas","Exam readiness")}</h2>
-     ${exams.length?`<div class="list">${exams.map(x=>`<div class="li" style="cursor:default;display:block">
-       <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><b style="font-size:14px">${esc(nm(x.d))} · ${esc(nm(x.ex))}</b><span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
-       <div class="track" style="margin:10px 0 8px" role="img" aria-label="${x.seen}/${x.n}"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
-       <div style="font-size:12.5px;color:var(--muted);line-height:1.5">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.due?` · ${x.due} ${T2("para revisar","due")}`:""}<br>
-       ${x.unseen?`${T2("Meta","Goal")}: <b>${x.meta} ${T2("novas/dia","new/day")}</b> ${T2("para ver tudo até a prova","to see everything by the exam")}`:`<b>${T2("Banco da prova completo","All exam questions seen")}</b>`}</div></div>`).join("")}</div>`:`<p class="empty">${T2("Nenhuma prova futura com questões no banco.","No upcoming exams with questions.")}</p>`}</div>
-   ${incidenceHTML()}
    <div class="panel"><h2>${T2("Temas mais fracos","Weakest topics")}</h2><p class="lede" style="margin:-4px 0 10px;font-size:12.5px">${T2("Último resultado de cada questão; temas com 5 ou mais respondidas.","Latest result per question; topics with at least 5 answered.")}</p>
      <div class="bars">${weak.slice(0,6).map(x=>`<div class="bar-row"><span class="n">${esc(nm(x.t))}<small style="color:var(--subtle)"> · ${esc(nm(x.d))}</small></span><span class="p">${x.o}/${x.n}&ensp;<b>${Math.round(100*x.acc)}%</b></span>
        <div class="track"><i class="ok" style="width:${100*x.acc}%"></i><i class="bad" style="width:${100*(1-x.acc)}%"></i></div></div>`).join("")||`<p class="empty">${T2("Responda ao menos 5 questões de um tema.","Answer at least 5 questions in a topic.")}</p>`}</div></div>
@@ -731,7 +727,16 @@ function vStats(v){
    <div class="panel"><div class="row" style="justify-content:space-between"><h2>${T2("Revisões nos próximos 30 dias","Reviews, next 30 days")}</h2><span class="mono" style="font-size:12px;color:var(--muted)">${T2("hoje","today")}: ${dueNow}</span></div>
      <div class="spark" style="height:70px">${load.map(l=>`<div title="+${l.i+1}${tr("days")}: ${l.n}"><i style="height:${100*l.n/lmax}%;background:var(--accent)"></i></div>`).join("")}</div>
      <div class="spark-l"><span>${tr("tomorrow")}</span><span>+30${tr("days")}</span></div>
-     ${week.length?`<p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2("Próximos 7 dias","Next 7 days")}: ${week.map(x=>`${esc(nm(x.d))} <b>${x.n}</b>`).join(" · ")}</p>`:""}</div>`;
+     ${week.length?`<p class="lede" style="margin:10px 0 0;font-size:12.5px">${T2("Próximos 7 dias","Next 7 days")}: ${week.map(x=>`${esc(nm(x.d))} <b>${x.n}</b>`).join(" · ")}</p>`:""}</div>`:""}${tab==="provas"?`
+   <div class="panel"><h2>${T2("Prontidão para as provas","Exam readiness")}</h2>
+     ${exams.length?`<div class="list">${exams.map(x=>`<div class="li" style="cursor:default;display:block">
+       <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><b style="font-size:14px">${esc(nm(x.d))} · ${esc(nm(x.ex))}</b><span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
+       <div class="track" style="margin:10px 0 8px" role="img" aria-label="${x.seen}/${x.n}"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
+       <div style="font-size:12.5px;color:var(--muted);line-height:1.5">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.due?` · ${x.due} ${T2("para revisar","due")}`:""}<br>
+       ${x.unseen?`${T2("Meta","Goal")}: <b>${x.meta} ${T2("novas/dia","new/day")}</b> ${T2("para ver tudo até a prova","to see everything by the exam")}`:`<b>${T2("Banco da prova completo","All exam questions seen")}</b>`}</div></div>`).join("")}</div>`:`<p class="empty">${T2("Nenhuma prova futura com questões no banco.","No upcoming exams with questions.")}</p>`}</div>
+`:""}${tab==="cobrados"?`
+   ${incidenceHTML()}
+`:""}`;
 }
 /* ---------- PROVAS NA ÍNTEGRA + INCIDÊNCIA ---------- */
 // "P2 20.2 · Q33 · 22.2 · Q14" → [{ex:"P2 20.2",n:33},{ex:"P2 22.2",n:14}]
@@ -998,6 +1003,7 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="statsTab"){ S.statsTab=a.dataset.val; render(); window.scrollTo({top:0}); return; }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
   if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }

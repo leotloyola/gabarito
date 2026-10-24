@@ -23,7 +23,7 @@ function fixture(){
   const base=`http://127.0.0.1:${srv.address().port}/index.html`;
   const b=await chromium.launch(); const errs=[]; let steps=0;
   for(const vp of [{width:390,height:844},{width:1024,height:768}]){
-    const ctx=await b.newContext({viewport:vp}); const p=await ctx.newPage();
+    const ctx=await b.newContext({viewport:vp}); const p=await ctx.newPage(); p.setDefaultTimeout(8000);
     await p.route(/supabase|fonts\.g/,r=>r.abort());
     p.on("pageerror",e=>errs.push(`[${vp.width}] ${e.message}`));
     p.on("console",m=>{ if(m.type()==="error"&&!/Failed to load resource|ERR_FAILED|net::/.test(m.text())) errs.push(`[${vp.width}] console: ${m.text()}`); });
@@ -36,9 +36,9 @@ function fixture(){
     for(const t of ["geral","provas","cobrados"]) await step("stats "+t, ()=>p.evaluate(t=>{ S.statsTab=t; go("stats"); render(); },t));
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
-    await step("topic picker", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; S.studyTab="build"; set().std="all"; set().topic="t1"; go("study"); }); await p.click('#selTopic'); await p.click('[data-act="pickTopic"][data-val="t3"]'); const t=await p.evaluate(()=>set().topic); if(t!=="t3") throw new Error("tema não trocou: "+t); await p.click('#selTopic'); await p.click('[data-act="pickTopic"][data-val="exam:P1"]'); await p.click('#suSub'); await p.click('[data-act="pickSub"][data-val="t2"]'); const su=await p.evaluate(()=>S.setup.sub); if(su!=="t2") throw new Error("subtema: "+su); await p.evaluate(()=>{ S.setup=null; set().topic="t1"; render(); }); });
     await step("report sheet", async()=>{ await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
     await step("lesson from question", async()=>{ await p.click('.tags [data-act="lesson"]'); await p.waitForSelector(".lesson"); await p.goBack(); });
+    await step("topic picker", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; S.studyTab="build"; set().std="all"; set().topic="t1"; go("study"); }); await p.click('#selTopic'); await p.evaluate(()=>document.querySelectorAll("details.pg").forEach(g=>g.open=true)); await p.click('[data-act="pickTopic"][data-val="t3"]'); const t=await p.evaluate(()=>set().topic); if(t!=="t3") throw new Error("tema não trocou: "+t); await p.click('#selTopic'); await p.evaluate(()=>document.querySelectorAll("details.pg").forEach(g=>g.open=true)); await p.click('[data-act="pickTopic"][data-val="exam:P1"]'); await p.click('#suSub'); await p.click('[data-act="pickSub"][data-val="t2"]'); const su=await p.evaluate(()=>S.setup.sub); if(su!=="t2") throw new Error("subtema: "+su); await p.evaluate(()=>{ S.setup=null; set().topic="t1"; render(); }); });
     await step("full exam sim", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="full"; go("study"); }); await p.click('[data-act="fullExam"][data-mode="sim"]'); await p.click('[data-pick="1"]'); });
     await step("review session", ()=>p.evaluate(()=>{ S.session=null; go("review"); document.querySelector('[data-act="startReview"]')?.click(); }));
     await step("flashcards", ()=>p.evaluate(()=>{ S.session=null; S.fcDeck=null; go("cards"); document.querySelector('[data-act="fcStart"]')?.click(); }));

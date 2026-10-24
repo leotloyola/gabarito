@@ -78,6 +78,31 @@ button{font:inherit;color:inherit}
 .sel select{appearance:none;-webkit-appearance:none;font:inherit;font-size:13px;font-weight:500;color:var(--ink-2);background:var(--surface);border:0;box-shadow:var(--shadow),0 0 0 1px var(--hair);border-radius:999px;padding:9px 32px 9px 14px;width:100%;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 .sel::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--subtle);border-bottom:1.5px solid var(--subtle);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .sel .lab{position:absolute;left:-9999px}
+.selbtn{font:inherit;font-size:13px;font-weight:500;color:var(--ink-2);background:var(--surface);border:0;box-shadow:var(--shadow),0 0 0 1px var(--hair);border-radius:999px;padding:9px 32px 9px 14px;width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.ptop{display:flex;flex-direction:column;gap:10px;position:sticky;top:-14px;background:var(--surface);padding-top:2px;z-index:1}
+.ptop h2{display:flex;align-items:center;gap:8px}
+.psearch{font:inherit;font-size:15px;width:100%;padding:10px 14px;border-radius:12px;border:0;box-shadow:0 0 0 1px var(--hair);background:var(--surface);color:var(--ink)}
+.plist{display:flex;flex-direction:column;gap:4px;margin-top:-6px}
+details.pg{border-radius:14px}
+details.pg>summary{list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 4px 6px;cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+details.pg>summary::-webkit-details-marker{display:none}
+details.pg>summary span::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .15s}
+details.pg[open]>summary span::before{transform:rotate(90deg)}
+details.pg>summary small{text-transform:none;letter-spacing:0;font-weight:500}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;font:inherit;border:0;background:transparent;color:var(--ink);padding:10px 12px;border-radius:12px;cursor:pointer}
+.prow:hover{background:var(--pill)}
+.prow.cur{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.prow[disabled]{opacity:.45;cursor:default}
+.prow .pt{display:flex;flex-direction:column;min-width:0}
+.prow .pt b{font-weight:500;font-size:14.5px}
+.prow .pt small{color:var(--muted);font-size:12px;margin-top:1px}
+.prow .pm{display:flex;align-items:center;gap:6px;flex:none}
+.prow .pl{color:var(--accent);display:inline-flex}
+.prow .pd{font-size:11.5px;font-weight:600;background:var(--ink);color:var(--surface);border-radius:999px;padding:2px 7px}
+.prow .pp{font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--pill)}
+.prow .pp.good{color:#15803D}.prow .pp.mid{color:#B45309}.prow .pp.bad{color:#B91C1C}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .prow .pp.good{color:#86EFAC}:root:not([data-theme="light"]) .prow .pp.mid{color:#FCD34D}:root:not([data-theme="light"]) .prow .pp.bad{color:#FCA5A5}}
+:root[data-theme="dark"] .prow .pp.good{color:#86EFAC}:root[data-theme="dark"] .prow .pp.mid{color:#FCD34D}:root[data-theme="dark"] .prow .pp.bad{color:#FCA5A5}
 .seg{display:inline-flex;background:var(--pill);border-radius:999px;padding:3px;flex:none}
 .seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);letter-spacing:.02em}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(24,24,27,.08)}
@@ -567,23 +592,54 @@ function renderTabs(){
 function renderCtx(){
   const d=curDisc(), t=curTopic();
   const dOpts = discs().map(x=>`<option value="${esc(x.id)}" ${d&&x.id===d.id?"selected":""}>${esc(nm(x))}</option>`).join("");
-  const topt = x=>{ const n=topicCount(x.id); return `<option value="${esc(x.id)}" ${t&&x.id===t.id?"selected":""} ${n?"":"disabled"}>${esc(nm(x))}${n?"":" · "+(set().lang==="en"?"soon":"em breve")}</option>`; };
-  const exs=d?.exams||[]; let tOpts="";
-  if(exs.length){
-    for(const ex of exs){ const tps=(d.topics||[]).filter(x=>ex.all? false : x.exam===ex.id); const all=`<option value="exam:${esc(ex.id)}" ${t&&t.id==="exam:"+ex.id?"selected":""}>▸ ${esc(nm(ex))} · ${set().lang==="en"?"all topics":"todos os temas"}</option>`;
-      tOpts+=`<optgroup label="${esc(nm(ex))}">${all}${tps.map(topt).join("")}</optgroup>`; }
-    const rest=(d.topics||[]).filter(x=>!x.exam); if(rest.length) tOpts+=`<optgroup label="${set().lang==="en"?"Other":"Outros"}">${rest.map(topt).join("")}</optgroup>`;
-  } else tOpts=(d?.topics||[]).map(topt).join("");
   const st=set().std, lg=set().lang;
   if(S.view==="lesson"){ $("#ctx").innerHTML=""; return; }
   $("#ctx").innerHTML = `
    ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}" style="box-shadow:inset 4px 0 0 ${discColor(d)}">${dOpts||`<option>—</option>`}</select></label>
-   <label class="sel"><span class="lab">${tr("topic")}</span><select id="selTopic" aria-label="${tr("topic")}">${tOpts||`<option>—</option>`}</select></label>`}
+   <div class="sel"><button type="button" class="selbtn" id="selTopic" data-act="topicPick" aria-haspopup="dialog" aria-label="${tr("topic")}">${esc(t?nm(t):"—")}</button></div>`}
    <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
   if(S.view==="stats") return;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
-  $("#selTopic").onchange=e=>{ set().topic=e.target.value; saveProg(); S.session=null; S.fcDeck=null; if(S.setup) S.setup.sub=""; S.bankFilter.sub=""; go(S.view); };
 }
+/* ---------- seletor de tema (folha com busca, grupos por prova e números do tema) ---------- */
+function pickerStats(){ const d=curDisc(); const st=set().std; const end=startOfDay(now())+DAY; const agg={};
+  for(const q of S.qs.values()){ if(q.discipline!==d.id||(st!=="all"&&q.standard!==st)) continue;
+    const k=q.topic+"|"+(q.sub||""); for(const key of [q.topic, k]){ const a=agg[key]||(agg[key]={n:0,seen:0,ok:0,due:0}); a.n++; const r=rec(q.id); if(r){ a.seen++; if(r.ok) a.ok++; if(r.due!=null&&r.due<end) a.due++; } } }
+  return agg; }
+function pickRow(act,val,label,a,{cur,lesson,dis,sub}={}){ a=a||{n:0,seen:0,ok:0,due:0}; const en=set().lang==="en";
+  const pct=a.seen?Math.round(100*a.ok/a.seen):null; const pc=pct==null?"":pct>=75?"good":pct>=50?"mid":"bad";
+  const meta=dis? (en?"soon":"em breve") : `${a.n} q${a.seen?` · ${a.seen}/${a.n} ${en?"done":"feitas"}`:""}`;
+  return `<button type="button" class="prow${cur?" cur":""}" data-act="${act}" data-val="${esc(val)}" data-q="${esc(label.toLowerCase())}" ${dis?"disabled":""}>
+    <span class="pt"><b>${esc(label)}</b><small>${meta}</small></span>
+    <span class="pm">${lesson?`<span class="pl" title="${en?"Lesson":"Lição"}">${ICONS_L}</span>`:""}${a.due?`<span class="pd" title="${en?"Due today":"Revisões hoje"}">${a.due}</span>`:""}${pct!=null?`<span class="pp ${pc}">${pct}%</span>`:""}</span></button>`; }
+const ICONS_L='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>';
+function pickSheet(title, body, n){ const en=set().lang==="en";
+  openSheet(`<div class="ptop"><h2 style="margin:0">${title}</h2>${n>7?`<input type="search" id="pickQ" class="psearch" placeholder="${en?"Search topic…":"Buscar tema…"}" autocomplete="off">`:""}</div><div class="plist">${body}</div><p class="empty" id="pickNone" hidden>${en?"Nothing found.":"Nada encontrado."}</p>`, sh=>{
+    const c=sh.querySelector(".prow.cur"); if(c) setTimeout(()=>c.scrollIntoView({block:"center"}),30);
+    const qi=sh.querySelector("#pickQ"); if(!qi) return;
+    qi.oninput=()=>{ const v=qi.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); let any=false;
+      sh.querySelectorAll("details.pg").forEach(g=>{ let vis=0; g.querySelectorAll(".prow").forEach(r=>{ const ok=!v||r.dataset.q.normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(v); r.hidden=!ok; if(ok) vis++; }); g.hidden=!vis; if(v) g.open=true; if(vis) any=true; });
+      sh.querySelectorAll(".plist > .prow").forEach(r=>{ const ok=!v||r.dataset.q.normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(v); r.hidden=!ok; if(ok) any=true; });
+      $("#pickNone").hidden=any; }; }); }
+function openTopicPicker(){ const d=curDisc(); if(!d) return; const t=curTopic(); const agg=pickerStats(); const en=set().lang==="en";
+  const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; } return s; },{n:0,seen:0,ok:0,due:0});
+  const row=x=>pickRow("pickTopic",x.id,nm(x),agg[x.id],{cur:t&&t.id===x.id,lesson:!!lessonOf(d.id,x.id),dis:!topicCount(x.id)});
+  const exs=d.exams||[]; let body="", n=(d.topics||[]).length;
+  const grp=(label,inner,open,a)=>`<details class="pg" ${open?"open":""}><summary><span>${esc(label)}</span><small>${a.n} q${a.due?` · ${a.due} ${en?"due":"p/ hoje"}`:""}</small></summary>${inner}</details>`;
+  if(exs.length){
+    for(const ex of exs){ const tps=(d.topics||[]).filter(x=>ex.all?false:x.exam===ex.id); const ids=ex.all?(d.topics||[]).map(x=>x.id):tps.map(x=>x.id); const a=sum(ids);
+      const all=pickRow("pickTopic","exam:"+ex.id,"▸ "+nm(ex)+" · "+(en?"all topics":"todos os temas"),a,{cur:t&&t.id==="exam:"+ex.id});
+      const open=!t||t.id==="exam:"+ex.id||tps.some(x=>x.id===t.id)||exs.length===1;
+      body+=grp(nm(ex),all+tps.map(row).join(""),open,a); }
+    const rest=(d.topics||[]).filter(x=>!x.exam); if(rest.length) body+=grp(en?"Other":"Outros",rest.map(row).join(""),!t||rest.some(x=>x.id===t.id),sum(rest.map(x=>x.id)));
+  } else body=(d.topics||[]).map(row).join("");
+  pickSheet(`${ddot(d)}${esc(nm(d))}`, body, n); }
+function openSubPicker(){ const d=curDisc(), t=curTopic(); if(!d||!t) return; const su=S.setup||(S.setup=defaultSetup()); const agg=pickerStats(); const en=set().lang==="en";
+  let body;
+  if(t.pseudo){ const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; } return s; },{n:0,seen:0,ok:0,due:0});
+    body=pickRow("pickSub","",tr("allSubs"),sum(t.topics),{cur:!su.sub})+(t.subs||[]).map(s=>pickRow("pickSub",s.id,nm(s),agg[s.id],{cur:su.sub===s.id})).join(""); }
+  else body=pickRow("pickSub","",tr("allSubs"),agg[t.id],{cur:!su.sub})+(t.subs||[]).map(s=>pickRow("pickSub",s.id,nm(s),agg[t.id+"|"+s.id],{cur:su.sub===s.id})).join("");
+  pickSheet(esc(nm(t)), body, (t.subs||[]).length); }
 function go(v){ const changed=S.view!==v; S.view=v; try{ if(changed) history.pushState({v},"","#"+v); else history.replaceState({v},"","#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
 // botão "voltar" do celular: fecha a folha aberta ou volta para a tela anterior do app
 window.addEventListener("popstate", e=>{
@@ -655,7 +711,7 @@ function vStudy(v){
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
       <button type="button" class="chip" data-su="mode" data-val="study" aria-pressed="${su.mode==="study"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mStudy")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mStudyD")}</span></button>
       <button type="button" class="chip" data-su="mode" data-val="sim" aria-pressed="${su.mode==="sim"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mSim")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mSimD")}</span></button></div></div>
-    <div class="field"><label for="suSub">${tr("sub")}</label><select id="suSub"><option value="">${tr("allSubs")}</option>${(t?.subs||[]).map(s=>`<option value="${esc(s.id)}" ${su.sub===s.id?"selected":""}>${esc(nm(s))}</option>`).join("")}</select></div>
+    <div class="field"><span class="flabel">${tr("sub")}</span><div class="sel" style="max-width:none"><button type="button" class="selbtn" id="suSub" data-act="subPick" aria-haspopup="dialog">${esc(su.sub?subName(su.sub):tr("allSubs"))}</button></div></div>
     <div class="field"><span class="flabel">${tr("origin")}</span><div class="chips">${chip("origin","",tr("oAll"))}${chip("origin","real",tr("oReal"))}${chip("origin","authored",tr("oAuth"))}${hasGen?chip("origin","generated",tr("oGen")):""}</div></div>
     <div class="field"><span class="flabel">${tr("filter")}</span><div class="chips">${chip("filter","all",tr("fAll"))}${chip("filter","open",tr("fOpen"))}${chip("filter","wrong",tr("fWrong"))}</div></div>
     <div class="field"><span class="flabel">${tr("count")}</span><div class="chips">${[5,10,20,40].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}</div></div>
@@ -666,7 +722,7 @@ function vStudy(v){
     <div class="row" style="justify-content:space-between"><span class="mono" style="color:var(--muted);font-size:13px">${pool.length} ${tr("available")}</span>
       <button class="btn primary" data-act="startSession" ${pool.length?"":"disabled"}>${tr("start")}</button></div>
    </div>`;
-  $("#suSub").onchange=e=>{ su.sub=e.target.value; render(); };
+
 }
 function buildSession(kind, list, su){
   let qs = su.shuffleQ ? shuffle(list) : list.slice();
@@ -1153,6 +1209,10 @@ document.addEventListener("click", async e=>{
   if(act==="incDisc"){ S.incDisc=a.dataset.val; return render(); }
   if(act==="incTopic"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; saveProg(); return go("study"); }
   if(act==="leechStudy"){ const qs=leechList().slice(0,20); if(!qs.length) return; S.setup=Object.assign(defaultSetup(),{mode:"study",count:0}); S.session=buildSession("study",shuffle(qs),S.setup); return go("study"); }
+  if(act==="topicPick"){ return openTopicPicker(); }
+  if(act==="subPick"){ return openSubPicker(); }
+  if(act==="pickTopic"){ set().topic=a.dataset.val; saveProg(); S.session=null; S.fcDeck=null; if(S.setup) S.setup.sub=""; S.bankFilter.sub=""; closeSheet(); render(); window.scrollTo({top:0}); return; }
+  if(act==="pickSub"){ const su=S.setup||(S.setup=defaultSetup()); su.sub=a.dataset.val; closeSheet(); return render(); }
   if(act==="revScope"){ set().revScope=a.dataset.val; saveProg(); return render(); }
   if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",shuffle(due),{mode:"study",count:0,shuffleQ:true,shuffleO:true}); return go("review"); }
   if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); render(); window.scrollTo({top:0}); return; }

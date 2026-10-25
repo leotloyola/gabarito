@@ -31,7 +31,7 @@ function fixture(){
     const F=fixture();
     await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; set().disc="da"; set().topic="t1";
       const t=Date.now(); F.qs.forEach((q,i)=>{ if(i%3) return; S.prog.q[q.id]={n:2,nOk:i%2,ok:!!(i%2),first:true,box:1,due:t-86400000,ts:t}; }); render(); },F);
-    const step=async(name,fn)=>{ try{ await fn(); steps++; }catch(e){ errs.push(`[${vp.width}] ${name}: ${e.message.split("\n")[0]}`); } };
+    const step=async(name,fn)=>{ try{ await fn(); steps++; }catch(e){ errs.push(`[${vp.width}] ${name}: ${e.message.split("\n").slice(0,4).join(" | ")}`); } };
     for(const v of ["home","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
     for(const t of ["geral","provas","cobrados"]) await step("stats "+t, ()=>p.evaluate(t=>{ S.statsTab=t; go("stats"); render(); },t));
     await step("stats nome longo", async()=>{ const w=await p.evaluate(()=>{ const t=S.catalog.disciplines[0].topics[0], old=t.name; t.name={pt:"Fundamentos: fenomenologia, entrevista psiquiátrica e exame do estado mental completo",en:"x"}; S.statsTab="geral"; go("stats"); render(); const w=document.documentElement.scrollWidth-document.documentElement.clientWidth; t.name=old; return w; }); if(w>0) throw new Error("transborda "+w+"px"); });
@@ -54,6 +54,28 @@ function fixture(){
     await step("flashcards", ()=>p.evaluate(()=>{ S.session=null; S.fcDeck=null; go("cards"); document.querySelector('[data-act="fcStart"]')?.click(); }));
     await step("usmle + dark", ()=>p.evaluate(()=>{ set().std="usmle"; set().theme="dark"; applyTheme(); S.session=null; go("home"); go("stats"); }));
     await step("period select", async()=>{ await p.evaluate(()=>{ S.session=null; go("home"); }); await p.selectOption("#selPer","4"); const a=await p.evaluate(()=>[curDisc()?.id, discs().length]); if(a[0]!=="db"||a[1]!==1) throw new Error("período 4: "+a); await p.selectOption("#selPer","all"); const n=await p.evaluate(()=>discs().length); if(n!==2) throw new Error("todos: "+n); await p.evaluate(()=>go("stats")); await p.selectOption("#selPer","5"); const c=await p.evaluate(()=>curDisc()?.id); if(c!=="da") throw new Error("período 5: "+c); });
+    await step("busca", async()=>{
+      await p.evaluate(()=>{ S.session=null; S.fcDeck=null; window.SINONIMOS=[["zzsig","alternativa","option"]]; Object.assign(S.srch,{text:"",more:{}}); S.srch.f={per:"all",std:"all",real:false,st:"all",pri:0}; go("home"); });
+      await p.click('[data-act="search"]'); await p.waitForSelector("#srQ");
+      const q=async t=>{ await p.fill("#srQ",t); await p.waitForFunction(t=>S.srch.text===t&&!document.querySelector("#srRes .empty:not(.x)")||S.srch.text===t,t); await p.waitForTimeout(350); return p.evaluate(()=>{ const R=S.srRes; return R?{nq:R.nq,nl:R.nl,nt:R.nt,fz:R.P.notes.fuzzy,sy:R.P.notes.syn,ids:R.ids}:null; }); };
+      let r=await q("enunciado"); if(!r||r.nq!==48) throw new Error("exato: "+JSON.stringify(r&&{nq:r.nq}));
+      r=await q("ENUNCIÀDO"); if(r?.nq!==48) throw new Error("acento/caixa: "+r?.nq);
+      r=await q("enunciadu"); if(r?.nq!==48||!r.fz.length) throw new Error("typo: "+JSON.stringify(r&&{nq:r.nq,fz:r.fz}));
+      r=await q("enuncaido"); if(r?.nq!==48) throw new Error("transposição: "+r?.nq);
+      r=await q("zzsig"); if(!r||r.nq<48||!r.sy.length) throw new Error("sinônimo: "+JSON.stringify(r&&{nq:r.nq,sy:r.sy}));
+      r=await q("enunciado da/t1"); if(r?.nq!==12) throw new Error("e lógico: "+r?.nq);
+      r=await q("secao"); if(!r||!r.nl) throw new Error("lição: "+JSON.stringify(r));
+      await p.click('[data-act="srLesson"]'); await p.waitForSelector(".lesson mark.srh");
+      await p.goBack(); await p.waitForSelector("#srQ");
+      r=await q("enunciado"); await p.evaluate(()=>{ document.querySelector("#srFSum").parentElement.open=true; }); await p.click('[data-act="srF"][data-sk="real"][data-sv="true"]'); let n=await p.evaluate(()=>S.srRes.nq); if(!n||n>=48) throw new Error("filtro real: "+n);
+      await p.click('[data-act="srF"][data-sk="std"][data-sv="usmle"]'); n=await p.evaluate(()=>S.srRes.nq); if(n!==0) throw new Error("real+usmle deveria zerar: "+n);
+      await p.evaluate(()=>{ S.srch.f={per:"all",std:"all",real:false,st:"all",pri:0}; srRefresh(true); });
+      await p.click('[data-act="srStudy"][data-n="20"]'); const ss=await p.evaluate(()=>({from:S.session.from,v:S.view,n:S.session.items.length,pri:S.session.items.map(it=>S.qs.get(it.id).pri)}));
+      if(ss.from!=="search"||ss.v!=="study"||ss.n!==20||ss.pri.some((x,i)=>i&&x>ss.pri[i-1])) throw new Error("simulado da busca: "+JSON.stringify(ss));
+      await p.click('[data-act="exit"]'); if(await p.evaluate(()=>S.view)!=="search") throw new Error("sair não voltou à busca");
+      await p.keyboard.press("Escape"); await p.click('[data-act="srClose"]');
+      await p.evaluate(()=>{ S.session=null; go("home"); }); await p.keyboard.press("/"); await p.waitForSelector("#srQ");
+      await p.evaluate(()=>{ S.srch.text=""; go("home"); }); });
     await step("settings sheet", async()=>{ await p.evaluate(()=>{ S.session=null; go("home"); }); await p.click("#btnSettings"); await p.goBack(); });
     await ctx.close();
   }

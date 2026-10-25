@@ -267,7 +267,7 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .st.ok{color:var(--ok)} .st.bad{color:var(--bad)} .st.no{color:var(--subtle)}
 .empty{color:var(--subtle);text-align:center;padding:28px 12px;font-size:14px}
 .banner{border-radius:16px;padding:12px 16px;font-size:13px;background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset;color:var(--ink-2)}
-@media (min-width:700px){ .radar-leg{grid-template-columns:1fr 1fr !important} }
+@media (min-width:700px){ .radar-leg{grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important} }
 .lesson{background:var(--surface);border-radius:20px;padding:18px 18px 8px;box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.04));font-size:calc(15px * var(--fs));line-height:1.6;color:var(--ink-2)}
 .lesson h2{font-size:calc(17px * var(--fs));margin:22px 0 8px} .lesson h2:first-child{margin-top:4px} .lesson h3{font-size:calc(15px * var(--fs));margin:16px 0 6px}
 .lesson p{margin:8px 0} .lesson ul,.lesson ol{margin:8px 0;padding-left:20px} .lesson li{margin:4px 0} .lesson b{color:var(--ink)}
@@ -1019,9 +1019,9 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
     ${[.25,.5,.75,1].map(ring).join("")}${axes}
     <polygon points="${poly(x=>x.cov)}" fill="var(--accent)" fill-opacity=".10" stroke="none"/>${ref}
     <polygon points="${poly(x=>x.seen?x.acc:0)}" fill="${discColor(cur)}" fill-opacity=".16" stroke="${discColor(cur)}" stroke-width="2" stroke-linejoin="round"/>${dots}</svg>`;
-  const leg=tps.map((x,i)=>`<button type="button" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(x.t.id)}" style="all:unset;cursor:pointer;display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px">
-     <b style="min-width:18px;color:${x.seen<5?"var(--subtle)":"var(--ink)"}">${i+1}</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)">${esc(nm(x.t))}</span>
-     <span class="mono" style="color:var(--muted)">${x.seen?`<b style="color:${x.seen<5?"var(--subtle)":x.acc>=.7?"var(--ok)":"var(--bad)"}">${Math.round(100*x.acc)}%</b>`:"—"} · ${Math.round(100*x.cov)}%</span></button>`).join("");
+  const leg=tps.map((x,i)=>`<button type="button" data-act="incTopic" data-d="${esc(cur.id)}" data-t="${esc(x.t.id)}" title="${esc(nm(x.t))}" style="all:unset;box-sizing:border-box;min-width:0;cursor:pointer;display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px">
+     <b style="flex:none;min-width:18px;color:${x.seen<5?"var(--subtle)":"var(--ink)"}">${i+1}</b><span style="flex:1;min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere;color:var(--ink-2)">${esc(nm(x.t))}</span>
+     <span class="mono" style="flex:none;white-space:nowrap;color:var(--muted)">${x.seen?`<b style="color:${x.seen<5?"var(--subtle)":x.acc>=.7?"var(--ok)":"var(--bad)"}">${Math.round(100*x.acc)}%</b>`:"—"} · ${Math.round(100*x.cov)}%</span></button>`).join("");
   return `<div class="panel"><h2>${T2("Mapa da disciplina","Discipline map")}</h2>
    <div class="chips" style="margin:2px 0 8px">${ds.map(d=>`<button type="button" class="chip" data-act="incDisc" data-val="${esc(d.id)}" aria-pressed="${d.id===cur.id}">${ddot(d)}${esc(nm(d))}</button>`).join("")}</div>
    ${svg}
@@ -1029,7 +1029,7 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
      <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;height:3px;border-radius:2px;background:${discColor(cur)}"></i>${T2("acerto","accuracy")}</span>
      <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:12px;height:12px;border-radius:3px;background:var(--accent);opacity:.18"></i>${T2("cobertura","coverage")}</span>
      <span style="display:inline-flex;gap:6px;align-items:center"><i style="width:14px;border-top:1.5px dashed var(--warn)"></i>70%</span></div>
-   <div style="display:grid;grid-template-columns:1fr;column-gap:20px" class="radar-leg">${leg}</div>
+   <div style="display:grid;grid-template-columns:minmax(0,1fr);column-gap:20px" class="radar-leg">${leg}</div>
    <p class="lede" style="margin:8px 0 0;font-size:12px">${T2("Acerto · cobertura. Eixo tracejado = menos de 5 respondidas (pouco confiável). Toque num tema para estudá-lo.","Accuracy · coverage. Dashed axis = fewer than 5 answered. Tap a topic to study it.")}</p></div>`; }
 function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="group" aria-label="${T2("Tipo de revisão","Review type")}" style="align-self:flex-start"><button type="button" data-nav="review" aria-pressed="${!fc}">${T2("Questões","Questions")}${dueQs().length?` · ${dueQs().length}`:""}</button><button type="button" data-nav="cards" aria-pressed="${fc}">Flashcards${dueCards().length?` · ${dueCards().length}`:""}</button></div>`; }
 /* ---------- LIÇÕES ---------- */

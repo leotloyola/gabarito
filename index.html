@@ -313,7 +313,7 @@ details.adv summary::before{content:"+ ";} details.adv[open] summary::before{con
 .tag.old{background:var(--bad-soft);color:var(--bad);box-shadow:0 0 0 1px var(--bad-bar) inset}
 .banner.info{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset}
 /* nav */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:500;letter-spacing:.01em;color:var(--subtle);cursor:pointer;position:relative;transition:color .15s ease}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current="page"]{color:var(--ink)}
@@ -399,6 +399,23 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
   .ltoc summary::-webkit-details-marker{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.plhome{display:block;width:100%;text-align:left;border:0;cursor:pointer;font:inherit;color:inherit}
+.plh{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:12px;font-size:13.5px}.plh .n{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.plh .p{color:var(--muted);font-size:12.5px;white-space:nowrap}.plh .track{margin-top:4px}
+.plh-f{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12.5px;color:var(--muted)}
+.pexam .pstat{margin-top:10px;font-size:12.5px;color:var(--muted)}.pexam .pstat.warn{color:var(--warn);font-weight:500}
+.ptps{margin-top:10px}.ptps summary{cursor:pointer;font-size:13px;font-weight:500;padding:6px 0}
+.pgrid{display:flex;flex-direction:column;gap:8px}
+.pday{display:grid;grid-template-columns:64px 1fr;gap:10px;background:var(--surface);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+.pday.today{box-shadow:0 0 0 2px var(--accent) inset,var(--shadow)}.pday.past{opacity:.7}.pday.off{background:var(--surface-2)}
+.pdl{display:flex;flex-direction:column;align-items:flex-start;gap:1px;font-size:12px;color:var(--muted)}.pdl b{font-size:13px;color:var(--ink);font-weight:600}
+.pdx{margin-top:6px;border:0;background:var(--pill);color:var(--muted);border-radius:999px;padding:3px 9px;font-size:10.5px;cursor:pointer}.pdx[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.pbody{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--surface-2);flex-wrap:wrap}
+.pitem.ok{background:var(--ok-soft)}.pitem.rev{background:var(--warn-soft)}.pitem.fin,.pitem.exam{background:var(--accent-soft)}
+.pitem .pt{min-width:0;flex:1 1 140px;display:flex;flex-direction:column}.pitem .pt b{font-size:13.5px;font-weight:600}.pitem .pt small{font-size:11.5px;color:var(--muted)}
+.pitem .pa{display:flex;gap:6px;flex-wrap:wrap}.pnote{font-size:12.5px;color:var(--muted);padding:4px 2px}.pnote.ok{color:var(--ok)}
+.plrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}.plrow label{display:flex;align-items:center;gap:6px;font-size:13px;min-width:0}
+input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -424,7 +441,7 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 <script>
 /* ---------- i18n ---------- */
 const T = {
-pt:{stats:"Números",home:"Início",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
+pt:{stats:"Números",home:"Início",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
@@ -457,7 +474,7 @@ pt:{stats:"Números",home:"Início",study:"Estudar",review:"Revisão",cards:"Fla
  noDb:"Banco indisponível nesta visualização. Mostrando a última cópia salva neste aparelho.",noData:"O banco ainda está vazio.",
  aiUnavailable:"Claude não está disponível nesta visualização.",aiDenied:"Uso do Claude não autorizado nesta visualização.",aiRate:"Muitas solicitações. Tente de novo em instantes.",aiErr:"Não deu certo. Tente de novo.",
  min:"min",qs:"questões",step:"Etapa",days:"d",today:"hoje",tomorrow:"amanhã"},
-en:{stats:"Stats",home:"Home",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
+en:{stats:"Stats",home:"Home",plan:"Plan",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
@@ -499,6 +516,7 @@ const ICONS = {
  review:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/><path d="M12 8v4l3 2"/></svg>',
  cards:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v10"/></svg>',
  bank:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
+ plan:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M8 14h3M13 14h3M8 17.5h3"/></svg>',
  timer:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>'
 };
 const CHEV='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -660,7 +678,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length;
-  $("#tabs").innerHTML = ["home","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+  $("#tabs").innerHTML = ["home","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
 }
 function renderCtx(){
   const d=curDisc(), t=curTopic();
@@ -721,14 +739,14 @@ function go(v){ const changed=S.view!==v; S.view=v; try{ if(changed) history.pus
 window.addEventListener("popstate", e=>{
   if($("#layer") && $("#layer").innerHTML){ S.sheetPushed=false; closeSheetRaw(); return; }
   const v=(e.state&&e.state.v)||(location.hash||"#home").slice(1)||"home";
-  if(!["home","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
+  if(!["home","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
   if(v==="lesson" && !S.lessons.get(S.lessonId)) return;
   S.view=v; render(); window.scrollTo({top:0});
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, lesson:vLesson, search:vSearch}[S.view]||vHome)(v);
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, lesson:vLesson, search:vSearch}[S.view]||vHome)(v);
 }
 
 /* ---------- HOME ---------- */
@@ -745,6 +763,7 @@ function vHome(v){
    <div class="due dc" style="--dc:${discColor(curDisc())}"><div><div class="eyebrow">${tr("dueToday")} · ${esc(scopeLabel())}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
    ${(()=>{ const t=curTopic(); return t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id)}</div>`:""; })()}
+   ${planHomeHTML()}
    ${nextExamHTML()}
    <div class="kpis">
      <div class="kpi"><div class="v">${done.length}<small>/${qs.length}</small></div><div class="l">${tr("answered")}</div></div>
@@ -1640,6 +1659,104 @@ function srLessonHl(){ // destaca o termo na lição aberta pela busca e rola at
   if(tgt) requestAnimationFrame(()=>tgt.scrollIntoView({block:"start"}));
 }
 
+/* ---------- PLANO (grade de estudos até as provas) ---------- */
+// Tudo calculado na hora a partir do catálogo (datas das provas), das questões (★) e do progresso; só as preferências ficam em settings.plan.
+const PLAN_COV=.85; // tema "coberto" quando 85% das questões foram vistas
+function PL(){ const s=set(), p=s.plan||(s.plan={}); if(typeof p.cap!=="number") p.cap=30; for(const k of ["offWd","offDates"]) if(!Array.isArray(p[k])) p[k]=[]; for(const k of ["dates","hide"]) if(!p[k]||typeof p[k]!=="object") p[k]={}; return p; }
+const addDays=(t,n)=>{ const d=new Date(t); d.setDate(d.getDate()+n); return d.getTime(); };
+const exKey=(d,ex)=>d.id+"|"+ex.id;
+function planExDate(d,ex){ const o=PL().dates[exKey(d,ex)]; return o ? startOfDay(new Date(o+"T12:00:00").getTime()) : examDate(ex); }
+function planIsOff(t,P){ return P.offWd.includes(new Date(t).getDay()) || P.offDates.includes(dayKey(new Date(t))); }
+function planIndex(){ const m=new Map(); for(const q of S.qs.values()){ if(q.standard==="usmle") continue; const k=q.discipline+"|"+q.topic; let a=m.get(k); if(!a) m.set(k,a=[]); a.push(q); } return m; }
+function planTopic(d,t,idx){ const qs=idx.get(d.id+"|"+t.id)||[]; const n=qs.length; let seen=0,ok=0,ps=0; const wrong=[];
+  for(const q of qs){ ps+=priOf(q); const r=rec(q.id); if(r){ seen++; if(r.ok) ok++; else wrong.push(q); } }
+  const need=Math.max(0,Math.ceil(n*PLAN_COV)-seen), acc=seen?ok/seen:null, w=n?ps/n:2;
+  return {d,t,n,seen,ok,acc,w,need,wrong,done:n>0&&need===0,score:w+(seen?1.5*(1-acc):.3)}; }
+function planCompute(){
+  const idx=planIndex(), P=PL(), today=startOfDay(now()), tk=dayKey(new Date(today));
+  const exams=[];
+  for(const d of discs()) for(const ex of (d.exams||[])){ if(P.hide[exKey(d,ex)]) continue; const dt=planExDate(d,ex); if(dt==null||dt<today) continue;
+    const tps=(d.topics||[]).filter(t=>ex.all||t.exam===ex.id).map(t=>planTopic(d,t,idx)).filter(x=>x.n); if(!tps.length) continue;
+    exams.push({d,ex,dt,days:Math.round((dt-today)/DAY),tps,n:tps.reduce((s,x)=>s+x.n,0),seen:tps.reduce((s,x)=>s+x.seen,0),ok:tps.reduce((s,x)=>s+x.ok,0)}); }
+  exams.sort((a,b)=>a.dt-b.dt);
+  const days=new Map(), push=(k,it)=>{ if(!days.has(k)) days.set(k,[]); days.get(k).push(it); };
+  const doneToday=(S.prog.log[tk]||{}).n||0, used={}, claimed=new Set();
+  for(const e of exams){
+    const free=[]; for(let t=today;t<e.dt;t=addDays(t,1)) if(!planIsOff(t,P)) free.push(t);
+    e.freeN=free.length; e.reviewDay=free.length>=4?free.pop():null;
+    const pend=e.tps.filter(x=>!x.done&&!claimed.has(x.d.id+"|"+x.t.id)).sort((a,b)=>b.score-a.score);
+    pend.forEach(x=>claimed.add(x.d.id+"|"+x.t.id));
+    e.needTotal=pend.reduce((s,x)=>s+x.need,0); e.quota=free.length?Math.min(P.cap,Math.ceil(e.needTotal/free.length)):0;
+    const left=new Map(pend.map(x=>[x,x.need]));
+    for(const lim of [e.quota,P.cap]){
+      for(const x of pend){ let l=left.get(x); if(l<=0) continue;
+        for(const t of free){ const k=dayKey(new Date(t)); const room=(t===today?Math.max(0,lim-doneToday):lim)-(used[k]||0); if(room<=0) continue;
+          const take=Math.min(l,room); used[k]=(used[k]||0)+take; l-=take; push(k,{k:"new",tp:x,n:take}); if(l<=0) break; }
+        left.set(x,l); } }
+    e.over=[...left.values()].reduce((s,v)=>s+v,0);
+    // erros voltam na data de revisão do FSRS (nunca antes de hoje, nem em dia sem estudo, nem depois da prova)
+    for(const x of e.tps){ const by={}; for(const q of x.wrong){ const r=rec(q.id); let t=Math.max(today,r.due!=null?startOfDay(r.due):today+DAY);
+        while(t<e.dt&&planIsOff(t,P)) t=addDays(t,1); if(t>=e.dt) t=e.reviewDay||free[free.length-1]||today; by[dayKey(new Date(t))]=(by[dayKey(new Date(t))]||0)+1; }
+      for(const k in by) push(k,{k:"rev",tp:x,n:by[k]}); }
+    if(e.reviewDay!=null){ const q3=e.tps.reduce((s,x)=>s+x.wrong.length,0); push(dayKey(new Date(e.reviewDay)),{k:"final",e,n:q3}); }
+  }
+  // o que já foi feito hoje fica verde no topo da célula de hoje
+  const seenDone=new Set(); for(const e of exams) for(const x of e.tps){ const id=x.d.id+"|"+x.t.id; if(seenDone.has(id)) continue; seenDone.add(id);
+    let c=0; for(const q of S.qs.values()) if(q.discipline===x.d.id&&q.topic===x.t.id&&q.standard!=="usmle"){ const r=rec(q.id); if(r&&r.ts>=today) c++; }
+    if(c) (days.get(tk)||(days.set(tk,[]),days.get(tk))).unshift({k:"done",tp:x,n:c}); }
+  return {exams,days,today,tk,doneToday};
+}
+const WDN=()=>set().lang==="en"?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]:["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const fmtDM=t=>new Date(t).toLocaleDateString(set().lang==="en"?"en-US":"pt-BR",{day:"2-digit",month:"2-digit"});
+function planStars(w){ return "★".repeat(Math.max(1,Math.min(3,Math.round(w)))); }
+function planLinks(tp){ const l=lessonOf(tp.d.id,tp.t.id);
+  return `${l?`<button class="btn small" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Lição","Lesson")}</button>`:""}<button class="btn small" data-act="planStudy" data-d="${esc(tp.d.id)}" data-t="${esc(tp.t.id)}">${T2("Questões","Questions")}</button>`; }
+function planItem(it){
+  if(it.k==="final"){ const e=it.e; return `<div class="pitem fin"><div class="pt"><b>${ddot(e.d)}${T2("Revisão geral","Final review")} · ${esc(nm(e.d))}</b><small>${T2("Véspera: ★★★ e erros","Eve: ★★★ and misses")}${it.n?` · ${it.n} ${T2("erros","misses")}`:""}</small></div><div class="pa"><button class="btn small primary" data-act="planFinal" data-d="${esc(e.d.id)}" data-ex="${esc(e.ex.id)}">${T2("Revisar","Review")}</button></div></div>`; }
+  const tp=it.tp, name=esc(nm(tp.t));
+  if(it.k==="rev") return `<div class="pitem rev"><div class="pt"><b>${ddot(tp.d)}↻ ${name}</b><small>${T2("Rever erros","Review misses")} · ${it.n}</small></div><div class="pa"><button class="btn small" data-act="planRev" data-d="${esc(tp.d.id)}" data-t="${esc(tp.t.id)}">${T2("Rever","Review")}</button></div></div>`;
+  if(it.k==="done") return `<div class="pitem ok"><div class="pt"><b>${ddot(tp.d)}✓ ${name}</b><small>${T2("feito hoje","done today")} · ${it.n} ${T2("questões","questions")}</small></div><div class="pa">${planLinks(tp)}</div></div>`;
+  return `<div class="pitem"><div class="pt"><b>${ddot(tp.d)}${name}</b><small>${it.n} ${T2("questões novas","new questions")} · ${planStars(tp.w)}${tp.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(tp.acc*100)}%`:""}</small></div><div class="pa">${planLinks(tp)}</div></div>`;
+}
+function planHomeHTML(){ const C=planCompute(); if(!C.exams.length) return "";
+  const today=C.days.get(C.tk)||[], nNew=today.filter(i=>i.k==="new").reduce((s,i)=>s+i.n,0), nRev=today.filter(i=>i.k==="rev").reduce((s,i)=>s+i.n,0);
+  return `<button type="button" class="panel plhome" data-nav="plan"><div class="eyebrow">${T2("Plano de estudos","Study plan")}</div>
+    ${C.exams.slice(0,3).map(e=>`<div class="plh"><span class="n">${ddot(e.d)}${esc(nm(e.d))} · ${esc(nm(e.ex))}</span><span class="p"><b>${e.days}</b> ${T2(e.days===1?"dia":"dias",e.days===1?"day":"days")} · ${pct(e.seen,e.n)} ${T2("coberto","covered")}</span><div class="track"><i class="ok" style="width:${100*e.ok/e.n}%"></i><i class="bad" style="width:${100*(e.seen-e.ok)/e.n}%"></i></div></div>`).join("")}
+    <div class="plh-f">${nNew||nRev?`${T2("Hoje","Today")}: ${nNew} ${T2("novas","new")}${nRev?` + ${nRev} ${T2("revisões de erros","misses to review")}`:""}`:C.doneToday?T2("Meta de hoje cumprida ✓","Today's goal done ✓"):T2("Nada previsto para hoje","Nothing planned today")}<span class="go">${CHEV}</span></div></button>`; }
+function vPlan(v){
+  const P=PL(), C=planCompute(), today=C.today, wk=S.planWeek||0, dow=(new Date(today).getDay()+6)%7, start=addDays(today,-dow+7*wk), W=WDN();
+  const rows=[...Array(7)].map((_,i)=>{ const t=addDays(start,i), k=dayKey(new Date(t)), past=t<today, wdOff=P.offWd.includes(new Date(t).getDay()), off=planIsOff(t,P), its=C.days.get(k)||[], exs=C.exams.filter(e=>e.dt===t), lg=S.prog.log[k];
+    const body=exs.map(e=>`<div class="pitem exam"><div class="pt"><b>🎯 ${ddot(e.d)}${esc(nm(e.d))} · ${esc(nm(e.ex))}</b></div></div>`).join("")+
+      (past? (lg&&lg.n?`<div class="pnote ok">✓ ${lg.n} ${T2("questões","questions")} · ${T2("acerto","accuracy")} ${pct(lg.ok,lg.n)}</div>`:`<div class="pnote">—</div>`)
+       : its.length ? its.map(planItem).join("") : off ? `<div class="pnote">${T2("Sem estudo","Day off")}</div>` : exs.length?"":`<div class="pnote">${t===today&&C.doneToday?T2("Meta cumprida ✓","Goal done ✓"):T2("Livre","Free")}</div>`);
+    return `<div class="pday ${t===today?"today":""} ${past?"past":""} ${off?"off":""}"><div class="pdl"><b>${W[new Date(t).getDay()]}</b><span>${fmtDM(t)}</span>${!past&&!wdOff?`<button type="button" class="pdx" data-act="planOff" data-day="${k}" aria-pressed="${off}" title="${T2("Marcar dia sem estudo (plantão)","Mark day off")}">${off?T2("liberar","free"):T2("plantão","off")}</button>`:""}</div><div class="pbody">${body}</div></div>`; }).join("");
+  const cards=C.exams.map(e=>{ const warn=e.over>0, none=!e.needTotal;
+    return `<div class="panel pexam"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><div><div class="eyebrow">${ddot(e.d)}${esc(nm(e.d))}</div><b style="font-size:16px">${esc(nm(e.ex))}</b></div><span class="tag ${e.days<=7?"old":""}">${e.days} ${T2(e.days===1?"dia":"dias",e.days===1?"day":"days")}</span></div>
+      <div class="track" style="margin:12px 0 8px"><i class="ok" style="width:${100*e.ok/e.n}%"></i><i class="bad" style="width:${100*(e.seen-e.ok)/e.n}%"></i></div>
+      <div style="font-size:12.5px;color:var(--muted)"><b>${pct(e.seen,e.n)}</b> ${T2("coberto","covered")} (${e.seen}/${e.n}) · ${T2("acerto","accuracy")} <b>${pct(e.ok,e.seen)}</b></div>
+      <div class="pstat ${warn?"warn":""}">${warn?`⚠ ${e.over} ${T2("questões não cabem: aumente a meta diária ou libere dias.","questions don't fit: raise the daily goal or free up days.")}`: none?`✓ ${T2("Cobertura-alvo atingida: foque nos erros e na revisão.","Coverage target reached: focus on misses and review.")}`:`${T2("Ritmo","Pace")}: ~${e.quota} ${T2("questões novas/dia em","new questions/day over")} ${e.freeN-(e.reviewDay!=null?1:0)} ${T2("dias de estudo","study days")}`}</div>
+      <details class="ptps"><summary>${T2("Temas","Topics")} (${e.tps.length})</summary>${e.tps.map(x=>`<div class="pitem ${x.done?"ok":""}"><div class="pt"><b>${x.done?"✓ ":""}${esc(nm(x.t))}</b><small>${planStars(x.w)} · ${pct(x.seen,x.n)} ${T2("visto","seen")}${x.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(x.acc*100)}%`:""}</small></div><div class="pa">${planLinks(x)}</div></div>`).join("")}</details></div>`; }).join("");
+  const a=new Date(start), b=new Date(addDays(start,6));
+  v.innerHTML=`<div class="row" style="justify-content:space-between"><div><div class="eyebrow">${T2("Até as provas","Until the exams")}</div><h1>${T2("Plano de estudos","Study plan")}</h1></div><button class="btn small" data-act="planCfg">⚙ ${T2("Configurar","Settings")}</button></div>
+   ${C.exams.length?cards:`<div class="panel"><h2>${T2("Nenhuma prova futura","No upcoming exam")}</h2><p class="lede">${T2("Defina a data das provas em Configurar. O plano distribui os temas (★ primeiro, os mais fracos antes) pelos dias livres, e se atrasar ele remaneja sozinho.","Set the exam dates in Settings. The plan spreads topics (★ and weakest first) over free days and re-plans itself if you fall behind.")}</p></div>`}
+   <div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="planWeek" data-v="-1" aria-label="${T2("Semana anterior","Previous week")}">‹</button><button class="btn small ghost" data-act="planWeek" data-v="0">${fmtDM(a)} – ${fmtDM(b)}${wk?"":" · "+T2("esta semana","this week")}</button><button class="btn small ghost" data-act="planWeek" data-v="1" aria-label="${T2("Próxima semana","Next week")}">›</button></div>
+   <div class="pgrid">${rows}</div>
+   <p class="lede" style="font-size:12px">${T2("Verde = feito (o app marca sozinho quando você responde as questões). Meta de "+P.cap+" questões novas por dia. Erros voltam na data da revisão espaçada.","Green = done (the app ticks it when you answer the questions). Goal: "+P.cap+" new questions/day. Misses return on their spaced-review date.")}</p>`;
+}
+function openPlanCfg(){ const P=PL(), en=set().lang==="en", W=WDN(), today=startOfDay(now());
+  const exr=discs().flatMap(d=>(d.exams||[]).map(ex=>{ const key=exKey(d,ex), dt=planExDate(d,ex); return `<div class="plrow"><label><input type="checkbox" data-pinc="${esc(key)}" ${P.hide[key]?"":"checked"}> ${ddot(d)}<span>${esc(nm(d))} · ${esc(nm(ex))}</span></label><input type="date" data-pdate="${esc(key)}" value="${dt!=null?dayKey(new Date(dt)):""}" aria-label="${T2("Data da prova","Exam date")}"></div>`; })).join("");
+  const offs=P.offDates.filter(k=>k>=dayKey(new Date(today))).sort();
+  openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Configurar plano","Plan settings")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <div class="eyebrow" style="margin:14px 0 8px">${T2("Meta: questões novas por dia","Goal: new questions per day")}</div>
+   <div class="chips">${[15,30,50,80].map(n=>`<button type="button" class="chip" data-act="planCap" data-v="${n}" aria-pressed="${P.cap===n}">${n}</button>`).join("")}</div>
+   <div class="eyebrow" style="margin:16px 0 8px">${T2("Dias da semana sem estudo","Weekdays off")}</div>
+   <div class="chips">${[1,2,3,4,5,6,0].map(i=>`<button type="button" class="chip" data-act="planWd" data-v="${i}" aria-pressed="${P.offWd.includes(i)}">${W[i]}</button>`).join("")}</div>
+   <div class="eyebrow" style="margin:16px 0 8px">${T2("Plantões / dias específicos sem estudo","Specific days off")}</div>
+   <div class="row" style="gap:8px"><input type="date" id="plOffD" min="${dayKey(new Date(today))}" aria-label="${T2("Data","Date")}"><button class="btn small" data-act="planOffAdd">${T2("Adicionar","Add")}</button></div>
+   ${offs.length?`<div class="chips" style="margin-top:8px">${offs.map(k=>`<button type="button" class="chip" data-act="planOffDel" data-day="${k}">${k.slice(8)}/${k.slice(5,7)} ✕</button>`).join("")}</div>`:""}
+   <div class="eyebrow" style="margin:16px 0 8px">${T2("Provas (marque as que entram no plano)","Exams (tick those in the plan)")}</div>
+   <div class="plrows">${exr||`<p class="lede">—</p>`}</div>`); }
+
 /* ---------- events ---------- */
 document.addEventListener("click", async e=>{
   const nav=e.target.closest("[data-nav]"); if(nav){ if($("#layer").innerHTML) closeSheet(); go(nav.dataset.nav); return; }
@@ -1690,6 +1807,16 @@ document.addEventListener("click", async e=>{
   if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="statsTab"){ S.statsTab=a.dataset.val; render(); window.scrollTo({top:0}); return; }
   if(act==="examEssentials"){ set().topic="exam:"+a.dataset.ex; S.fcDeck=null; saveProg(); S.studyTab="build"; S.setup=Object.assign(defaultSetup(),{prio:"3",order:"pri",count:20,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="wrong"; pool=setupPool(S.setup); } if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup); } if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
+  if(act==="planCfg") return openPlanCfg();
+  if(act==="planCap"){ PL().cap=Number(a.dataset.v); saveProg(); render(); return openPlanCfg(); }
+  if(act==="planWd"){ const P=PL(), i=Number(a.dataset.v); P.offWd=P.offWd.includes(i)?P.offWd.filter(x=>x!==i):P.offWd.concat(i); saveProg(); render(); return openPlanCfg(); }
+  if(act==="planOffAdd"){ const k=$("#plOffD")?.value; if(!k) return; const P=PL(); if(!P.offDates.includes(k)) P.offDates.push(k); saveProg(); render(); return openPlanCfg(); }
+  if(act==="planOffDel"){ const P=PL(); P.offDates=P.offDates.filter(x=>x!==a.dataset.day); saveProg(); render(); return openPlanCfg(); }
+  if(act==="planOff"){ const P=PL(), k=a.dataset.day; P.offDates=P.offDates.includes(k)?P.offDates.filter(x=>x!==k):P.offDates.concat(k); saveProg(); return render(); }
+  if(act==="planWeek"){ const v=Number(a.dataset.v); S.planWeek=v===0?0:(S.planWeek||0)+v; return render(); }
+  if(act==="planStudy"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
+  if(act==="planRev"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.fcDeck=null; S.setup=null; const L=[...S.qs.values()].filter(q=>q.discipline===a.dataset.d&&q.topic===a.dataset.t&&q.standard!=="usmle"&&rec(q.id)&&!rec(q.id).ok); if(!L.length) return toast(tr("none")); saveProg(); S.session=buildSession("review",prioSort(shuffle(L)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
+  if(act==="planFinal"){ set().disc=a.dataset.d; a.dataset.act="examEssentials"; return a.click(); }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
   if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }
@@ -1733,6 +1860,10 @@ document.addEventListener("click", async e=>{
   if(act==="resetProg"){ return arm(a, tr("confirmReset"), ()=>{ S.prog=mergeProg(S.prog,{settings:S.prog.settings}); S.session=null; S.fcDeck=null; saveProg(); closeSheet(); toast(tr("resetDone")); render(); }); }
 });
 document.addEventListener("input", e=>{ if(e.target.id!=="srQ") return; clearTimeout(srRefresh.it); srRefresh.it=setTimeout(()=>{ S.srch.text=e.target.value; srRefresh(); },180); });
+document.addEventListener("change", e=>{
+  const di=e.target.closest("[data-pdate]"); if(di){ const P=PL(); if(di.value) P.dates[di.dataset.pdate]=di.value; else delete P.dates[di.dataset.pdate]; saveProg(); render(); return; }
+  const ci=e.target.closest("[data-pinc]"); if(ci){ const P=PL(); if(ci.checked) delete P.hide[ci.dataset.pinc]; else P.hide[ci.dataset.pinc]=1; saveProg(); render(); }
+});
 document.addEventListener("keydown", e=>{
   if(e.target.closest("input,textarea,select")||e.ctrlKey||e.metaKey||e.altKey) return;
   if(e.key==="Escape" && $("#layer").innerHTML){ closeSheet(); return; }

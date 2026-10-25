@@ -8,7 +8,7 @@ const day=86400000;
 function fixture(){
   const exams=[{id:"P1",name:{pt:"P1 · 15/dez",en:"Exam 1"}},{id:"P2",name:{pt:"P2 · 20/dez",en:"Exam 2"}},{id:"FINAL",all:true,name:{pt:"Final · 30/dez",en:"Final"}}];
   const mk=(d,n)=>({id:d,name:{pt:n,en:n},exams,topics:["t1","t2","t3","t4"].map((t,i)=>({id:t,name:{pt:`${n} tema ${i+1}`,en:`${n} topic ${i+1}`},exam:i<2?"P1":"P2",subs:[{id:"s1",name:{pt:"Sub 1",en:"Sub 1"}},{id:"s2",name:{pt:"Sub 2",en:"Sub 2"}}]}))});
-  const cat={disciplines:[mk("da","Disciplina A"),mk("db","Disciplina B")]};
+  const cat={disciplines:[{...mk("da","Disciplina A"),period:5},{...mk("db","Disciplina B"),period:4}]};
   const qs=[]; let k=0;
   for(const d of ["da","db"]) for(const t of ["t1","t2","t3","t4"]) for(let i=0;i<6;i++){ k++;
     const usmle=i===5; const opts=[0,1,2,3,4].map(j=>({t:`Alternativa ${j} da questão ${k}`,why:j===i%5?"<b>Correta</b> porque sim.":"Errada.",more:"Detalhe."}));
@@ -47,6 +47,7 @@ function fixture(){
     await step("review session", ()=>p.evaluate(()=>{ S.session=null; go("review"); document.querySelector('[data-act="startReview"]')?.click(); }));
     await step("flashcards", ()=>p.evaluate(()=>{ S.session=null; S.fcDeck=null; go("cards"); document.querySelector('[data-act="fcStart"]')?.click(); }));
     await step("usmle + dark", ()=>p.evaluate(()=>{ set().std="usmle"; set().theme="dark"; applyTheme(); S.session=null; go("home"); go("stats"); }));
+    await step("period select", async()=>{ await p.evaluate(()=>{ S.session=null; go("home"); }); await p.selectOption("#selPer","4"); const a=await p.evaluate(()=>[curDisc()?.id, discs().length]); if(a[0]!=="db"||a[1]!==1) throw new Error("período 4: "+a); await p.selectOption("#selPer","all"); const n=await p.evaluate(()=>discs().length); if(n!==2) throw new Error("todos: "+n); await p.evaluate(()=>go("stats")); await p.selectOption("#selPer","5"); const c=await p.evaluate(()=>curDisc()?.id); if(c!=="da") throw new Error("período 5: "+c); });
     await step("settings sheet", async()=>{ await p.evaluate(()=>{ S.session=null; go("home"); }); await p.click("#btnSettings"); await p.goBack(); });
     await ctx.close();
   }

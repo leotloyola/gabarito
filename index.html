@@ -78,6 +78,7 @@ button{font:inherit;color:inherit}
 .sel select{appearance:none;-webkit-appearance:none;font:inherit;font-size:13px;font-weight:500;color:var(--ink-2);background:var(--surface);border:0;box-shadow:var(--shadow),0 0 0 1px var(--hair);border-radius:999px;padding:9px 32px 9px 14px;width:100%;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 .sel::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--subtle);border-bottom:1.5px solid var(--subtle);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .sel .lab{position:absolute;left:-9999px}
+.sel.per{flex:0 1 auto;max-width:170px}
 .selbtn{font:inherit;font-size:13px;font-weight:500;color:var(--ink-2);background:var(--surface);border:0;box-shadow:var(--shadow),0 0 0 1px var(--hair);border-radius:999px;padding:9px 32px 9px 14px;width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .ptop{display:flex;flex-direction:column;gap:10px;position:sticky;top:-14px;background:var(--surface);padding-top:2px;z-index:1}
 .ptop h2{display:flex;align-items:center;gap:8px}
@@ -576,7 +577,15 @@ function arm(btn, label, fn){ if(btn.dataset.armed){ delete btn.dataset.armed; f
 function applyTheme(){ const t=set().theme; const r=document.documentElement; if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme"); r.style.setProperty("--fs", set().fs||1); }
 
 /* ---------- catalog / filters ---------- */
-function discs(){ return S.catalog?.disciplines || []; }
+// período: set().per = número (ex. 5) ou "all"; sem escolha → período da disciplina atual (ou o mais alto)
+function allDiscs(){ return S.catalog?.disciplines || []; }
+function periods(){ return [...new Set(allDiscs().map(d=>d.period).filter(p=>p!=null))].sort((a,b)=>a-b); }
+function curPer(){ const p=set().per, ps=periods(); if(p==="all"||!ps.length) return "all"; if(ps.includes(p)) return p; const d=allDiscs().find(x=>x.id===set().disc); return d?.period ?? ps[ps.length-1]; }
+function inPer(d){ const p=curPer(); return p==="all" || d.period==null || d.period===p; }
+function discs(){ return allDiscs().filter(inPer); }
+let _dmCat=null,_dm=null;
+function discById(id){ if(_dmCat!==S.catalog){ _dmCat=S.catalog; _dm=new Map(allDiscs().map(d=>[d.id,d])); } return _dm.get(id); }
+function perOk(q){ if(curPer()==="all") return true; const d=discById(q.discipline); return !d || inPer(d); }
 function curDisc(){ const d=discs(); return d.find(x=>x.id===set().disc) || d[0] || null; }
 function examPseudo(d, exId){ const ex=(d.exams||[]).find(e=>e.id===exId); if(!ex) return null; const tps=d.topics.filter(t=>ex.all || t.exam===ex.id); const L0=set().lang;
   return {id:"exam:"+ex.id, pseudo:true, name:{pt:(ex.name?.pt||ex.id)+" · todos os temas", en:(ex.name?.en||ex.id)+" · all topics"}, topics:tps.map(t=>t.id), subs:tps.map(t=>({id:t.id,name:t.name}))}; }
@@ -648,10 +657,13 @@ function renderCtx(){
   const dOpts = discs().map(x=>`<option value="${esc(x.id)}" ${d&&x.id===d.id?"selected":""}>${esc(nm(x))}</option>`).join("");
   const st=set().std, lg=set().lang;
   if(S.view==="lesson"){ $("#ctx").innerHTML=""; return; }
-  $("#ctx").innerHTML = `
+  const ps=periods(), cp=curPer(), en=lg==="en";
+  const perSel = ps.length ? `<label class="sel per"><span class="lab">${en?"Year/term":"Período"}</span><select id="selPer" aria-label="${en?"Term":"Período"}">${ps.map(x=>`<option value="${x}" ${cp===x?"selected":""}>${en?"Term "+x:x+"º período"}</option>`).join("")}<option value="all" ${cp==="all"?"selected":""}>${en?"All terms":"Todos os períodos"}</option></select></label>` : "";
+  $("#ctx").innerHTML = `${perSel}
    ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}" style="box-shadow:inset 4px 0 0 ${discColor(d)}">${dOpts||`<option>—</option>`}</select></label>
    <div class="sel"><button type="button" class="selbtn" id="selTopic" data-act="topicPick" aria-haspopup="dialog" aria-label="${tr("topic")}">${esc(t?nm(t):"—")}</button></div>`}
    <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
+  const sp=$("#selPer"); if(sp) sp.onchange=e=>{ const v=e.target.value; set().per = v==="all" ? "all" : +v; if(!discs().some(x=>x.id===set().disc)){ set().disc=discs()[0]?.id||null; set().topic=null; } S.session=null; S.fcDeck=null; S.setup=null; saveProg(); render(); };
   if(S.view==="stats") return;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
 }
@@ -884,12 +896,12 @@ function nextExamHTML(){ const d=curDisc(); if(!d) return ""; const x=examReadin
 const T2=(pt,en)=>set().lang==="en"?en:pt;
 // cor-marcador por disciplina: d.color no catálogo, senão posição dentro do período (as cores se repetem entre períodos)
 const DCOL=["#7C3AED","#0284C7","#EA580C","#C026D3","#2563EB","#DB2777","#65A30D","#A16207","#0891B2","#57534E","#9A3412","#1E3A8A","#86198F","#4D7C0F","#475569"];
-function discColor(d){ if(!d) return "var(--subtle)"; if(d.color) return d.color; const same=discs().filter(x=>(x.period??null)===(d.period??null)); const i=Math.max(0,same.findIndex(x=>x.id===d.id)); return DCOL[i%DCOL.length]; }
+function discColor(d){ if(!d) return "var(--subtle)"; if(d.color) return d.color; const same=allDiscs().filter(x=>(x.period??null)===(d.period??null)); const i=Math.max(0,same.findIndex(x=>x.id===d.id)); return DCOL[i%DCOL.length]; }
 const ddot=d=>`<i class="ddot" style="background:${discColor(d)}" aria-hidden="true"></i>`;
 const MES={jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11};
 function examDate(ex){ if(ex.date) return startOfDay(new Date(ex.date+"T12:00:00").getTime()); const m=(ex.name?.pt||"").match(/(\d{1,2})(?:[–-]\d{1,2})?\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i); if(!m) return null;
   const y=new Date(now()).getFullYear(); return startOfDay(new Date(y, MES[m[2].toLowerCase()], Number(m[1]), 12).getTime()); }
-function stdOk(q){ const st=set().std; return st==="all"||q.standard===st; }
+function stdOk(q){ const st=set().std; return (st==="all"||q.standard===st) && perOk(q); }
 function pct(a,b){ return b?Math.round(100*a/b)+"%":"—"; }
 function leechList(){ return [...S.qs.values()].filter(q=>stdOk(q)&&rec(q.id)&&(rec(q.id).n-rec(q.id).nOk)>=2).sort((a,b)=>((rec(b.id).n-rec(b.id).nOk)-(rec(a.id).n-rec(a.id).nOk))||((rec(a.id).ok?1:0)-(rec(b.id).ok?1:0))); }
 function vStats(v){
@@ -972,7 +984,7 @@ function startFullExam(ex, mode){ const d=curDisc(); const x=fullExams(d.id).fin
   const qs=x.list.map(i=>i.q); const su=Object.assign(defaultSetup(),{mode, count:0, shuffleQ:false, shuffleO:false}); S.setup=su;
   S.session=buildSession("study", qs, su); S.session.exam=ex; go("study"); }
 // incidência: cada aparição em prova (questão repetida em anos diferentes conta de novo)
-function incidence(dId, exId){ const d=discs().find(x=>x.id===dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
+function incidence(dId, exId){ const d=discById(dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
   const okT=new Set((d.topics||[]).filter(t=>!exId||t.exam===exId).map(t=>t.id));
   for(const q of S.qs.values()){ if(q.discipline!==dId||!q.exam||!okT.has(q.topic)) continue; const k=examPairs(q.exam).length||1; by[q.topic]=(by[q.topic]||0)+k; total+=k; }
   const rows=(d.topics||[]).filter(t=>by[t.id]).map(t=>{ const r=[...S.qs.values()].filter(q=>q.discipline===dId&&q.topic===t.id&&rec(q.id)); const o=r.filter(q=>rec(q.id).ok).length; return {t,n:by[t.id],seen:r.length,o}; }).sort((a,b)=>b.n-a.n);
@@ -1022,13 +1034,13 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
 function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="group" aria-label="${T2("Tipo de revisão","Review type")}" style="align-self:flex-start"><button type="button" data-nav="review" aria-pressed="${!fc}">${T2("Questões","Questions")}${dueQs().length?` · ${dueQs().length}`:""}</button><button type="button" data-nav="cards" aria-pressed="${fc}">Flashcards${dueCards().length?` · ${dueCards().length}`:""}</button></div>`; }
 /* ---------- LIÇÕES ---------- */
 function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
-function lessonsOf(dId){ const d=discs().find(x=>x.id===dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
+function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
 function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id); const read=S.prog.read||{};
   if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>`;
   return `<div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }
 function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; return vStudy(v); }
-  const d=discs().find(x=>x.id===l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
+  const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const isRead=!!(S.prog.read||{})[l.id];
   const nQ=[...S.qs.values()].filter(q=>q.discipline===l.discipline&&q.topic===l.topic&&stdOk(q)).length;
   v.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>

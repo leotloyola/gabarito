@@ -582,7 +582,8 @@ function allDiscs(){ return S.catalog?.disciplines || []; }
 function periods(){ return [...new Set(allDiscs().map(d=>d.period).filter(p=>p!=null))].sort((a,b)=>a-b); }
 function curPer(){ const p=set().per, ps=periods(); if(p==="all"||!ps.length) return "all"; if(ps.includes(p)) return p; const d=allDiscs().find(x=>x.id===set().disc); return d?.period ?? ps[ps.length-1]; }
 function inPer(d){ const p=curPer(); return p==="all" || d.period==null || d.period===p; }
-function discs(){ return allDiscs().filter(inPer); }
+// menus: alfabética (pt, sem acento) dentro de cada período; cores seguem a ordem do catálogo (allDiscs)
+function discs(){ return allDiscs().filter(inPer).sort((a,b)=>(a.period??99)-(b.period??99) || nm(a).localeCompare(nm(b),"pt",{sensitivity:"base"})); }
 let _dmCat=null,_dm=null;
 function discById(id){ if(_dmCat!==S.catalog){ _dmCat=S.catalog; _dm=new Map(allDiscs().map(d=>[d.id,d])); } return _dm.get(id); }
 function perOk(q){ if(curPer()==="all") return true; const d=discById(q.discipline); return !d || inPer(d); }

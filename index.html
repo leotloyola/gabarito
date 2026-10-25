@@ -101,7 +101,7 @@ details.pg>summary small{text-transform:none;letter-spacing:0;font-weight:500}
 .prow .pd{font-size:11.5px;font-weight:600;background:var(--ink);color:var(--surface);border-radius:999px;padding:2px 7px}
 .prow .pp{font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--pill)}
 .prow .pp.good{color:#15803D}.prow .pp.mid{color:#B45309}.prow .pp.bad{color:#B91C1C}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .prow .pp.good{color:#86EFAC}:root:not([data-theme="light"]) .prow .pp.mid{color:#FCD34D}:root:not([data-theme="light"]) .prow .pp.bad{color:#FCA5A5}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.pri.p3{background:#451A03;color:#FCD34D;box-shadow:0 0 0 1px #92400E inset}:root:not([data-theme="light"]) .prow .pp.good{color:#86EFAC}:root:not([data-theme="light"]) .prow .pp.mid{color:#FCD34D}:root:not([data-theme="light"]) .prow .pp.bad{color:#FCA5A5}}
 :root[data-theme="dark"] .prow .pp.good{color:#86EFAC}:root[data-theme="dark"] .prow .pp.mid{color:#FCD34D}:root[data-theme="dark"] .prow .pp.bad{color:#FCA5A5}
 .seg{display:inline-flex;background:var(--pill);border-radius:999px;padding:3px;flex:none}
 .seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);letter-spacing:.02em}
@@ -211,6 +211,11 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .tag.real{background:var(--warn-soft);color:var(--warn);box-shadow:0 0 0 1px var(--warn-line) inset}
 .tag.gen{background:var(--bad-soft);color:var(--bad)}
 .tag.exc{background:var(--accent-soft);color:var(--accent)}
+.tag.pri{letter-spacing:.02em}.tag.pri.p3{background:#FEF3C7;color:#92400E;box-shadow:0 0 0 1px #FCD34D inset}.tag.pri.p1{opacity:.75}
+.stars{font-size:12px;letter-spacing:.5px;color:#D97706;white-space:nowrap}.stars.p1{color:var(--subtle)}.stars.p2{color:#F59E0B}
+.ess{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hair)}
+.ess>div{flex:1;min-width:0;font-size:12.5px;color:var(--muted)}.ess>div>b{display:block;font-size:13.5px;color:var(--ink);margin-bottom:2px}
+:root[data-theme="dark"] .tag.pri.p3{background:#451A03;color:#FCD34D;box-shadow:0 0 0 1px #92400E inset}
 .tag.std{color:var(--ink-2)}
 .stem{font-family:var(--f-read);font-size:calc(18px * var(--fs));line-height:1.65;margin:2px 0 0;color:var(--ink)}
 .opts{display:flex;flex-direction:column;gap:10px}
@@ -653,11 +658,11 @@ function renderCtx(){
 /* ---------- seletor de tema (folha com busca, grupos por prova e números do tema) ---------- */
 function pickerStats(){ const d=curDisc(); const st=set().std; const end=startOfDay(now())+DAY; const agg={};
   for(const q of S.qs.values()){ if(q.discipline!==d.id||(st!=="all"&&q.standard!==st)) continue;
-    const k=q.topic+"|"+(q.sub||""); for(const key of [q.topic, k]){ const a=agg[key]||(agg[key]={n:0,seen:0,ok:0,due:0}); a.n++; const r=rec(q.id); if(r){ a.seen++; if(r.ok) a.ok++; if(r.due!=null&&r.due<end) a.due++; } } }
+    const k=q.topic+"|"+(q.sub||""); const e=priOf(q)===3; for(const key of [q.topic, k]){ const a=agg[key]||(agg[key]={n:0,seen:0,ok:0,due:0,e3:0,e3s:0}); a.n++; if(e) a.e3++; const r=rec(q.id); if(r){ a.seen++; if(e) a.e3s++; if(r.ok) a.ok++; if(r.due!=null&&r.due<end) a.due++; } } }
   return agg; }
 function pickRow(act,val,label,a,{cur,lesson,dis,sub}={}){ a=a||{n:0,seen:0,ok:0,due:0}; const en=set().lang==="en";
   const pct=a.seen?Math.round(100*a.ok/a.seen):null; const pc=pct==null?"":pct>=75?"good":pct>=50?"mid":"bad";
-  const meta=dis? (en?"soon":"em breve") : `${a.n} q${a.seen?` · ${a.seen}/${a.n} ${en?"done":"feitas"}`:""}`;
+  const meta=dis? (en?"soon":"em breve") : `${a.n} q${a.seen?` · ${a.seen}/${a.n} ${en?"done":"feitas"}`:""}${a.e3?` · ★★★ ${a.e3s||0}/${a.e3}`:""}`;
   return `<button type="button" class="prow${cur?" cur":""}" data-act="${act}" data-val="${esc(val)}" data-q="${esc(label.toLowerCase())}" ${dis?"disabled":""}>
     <span class="pt"><b>${esc(label)}</b><small>${meta}</small></span>
     <span class="pm">${lesson?`<span class="pl" title="${en?"Lesson":"Lição"}">${ICONS_L}</span>`:""}${a.due?`<span class="pd" title="${en?"Due today":"Revisões hoje"}">${a.due}</span>`:""}${pct!=null?`<span class="pp ${pc}">${pct}%</span>`:""}</span></button>`; }
@@ -671,7 +676,7 @@ function pickSheet(title, body, n){ const en=set().lang==="en";
       sh.querySelectorAll(".plist > .prow").forEach(r=>{ const ok=!v||r.dataset.q.normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(v); r.hidden=!ok; if(ok) any=true; });
       $("#pickNone").hidden=any; }; }); }
 function openTopicPicker(){ const d=curDisc(); if(!d) return; const t=curTopic(); const agg=pickerStats(); const en=set().lang==="en";
-  const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; } return s; },{n:0,seen:0,ok:0,due:0});
+  const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; s.e3+=a.e3; s.e3s+=a.e3s; } return s; },{n:0,seen:0,ok:0,due:0,e3:0,e3s:0});
   const row=x=>pickRow("pickTopic",x.id,nm(x),agg[x.id],{cur:t&&t.id===x.id,lesson:!!lessonOf(d.id,x.id),dis:!topicCount(x.id)});
   const exs=d.exams||[]; let body="", n=(d.topics||[]).length;
   const grp=(label,inner,open,a)=>`<details class="pg" ${open?"open":""}><summary><span>${esc(label)}</span><small>${a.n} q${a.due?` · ${a.due} ${en?"due":"p/ hoje"}`:""}</small></summary>${inner}</details>`;
@@ -738,10 +743,16 @@ function vHome(v){
 }
 
 /* ---------- STUDY: setup ---------- */
-function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"all", count:10, shuffleQ:false, shuffleO:true}; }
+function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"all", prio:"all", order:"pri", count:10, shuffleQ:false, shuffleO:true}; }
+// prioridade 1–3 (★ detalhe · ★★ importante · ★★★ essencial): incidência nas provas + importância clínica + USMLE (calculada no repositório de conteúdo)
+function priOf(q){ return q.pri||2; }
+function prioSort(list){ return list.map((q,i)=>[q,i]).sort((a,b)=>priOf(b[0])-priOf(a[0])||a[1]-b[1]).map(x=>x[0]); }
+const STARS=n=>"★".repeat(n);
+function priTag(q){ const p=priOf(q); const l=[0,T2("Detalhe","Detail"),T2("Importante","Important"),T2("Essencial","Essential")][p]; return `<span class="tag pri p${p}" title="${T2("Prioridade","Priority")}: ${l}">${STARS(p)}${p===3?" "+l:""}</span>`; }
 function setupPool(su){ return ctxQs().filter(q=>{
   if(su.sub && subOf(q)!==su.sub) return false;
   if(su.origin && q.origin!==su.origin) return false;
+  if(su.prio && su.prio!=="all" && priOf(q)<Number(su.prio)) return false;
   const st=status(q.id); if(su.filter==="open"&&st!=="no") return false; if(su.filter==="wrong"&&st!=="bad") return false; return true; }); }
 function vStudy(v){
   if(S.session && S.session.kind!=="review") return vPlayer(v);
@@ -762,10 +773,11 @@ function vStudy(v){
       <button type="button" class="chip" data-su="mode" data-val="sim" aria-pressed="${su.mode==="sim"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mSim")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mSimD")}</span></button></div></div>
     <div class="field"><span class="flabel">${tr("sub")}</span><div class="sel" style="max-width:none"><button type="button" class="selbtn" id="suSub" data-act="subPick" aria-haspopup="dialog">${esc(su.sub?subName(su.sub):tr("allSubs"))}</button></div></div>
     <div class="field"><span class="flabel">${tr("origin")}</span><div class="chips">${chip("origin","",tr("oAll"))}${chip("origin","real",tr("oReal"))}${chip("origin","authored",tr("oAuth"))}${hasGen?chip("origin","generated",tr("oGen")):""}</div></div>
+    <div class="field"><span class="flabel">${T2("Prioridade","Priority")}</span><div class="chips">${chip("prio","all",T2("Todas","All"))}${chip("prio","2",T2("★★ ou mais","★★ and up"))}${chip("prio","3",T2("Só essenciais ★★★","Essentials only ★★★"))}</div></div>
+    <div class="field"><span class="flabel">${T2("Ordem","Order")}</span><div class="chips">${chip("order","pri",T2("Mais importantes primeiro","Most important first"))}${chip("order","seq",T2("Do banco","Bank order"))}${chip("order","rand",T2("Aleatória","Random"))}</div></div>
     <div class="field"><span class="flabel">${tr("filter")}</span><div class="chips">${chip("filter","all",tr("fAll"))}${chip("filter","open",tr("fOpen"))}${chip("filter","wrong",tr("fWrong"))}</div></div>
     <div class="field"><span class="flabel">${tr("count")}</span><div class="chips">${[5,10,20,40].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}</div></div>
     <details class="adv"${S.advOpen?" open":""} ontoggle="S.advOpen=this.open"><summary>${T2("Opções avançadas","Advanced options")}</summary>
-      <div class="toggle"><span>${tr("shuffleQ")}</span><button type="button" class="switch" role="switch" data-sw="shuffleQ" aria-checked="${su.shuffleQ}" aria-label="${tr("shuffleQ")}"></button></div>
       <div class="toggle"><span>${tr("shuffleO")}</span><button type="button" class="switch" role="switch" data-sw="shuffleO" aria-checked="${su.shuffleO}" aria-label="${tr("shuffleO")}"></button></div>
     </details>
     <div class="row" style="justify-content:space-between"><span class="mono" style="color:var(--muted);font-size:13px">${pool.length} ${tr("available")}</span>
@@ -774,7 +786,8 @@ function vStudy(v){
 
 }
 function buildSession(kind, list, su){
-  let qs = su.shuffleQ ? shuffle(list) : list.slice();
+  const ord = su.order || (su.shuffleQ?"rand":"seq");
+  let qs = ord==="rand" ? shuffle(list) : ord==="pri" ? prioSort(list) : list.slice();
   if(su.count) qs = qs.slice(0, su.count);
   const items = qs.map(q=>({id:q.id, perm: (su.shuffleO && q.origin!=="real") ? shuffle([0,1,2,3,4].slice(0,(q.i18n.pt||q.i18n.en).opts.length)) : [...Array((q.i18n.pt||q.i18n.en).opts.length).keys()], pick:null}));
   return {kind, mode: kind==="review"?"study":su.mode, items, i:0, t0:now(), done:false, std:set().std, topic:curTopic()?.id};
@@ -810,6 +823,7 @@ function questionHTML(q, it, reveal, simMode){
   const pick = it?.pick ?? null;
   const tags = [];
   tags.push(`<span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}${q.step?" · "+esc(q.step):""}</span>`);
+  tags.push(priTag(q));
   if(q.exam) tags.push(`<span class="tag real">${esc(q.exam)}</span>`);
   if(q.origin==="generated") tags.push(`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`);
   tagsOf(q).forEach(t=>tags.push(`<span class="tag">${esc(t)}</span>`));
@@ -855,14 +869,17 @@ function examReadiness(onlyDisc){ const today=startOfDay(now()), end=today+DAY; 
       const tids=new Set(tps.filter(t=>ex.all||t.exam===ex.id).map(t=>t.id)); const qs=allQ.filter(q=>q.discipline===d.id&&tids.has(q.topic)); if(!qs.length) continue;
       const seen=qs.filter(q=>rec(q.id)), ok=seen.filter(q=>rec(q.id).ok), due=qs.filter(q=>{const r=rec(q.id); return r&&r.due!=null&&r.due<end;}).length;
       const days=Math.max(1,Math.round((dt-today)/DAY)); const unseen=qs.length-seen.length;
-      exams.push({d,ex,dt,days,n:qs.length,seen:seen.length,ok:ok.length,due,unseen,meta:Math.ceil(unseen/days)}); } }
+      const e3=qs.filter(q=>priOf(q)===3), e3s=e3.filter(q=>rec(q.id)), e3o=e3s.filter(q=>rec(q.id).ok);
+      exams.push({d,ex,dt,days,n:qs.length,seen:seen.length,ok:ok.length,due,unseen,meta:Math.ceil(unseen/days),e3:e3.length,e3s:e3s.length,e3o:e3o.length}); } }
   return exams.sort((a,b)=>a.dt-b.dt); }
 function nextExamHTML(){ const d=curDisc(); if(!d) return ""; const x=examReadiness(d.id)[0]; if(!x) return "";
   return `<div class="panel" style="padding:16px 18px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><div><div class="eyebrow">${ddot(x.d)}${T2("Próxima prova","Next exam")}</div><b style="font-size:15px">${esc(nm(x.ex))}</b></div>
     <span class="tag ${x.days<=7?"old":""}">${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}</span></div>
     <div class="track" style="margin:12px 0 8px"><i class="ok" style="width:${100*x.ok/x.n}%"></i><i class="bad" style="width:${100*(x.seen-x.ok)/x.n}%"></i></div>
     <div class="row" style="justify-content:space-between;gap:8px"><span style="font-size:12.5px;color:var(--muted)">${T2("Vistas","Seen")} ${x.seen}/${x.n} · ${T2("acerto","accuracy")} <b>${pct(x.ok,x.seen)}</b>${x.unseen?` · ${T2("meta","goal")} <b>${x.meta}/${T2("dia","day")}</b>`:""}</span>
-    <button class="btn small" data-act="examStudy" data-ex="${esc(x.ex.id)}">${T2("Estudar","Study")} ${esc(x.ex.all?T2("tudo","all"):x.ex.id)}</button></div></div>`; }
+    <button class="btn small" data-act="examStudy" data-ex="${esc(x.ex.id)}">${T2("Estudar","Study")} ${esc(x.ex.all?T2("tudo","all"):x.ex.id)}</button></div>
+    ${x.e3?`<div class="ess"><div><b>★★★ ${T2("Trilha mínima","Essentials track")}</b><span>${x.e3s}/${x.e3} ${T2("feitas","done")} · ${T2("acerto","accuracy")} <b>${pct(x.e3o,x.e3s)}</b>${x.e3s<x.e3?` · ${T2("faltam","left")} ${x.e3-x.e3s}`:""}</span><div class="track" style="margin-top:6px"><i class="ok" style="width:${100*x.e3o/x.e3}%"></i><i class="bad" style="width:${100*(x.e3s-x.e3o)/x.e3}%"></i></div></div>
+      <button class="btn small primary" data-act="examEssentials" data-ex="${esc(x.ex.id)}">${x.e3s<x.e3?T2("Continuar","Continue"):T2("Revisar erros","Review misses")}</button></div>`:""}</div>`; }
 
 const T2=(pt,en)=>set().lang==="en"?en:pt;
 // cor-marcador por disciplina: d.color no catálogo, senão posição dentro do período (as cores se repetem entre períodos)
@@ -1109,7 +1126,7 @@ function vBank(v){
    </div>
    ${WIDE_B.matches?bankTable(list):`<div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
      <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
-     <span class="m"><span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>`}
+     <span class="m">${priTag(q)}<span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>`}
    ${reportsHTML()}
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
   const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
@@ -1118,13 +1135,13 @@ function vBank(v){
 }
 const WIDE_B=matchMedia("(min-width:1000px)");
 function bankTable(list){ const en=set().lang==="en"; const so=S.bankSort||(S.bankSort={k:"n",dir:1});
-  const row=q=>{ const r=rec(q.id); const c=content(q).c; return {q, n:list.indexOf(q), t:c?.stem||"", sub:subName(subOf(q)), orig:q.exam||(q.origin==="generated"?"IA":(en?"Authored":"Autoral")), std:q.standard, acc:r?(r.nOk||0)/(r.n||1):-1, last:r?.ts||0, r}; };
+  const row=q=>{ const r=rec(q.id); const c=content(q).c; return {q, n:list.indexOf(q), t:c?.stem||"", sub:subName(subOf(q)), orig:q.exam||(q.origin==="generated"?"IA":(en?"Authored":"Autoral")), std:q.standard, pri:priOf(q), acc:r?(r.nOk||0)/(r.n||1):-1, last:r?.ts||0, r}; };
   const rows=list.map(row); const k=so.k, dir=so.dir;
   rows.sort((a,b)=>{ const x=a[k], y=b[k]; const v=typeof x==="string"? x.localeCompare(y,"pt") : x-y; return (v||a.n-b.n)*dir; });
   const ago=ts=>{ if(!ts) return "—"; const d=Math.floor((startOfDay(now())-startOfDay(ts))/DAY); return d<=0?(en?"today":"hoje"):d===1?(en?"yesterday":"ontem"):d+(en?" d ago":" d"); };
   const th=(key,label,cls="")=>`<th class="${cls}"><button type="button" data-act="bankSort" data-val="${key}" aria-sort="${k===key?(dir>0?"ascending":"descending"):"none"}">${label}${k===key?(dir>0?" ↑":" ↓"):""}</button></th>`;
-  return `<div class="panel" style="padding:6px 6px 2px"><div class="btbl-w"><table class="btbl"><thead><tr>${th("n","#","num")}${th("t",en?"Question":"Enunciado")}${th("sub",en?"Subtopic":"Subtema")}${th("orig",en?"Source":"Origem")}${th("std",en?"Std":"Padrão")}${th("acc",en?"Correct":"Acerto","num")}${th("last",en?"Last":"Última","num")}</tr></thead><tbody>
-   ${rows.map(x=>{ const st=status(x.q.id); return `<tr data-act="bankOpen" data-q="${esc(x.q.id)}" tabindex="0"><td class="num mono">${x.n+1}</td><td class="bt"><span>${safe(x.t)}</span>${x.q.i18n?.[set().lang]?.outdated||x.q.i18n?.pt?.outdated?` <span class="tag old">${en?"Outdated":"Defasada"}</span>`:""}</td><td class="bs">${esc(x.sub)}</td><td>${x.q.exam?`<span class="tag real">${esc(x.orig)}</span>`:`<span class="muted">${esc(x.orig)}</span>`}</td><td><span class="tag std ${x.std==="usmle"?"usmle":""}">${x.std.toUpperCase()}</span></td><td class="num"><span class="st ${st}">${x.r?`${x.r.nOk||0}/${x.r.n}`:"·"}</span></td><td class="num muted">${ago(x.last)}</td></tr>`; }).join("") || `<tr><td colspan="7"><p class="empty">${tr("none")}</p></td></tr>`}</tbody></table></div></div>`; }
+  return `<div class="panel" style="padding:6px 6px 2px"><div class="btbl-w"><table class="btbl"><thead><tr>${th("n","#","num")}${th("t",en?"Question":"Enunciado")}${th("sub",en?"Subtopic":"Subtema")}${th("orig",en?"Source":"Origem")}${th("pri",en?"Priority":"Prior.")}${th("std",en?"Std":"Padrão")}${th("acc",en?"Correct":"Acerto","num")}${th("last",en?"Last":"Última","num")}</tr></thead><tbody>
+   ${rows.map(x=>{ const st=status(x.q.id); return `<tr data-act="bankOpen" data-q="${esc(x.q.id)}" tabindex="0"><td class="num mono">${x.n+1}</td><td class="bt"><span>${safe(x.t)}</span>${x.q.i18n?.[set().lang]?.outdated||x.q.i18n?.pt?.outdated?` <span class="tag old">${en?"Outdated":"Defasada"}</span>`:""}</td><td class="bs">${esc(x.sub)}</td><td>${x.q.exam?`<span class="tag real">${esc(x.orig)}</span>`:`<span class="muted">${esc(x.orig)}</span>`}</td><td><span class="stars p${x.pri}" title="${T2("Prioridade","Priority")} ${x.pri}">${STARS(x.pri)}</span></td><td><span class="tag std ${x.std==="usmle"?"usmle":""}">${x.std.toUpperCase()}</span></td><td class="num"><span class="st ${st}">${x.r?`${x.r.nOk||0}/${x.r.n}`:"·"}</span></td><td class="num muted">${ago(x.last)}</td></tr>`; }).join("") || `<tr><td colspan="8"><p class="empty">${tr("none")}</p></td></tr>`}</tbody></table></div></div>`; }
 WIDE_B.addEventListener?.("change",()=>{ if(S.view==="bank") render(); });
 function openSheet(html, onMount){
   if(!$("#layer").innerHTML){ try{ history.pushState({v:S.view,sheet:1},"",location.hash||"#"+S.view); S.sheetPushed=true; }catch(e){} }
@@ -1260,7 +1277,7 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="keys") return openKeys();
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
-  if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
+  if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
   if(act==="imgZoom"){ return openImg(a.dataset.q); }
   if(act==="report"){ return openReport(a.dataset.q); }
@@ -1273,6 +1290,7 @@ document.addEventListener("click", async e=>{
   if(act==="lessonBack"){ if(history.state&&history.state.v==="lesson"&&history.length>1){ history.back(); return; } return go(S.lessonBack&&S.lessonBack!=="lesson"?S.lessonBack:"study"); }
   if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="statsTab"){ S.statsTab=a.dataset.val; render(); window.scrollTo({top:0}); return; }
+  if(act==="examEssentials"){ set().topic="exam:"+a.dataset.ex; S.fcDeck=null; saveProg(); S.studyTab="build"; S.setup=Object.assign(defaultSetup(),{prio:"3",order:"pri",count:20,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="wrong"; pool=setupPool(S.setup); } if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup); } if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
   if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }
@@ -1285,7 +1303,7 @@ document.addEventListener("click", async e=>{
   if(act==="pickTopic"){ set().topic=a.dataset.val; saveProg(); S.session=null; S.fcDeck=null; if(S.setup) S.setup.sub=""; S.bankFilter.sub=""; closeSheet(); render(); window.scrollTo({top:0}); return; }
   if(act==="pickSub"){ const su=S.setup||(S.setup=defaultSetup()); su.sub=a.dataset.val; closeSheet(); return render(); }
   if(act==="revScope"){ set().revScope=a.dataset.val; saveProg(); return render(); }
-  if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",shuffle(due),{mode:"study",count:0,shuffleQ:true,shuffleO:true}); return go("review"); }
+  if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",prioSort(shuffle(due)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
   if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); render(); window.scrollTo({top:0}); return; }
   if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); render(); window.scrollTo({top:0}); return; }
   if(act==="finish"){ const s=S.session;
@@ -1303,7 +1321,7 @@ document.addEventListener("click", async e=>{
   if(act==="fcRate"){ const d=S.fcDeck; const q=S.qs.get(d.ids[d.i]); rateCard(q,Number(a.dataset.g)); d.i++; d.show=false; render(); window.scrollTo({top:0}); return; }
   if(act==="fcReset"){ S.fcDeck=null; return render(); }
   if(act==="bankOpen") return bankPreview(a.dataset.q);
-  if(act==="bankSort"){ const so=S.bankSort||(S.bankSort={k:"n",dir:1}); if(so.k===a.dataset.val) so.dir*=-1; else { so.k=a.dataset.val; so.dir=(a.dataset.val==="last"?-1:1); } return render(); }
+  if(act==="bankSort"){ const so=S.bankSort||(S.bankSort={k:"n",dir:1}); if(so.k===a.dataset.val) so.dir*=-1; else { so.k=a.dataset.val; so.dir=(a.dataset.val==="last"||a.dataset.val==="pri"?-1:1); } return render(); }
   if(act==="genOpen") return openGen();
   if(act==="genRun") return genRun();
   if(act==="genSave") return genSave();

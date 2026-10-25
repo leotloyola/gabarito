@@ -336,6 +336,55 @@ body.focus .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 body.focus .wrap{gap:12px}
 .fsbtn{min-width:38px;padding:0 10px}
 @media (min-width:960px){ body.focus .shell{grid-template-columns:minmax(0,1fr)} body.focus main{grid-column:1} }
+/* ---- telas largas (desktop / tablet deitado) ---- */
+.qgrid,.qleft,.qright{display:contents}
+.kbtn{display:none}
+kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:var(--pill);border-radius:6px;padding:2px 7px;box-shadow:inset 0 -1px 0 var(--line);color:var(--ink)}
+.kgrp{display:flex;flex-direction:column;gap:6px}.krow{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:4px 0;border-top:1px solid var(--hair)}
+.lwrap{display:flex;flex-direction:column;gap:14px}
+.ltoc{order:-1}
+.ltoc details{background:var(--surface);border-radius:16px;padding:10px 14px;box-shadow:0 0 0 1px var(--hair)}
+.ltoc summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2)}
+.ltoc ol{list-style:none;margin:8px 0 2px;padding:0;display:flex;flex-direction:column;gap:2px}
+.ltoc button{all:unset;cursor:pointer;display:block;font-size:13px;line-height:1.35;color:var(--muted);padding:6px 10px;border-radius:10px;box-sizing:border-box;width:100%}
+.ltoc button.sub{padding-left:22px;font-size:12.5px}
+.ltoc button:hover{background:var(--pill);color:var(--ink)}
+.ltoc button.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
+.lesson h2,.lesson h3{scroll-margin-top:84px}
+.btbl-w{overflow-x:auto}
+.btbl{width:100%;border-collapse:collapse;font-size:13px}
+.btbl th{text-align:left;position:sticky;top:0;background:var(--surface);z-index:1}
+.btbl th button{all:unset;cursor:pointer;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:10px 8px;display:block;white-space:nowrap}
+.btbl th button[aria-sort="ascending"],.btbl th button[aria-sort="descending"]{color:var(--ink)}
+.btbl td{padding:10px 8px;border-top:1px solid var(--hair);vertical-align:top}
+.btbl tbody tr{cursor:pointer}.btbl tbody tr:hover td,.btbl tbody tr:focus-visible td{background:var(--surface-2,var(--pill))}
+.btbl .num{text-align:right;white-space:nowrap}
+.btbl .bt span:first-child{font-family:var(--f-read);font-size:14px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.btbl .bs{max-width:170px;color:var(--ink-2)}
+.btbl .muted,.muted{color:var(--muted)}
+.btbl .tag{white-space:nowrap}
+@media (min-width:700px){ .kbtn{display:inline-flex} }
+@media (min-width:1000px){ .wrap:has(.btbl){max-width:1120px} }
+@media (min-width:960px){
+  body.focus #view .qgrid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;align-items:start}
+  body.focus #view .qleft{display:flex;flex-direction:column;gap:12px;position:sticky;top:14px;max-height:calc(100vh - 110px);overflow:auto}
+  body.focus #view .qright{display:flex;flex-direction:column;gap:12px}
+  body.focus .wrap:has(.qgrid){max-width:1280px}
+}
+@media (min-width:1180px){
+  body:not(.focus) #view .qgrid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;align-items:start}
+  body:not(.focus) #view .qleft{display:flex;flex-direction:column;gap:12px;position:sticky;top:14px}
+  body:not(.focus) #view .qright{display:flex;flex-direction:column;gap:12px}
+  body:not(.focus) .wrap:has(.qgrid){max-width:1180px}
+}
+@media (min-width:1150px){
+  .wrap:has(.lwrap){max-width:1080px}
+  .lwrap{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:24px;align-items:start}
+  .ltoc{order:0;position:sticky;top:84px;max-height:calc(100vh - 100px);overflow:auto}
+  .ltoc details{background:transparent;box-shadow:none;padding:4px 0}
+  .ltoc summary{list-style:none;pointer-events:none;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 10px}
+  .ltoc summary::-webkit-details-marker{display:none}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -745,7 +794,7 @@ function vPlayer(v){
    <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
      <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
      ${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}
-     ${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
+     ${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn kbtn" data-act="keys" aria-label="${T2("Atalhos de teclado","Keyboard shortcuts")}" title="${T2("Atalhos (?)","Shortcuts (?)")}">⌨</button><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
    ${questionHTML(q, it, reveal, s.mode==="sim")}
    <div class="qnav">
      <button class="btn icon" data-act="prev" ${s.i===0?"disabled":""} aria-label="${tr("prev")}">←</button>
@@ -787,7 +836,7 @@ function questionHTML(q, it, reveal, simMode){
     <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
-  return `<div class="tags">${tags.join("")}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`;
+  return `<div class="qgrid"><div class="qleft"><div class="tags">${tags.join("")}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div></div>`;
 }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
@@ -967,10 +1016,20 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const nQ=[...S.qs.values()].filter(q=>q.discipline===l.discipline&&q.topic===l.topic&&stdOk(q)).length;
   v.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <article class="lesson" lang="pt-BR">${l.html}</article>
+   <div class="lwrap"><article class="lesson" lang="pt-BR">${l.html}</article><nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
-   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; }
+   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); }
+const WIDE_L=matchMedia("(min-width:1150px)");
+function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=$("#view .lesson"), nav=$("#ltoc"); if(!art||!nav) return;
+  let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return;
+  hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
+  const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${i}" class="${h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h.textContent)}</button></li>`).join("");
+  nav.innerHTML=`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`; nav.hidden=false;
+  const btns=nav.querySelectorAll("button"); let cur=-1;
+  const mark=i=>{ if(i===cur) return; cur=i; btns.forEach((b,k)=>b.classList.toggle("on",k===i)); };
+  S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ if(h.getBoundingClientRect().top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
+  hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
 /* ---------- IMAGENS DAS QUESTÕES ---------- */
 function qImg(q){ const im=q.img; if(!im||!im.url) return ""; return `<figure class="qimg"><button type="button" data-act="imgZoom" data-q="${esc(q.id)}" aria-label="${T2("Ampliar imagem","Zoom image")}"><img src="${esc(im.url)}" alt="${esc(im.alt||"")}" loading="lazy" decoding="async"></button>${im.alt?`<figcaption>${esc(im.alt)}</figcaption>`:""}</figure>`; }
 function openImg(qid){ const q=S.qs.get(qid); if(!q?.img?.url) return; openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Imagem","Image")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
@@ -1024,7 +1083,7 @@ function vCards(v){
   const q=S.qs.get(d.ids[d.i]); if(!q){ d.i++; return vCards(v); }
   const {c}=content(q); const corr=c.opts[q.correct];
   v.innerHTML = `
-   <div class="qtop"><span class="qnum">${d.i+1} / ${d.ids.length}</span><div class="progress"><i style="width:${100*d.i/d.ids.length}%"></i></div>${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn" data-act="fcReset" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
+   <div class="qtop"><span class="qnum">${d.i+1} / ${d.ids.length}</span><div class="progress"><i style="width:${100*d.i/d.ids.length}%"></i></div>${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn kbtn" data-act="keys" aria-label="${T2("Atalhos de teclado","Keyboard shortcuts")}" title="${T2("Atalhos (?)","Shortcuts (?)")}">⌨</button><button class="btn small ghost fsbtn" data-act="fcReset" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
    <div class="card"><div class="tags">${tagsOf(q).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
      <div class="face">${safe(c.stem)}</div>${qImg(q)}
      ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(corr.why)}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}`:""}
@@ -1048,15 +1107,25 @@ function vBank(v){
        <div class="field" style="flex:1;min-width:150px"><label for="bkOrig">${tr("origin")}</label><select id="bkOrig">${[["",tr("oAll")],["real",tr("oReal")],["authored",tr("oAuth")],["generated",tr("oGen")]].map(([k,l])=>`<option value="${k}" ${f.origin===k?"selected":""}>${l}</option>`).join("")}</select></div>
      </div>
    </div>
-   <div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
+   ${WIDE_B.matches?bankTable(list):`<div class="panel"><div class="list" id="bkList">${list.map(q=>{ const c=content(q).c; const st=status(q.id); return `
      <button type="button" class="li" data-act="bankOpen" data-q="${esc(q.id)}"><span class="t">${safe(c.stem)}</span><span class="st ${st}">${st==="ok"?"✓":st==="bad"?"✗":"·"}</span>
-     <span class="m"><span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>
+     <span class="m"><span class="tag std ${q.standard==="usmle"?"usmle":""}">${q.standard.toUpperCase()}</span>${q.exam?`<span class="tag real">${esc(q.exam)}</span>`:""}${q.origin==="generated"?`<span class="tag gen">IA${q.reviewed?"":" · "+tr("notReviewed")}</span>`:""}${content(q).c?.outdated?`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`:""}<span class="tag">${esc(subName(subOf(q)))}</span></span></button>`; }).join("") || `<p class="empty">${tr("none")}</p>`}</div></div>`}
    ${reportsHTML()}
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>`;
   const ti=$("#bkText"); let deb=null; ti.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ f.text=ti.value; const pos=ti.selectionStart; render(); const n=$("#bkText"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} },250); };
   $("#bkSub").onchange=e=>{ f.sub=e.target.value; render(); };
   $("#bkOrig").onchange=e=>{ f.origin=e.target.value; render(); };
 }
+const WIDE_B=matchMedia("(min-width:1000px)");
+function bankTable(list){ const en=set().lang==="en"; const so=S.bankSort||(S.bankSort={k:"n",dir:1});
+  const row=q=>{ const r=rec(q.id); const c=content(q).c; return {q, n:list.indexOf(q), t:c?.stem||"", sub:subName(subOf(q)), orig:q.exam||(q.origin==="generated"?"IA":(en?"Authored":"Autoral")), std:q.standard, acc:r?(r.nOk||0)/(r.n||1):-1, last:r?.ts||0, r}; };
+  const rows=list.map(row); const k=so.k, dir=so.dir;
+  rows.sort((a,b)=>{ const x=a[k], y=b[k]; const v=typeof x==="string"? x.localeCompare(y,"pt") : x-y; return (v||a.n-b.n)*dir; });
+  const ago=ts=>{ if(!ts) return "—"; const d=Math.floor((startOfDay(now())-startOfDay(ts))/DAY); return d<=0?(en?"today":"hoje"):d===1?(en?"yesterday":"ontem"):d+(en?" d ago":" d"); };
+  const th=(key,label,cls="")=>`<th class="${cls}"><button type="button" data-act="bankSort" data-val="${key}" aria-sort="${k===key?(dir>0?"ascending":"descending"):"none"}">${label}${k===key?(dir>0?" ↑":" ↓"):""}</button></th>`;
+  return `<div class="panel" style="padding:6px 6px 2px"><div class="btbl-w"><table class="btbl"><thead><tr>${th("n","#","num")}${th("t",en?"Question":"Enunciado")}${th("sub",en?"Subtopic":"Subtema")}${th("orig",en?"Source":"Origem")}${th("std",en?"Std":"Padrão")}${th("acc",en?"Correct":"Acerto","num")}${th("last",en?"Last":"Última","num")}</tr></thead><tbody>
+   ${rows.map(x=>{ const st=status(x.q.id); return `<tr data-act="bankOpen" data-q="${esc(x.q.id)}" tabindex="0"><td class="num mono">${x.n+1}</td><td class="bt"><span>${safe(x.t)}</span>${x.q.i18n?.[set().lang]?.outdated||x.q.i18n?.pt?.outdated?` <span class="tag old">${en?"Outdated":"Defasada"}</span>`:""}</td><td class="bs">${esc(x.sub)}</td><td>${x.q.exam?`<span class="tag real">${esc(x.orig)}</span>`:`<span class="muted">${esc(x.orig)}</span>`}</td><td><span class="tag std ${x.std==="usmle"?"usmle":""}">${x.std.toUpperCase()}</span></td><td class="num"><span class="st ${st}">${x.r?`${x.r.nOk||0}/${x.r.n}`:"·"}</span></td><td class="num muted">${ago(x.last)}</td></tr>`; }).join("") || `<tr><td colspan="7"><p class="empty">${tr("none")}</p></td></tr>`}</tbody></table></div></div>`; }
+WIDE_B.addEventListener?.("change",()=>{ if(S.view==="bank") render(); });
 function openSheet(html, onMount){
   if(!$("#layer").innerHTML){ try{ history.pushState({v:S.view,sheet:1},"",location.hash||"#"+S.view); S.sheetPushed=true; }catch(e){} }
   $("#layer").innerHTML = `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="sheet-in">${html}</div></div>`;
@@ -1189,6 +1258,8 @@ document.addEventListener("click", async e=>{
   if(act==="fs"){ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI:"hide"}); }catch(err){ toast(set().lang==="en"?"Full screen is not available here":"Tela cheia não disponível aqui"); } setTimeout(render,150); return; }
   if(act==="signOut") return signOut();
   if(act==="closeSheet") return closeSheet();
+  if(act==="keys") return openKeys();
+  if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, shuffleQ:a.dataset.mode==="sim", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
   if(act==="imgZoom"){ return openImg(a.dataset.q); }
@@ -1232,6 +1303,7 @@ document.addEventListener("click", async e=>{
   if(act==="fcRate"){ const d=S.fcDeck; const q=S.qs.get(d.ids[d.i]); rateCard(q,Number(a.dataset.g)); d.i++; d.show=false; render(); window.scrollTo({top:0}); return; }
   if(act==="fcReset"){ S.fcDeck=null; return render(); }
   if(act==="bankOpen") return bankPreview(a.dataset.q);
+  if(act==="bankSort"){ const so=S.bankSort||(S.bankSort={k:"n",dir:1}); if(so.k===a.dataset.val) so.dir*=-1; else { so.k=a.dataset.val; so.dir=(a.dataset.val==="last"?-1:1); } return render(); }
   if(act==="genOpen") return openGen();
   if(act==="genRun") return genRun();
   if(act==="genSave") return genSave();
@@ -1244,14 +1316,32 @@ document.addEventListener("click", async e=>{
   if(act==="resetProg"){ return arm(a, tr("confirmReset"), ()=>{ S.prog=mergeProg(S.prog,{settings:S.prog.settings}); S.session=null; S.fcDeck=null; saveProg(); closeSheet(); toast(tr("resetDone")); render(); }); }
 });
 document.addEventListener("keydown", e=>{
-  if(e.target.closest("input,textarea,select")) return;
+  if(e.target.closest("input,textarea,select")||e.ctrlKey||e.metaKey||e.altKey) return;
   if(e.key==="Escape" && $("#layer").innerHTML){ closeSheet(); return; }
+  if($("#layer").innerHTML) return;
+  const k=e.key.toLowerCase(); const click=sel=>{ const b=document.querySelector(sel); if(b&&!b.disabled){ b.click(); e.preventDefault(); return true; } return false; };
+  if(k==="?"){ e.preventDefault(); return openKeys(); }
+  // flashcards
+  if(S.view==="cards" && S.fcDeck && S.fcDeck.i<S.fcDeck.ids.length){
+    if(!S.fcDeck.show){ if(k===" "||k==="enter") click('[data-act="fcShow"]'); return; }
+    const g="123".indexOf(k); if(g>=0) click(`[data-act="fcRate"][data-g="${g}"]`); else if(k===" "||k==="enter") click('[data-act="fcRate"][data-g="2"]');
+    if(k==="escape") click('[data-act="fcReset"]'); return; }
+  // lição
+  if(S.view==="lesson"){ if(k==="escape"||k==="backspace") click('[data-act="lessonBack"]'); return; }
   const s=S.session; if(!s||s.done||!(S.view==="study"||S.view==="review")) return;
-  const k=e.key.toLowerCase(); const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"12345".indexOf(k);
-  if(idx>=0){ const b=document.querySelectorAll(".opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
-  if(k==="arrowright"||(k==="enter"&&!e.target.closest("button"))){ const n=document.querySelector('[data-act="next"]'); if(n){ n.click(); e.preventDefault(); } }
-  if(k==="arrowleft"){ const p=document.querySelector('[data-act="prev"]'); if(p&&!p.disabled){ p.click(); e.preventDefault(); } }
+  const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"12345".indexOf(k);
+  if(idx>=0){ const b=document.querySelectorAll("#view .opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
+  if(k==="arrowright"||(k==="enter"&&!e.target.closest("button"))||(k===" "&&!e.target.closest("button"))){ if(!click('#view [data-act="next"]') && k!==" ") click('#view [data-act="finish"]'); return; }
+  if(k==="arrowleft"){ click('#view [data-act="prev"]'); return; }
+  if(k==="l"){ click('#view .tags [data-act="lesson"]'); return; }
+  if(k==="m"){ click('#view [data-act="detail"]'); return; }
+  if(k==="f"){ click('#view [data-act="fs"]'); return; }
 });
+function openKeys(){ const en=set().lang==="en"; const r=(k,t)=>`<div class="krow"><span>${k.split(" ").map(x=>`<kbd>${x}</kbd>`).join(" ")}</span><span>${t}</span></div>`;
+  openSheet(`<div class="row" style="justify-content:space-between"><h2>⌨ ${en?"Keyboard shortcuts":"Atalhos de teclado"}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <div class="kgrp"><div class="eyebrow">${en?"Questions":"Questões"}</div>${r("A–E 1–5",en?"Pick option":"Marcar alternativa")}${r("Enter →",en?"Next (finish on the last)":"Próxima (no fim, finalizar)")}${r("←",en?"Previous":"Anterior")}${r("M",en?"More / less detail":"Mais / menos detalhe")}${r("L",en?"Open topic lesson":"Abrir a lição do tema")}${r("F",en?"Full screen":"Tela cheia")}</div>
+   <div class="kgrp"><div class="eyebrow">Flashcards</div>${r("Espaço Enter",en?"Show answer":"Mostrar resposta")}${r("1 2 3",en?"Missed · Hard · Got it":"Errei · Difícil · Acertei")}</div>
+   <div class="kgrp"><div class="eyebrow">${en?"General":"Geral"}</div>${r("Esc",en?"Close / go back":"Fechar / voltar")}${r("?",en?"This list":"Esta lista")}</div>`); }
 
 /* ---------- data wiring (Supabase) ---------- */
 const CFG = window.GABARITO_CONFIG || {};

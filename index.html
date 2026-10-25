@@ -1094,7 +1094,11 @@ const PDF_CSS=`.pg,.pdfc{--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:
 .pdfc ol.flow li{counter-increment:f;position:relative;padding:10px 12px 10px 44px;margin:0 0 10px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset}
 .pdfc ol.flow li::before{content:counter(f);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
 .pdfc ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
-.pdfc ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc ol.flow li.stop::before{background:var(--bad)}`;
+.pdfc ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc ol.flow li.stop::before{background:var(--bad)}
+.pdfc .pq{padding-bottom:16px;font-size:13px;line-height:1.5} .pdfc .pq-h{font-size:11px;color:var(--muted);margin-bottom:4px} .pdfc .pq-h b{color:var(--ink);font-size:13px}
+.pdfc .pq-s{margin:0 0 6px;color:var(--ink)} .pdfc .pq-o{margin:2px 0 2px 18px;text-indent:-18px} .pdfc .pq-o i{font-style:normal;font-weight:600;color:var(--ink);display:inline-block;width:18px;text-indent:0}
+.pdfc .pq-img{margin:4px 0 8px} .pdfc .pq-img img{max-width:100%;max-height:320px;display:block} .pdfc .pq-img span{font-size:12px;color:var(--subtle)}
+.pdfc .pq-g{font-size:12px;line-height:1.45;padding-bottom:2px} .pdfc .pq-g b.n{color:var(--ink)} .pdfc .pq-g em{font-style:normal;color:var(--warn)}`;
 // rótulo padronizado: "5º · Disciplina · 03 Tema" (também nome do arquivo, cabeçalho e /Title)
 function pdfLabel(l){ const d=discById(l.discipline), i=(d?.topics||[]).findIndex(t=>t.id===l.topic), t=d?.topics?.[i];
   return `${d?.period!=null?d.period+"º · ":""}${nm(d)||l.discipline} · ${i>=0?String(i+1).padStart(2,"0")+" ":""}${t?nm(t):l.title}`.replace(/[\/\\:*?"<>|]/g,"").trim(); }
@@ -1126,6 +1130,7 @@ function pdfPaginate(box){
   const pages=[]; let pg=[], used=0; const eff=m=>m.h-(pg.length?0:m.mt), isH=m=>/^H[1-3]$/.test(m.el.tagName);
   const canSplit=el=>/^(TABLE|UL|OL)$/.test(el.tagName)||el.classList.contains("tbl");
   for(let i=0;i<items.length;i++){ const m=items[i];
+    if(pg.length&&m.el.classList?.contains("pq-br")){ pages.push(pg); pg=[]; used=0; }   // seção que começa em página nova
     let need=eff(m); if(isH(m)){ let j=i; while(j<items.length-1&&isH(items[j])) { j++; need+=canSplit(items[j].el)?Math.min(items[j].h,140):items[j].h; } }   // título vai junto com o próximo bloco (ou o começo dele)
     if(pg.length&&used+need>PCAP){ const rem=PCAP-used;
       if(!isH(m)&&rem>=140&&canSplit(m.el)){ const sp=pdfSplit(box,m.el,rem-m.mt); if(sp&&sp.length>1){ items.splice(i,1,...sp); i--; continue; } }   // lista/tabela começa no espaço que sobrou
@@ -1134,7 +1139,7 @@ function pdfPaginate(box){
   if(pg.length) pages.push(pg); return pages;
 }
 // página → JPEG (via SVG foreignObject)
-async function pdfRaster(nodes, label, n, N){
+async function pdfRaster(nodes, label, n, N, qual=.88){
   const pg=document.createElement("div"); pg.className="pg"; const bd=document.createElement("div"); bd.className="bd"; const c=document.createElement("div"); c.className="pdfc"; nodes.forEach(x=>c.appendChild(x.cloneNode(true))); bd.appendChild(c);
   const add=(cls,t)=>{ const e=document.createElement("div"); e.className=cls; if(t) e.textContent=t; pg.appendChild(e); };
   add("hd",label); add("ln"); add("nt","Notas"); pg.appendChild(bd); add("ft",`Gabarito · p. ${n}/${N}`);
@@ -1143,7 +1148,7 @@ async function pdfRaster(nodes, label, n, N){
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${PW}" height="${PH}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${xml}</div></foreignObject></svg>`;
   const img=new Image(); await new Promise((ok,no)=>{ img.onload=ok; img.onerror=()=>no(new Error("falha ao desenhar a página")); img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); });
   const cv=document.createElement("canvas"); cv.width=PW*2; cv.height=PH*2; const g=cv.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,cv.width,cv.height); g.drawImage(img,0,0,cv.width,cv.height);
-  const blob=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",.88)); if(!blob) throw new Error("falha ao gerar imagem");
+  const blob=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",qual)); if(!blob) throw new Error("falha ao gerar imagem");
   return {b:new Uint8Array(await blob.arrayBuffer()), w:cv.width, h:cv.height};
 }
 // PDF 1.4 mínimo: uma página A4 por JPEG
@@ -1164,12 +1169,51 @@ function jpegPdf(pages, title){
   put(`trailer\n<< /Size ${N+1} /Root 1 0 R /Info 3 0 R >>\nstartxref\n${xr}\n%%EOF\n`);
   return new Blob(parts,{type:"application/pdf"});
 }
-async function lessonPdf(l){
-  const label=pdfLabel(l), box=document.createElement("div"); box.style.cssText="position:fixed;left:-10000px;top:0";
-  box.innerHTML=`<style>${PDF_CSS}</style><div class="pdfc" style="width:${PCW}px"><h1>${esc(l.title)}</h1>${l.html}</div>`; document.body.appendChild(box);
+// HTML → páginas → PDF (File)
+async function pdfFromHtml(label, html, qual){
+  const box=document.createElement("div"); box.style.cssText="position:fixed;left:-10000px;top:0";
+  box.innerHTML=`<style>${PDF_CSS}</style><div class="pdfc" style="width:${PCW}px">${html}</div>`; document.body.appendChild(box);
   let pages; try{ pages=pdfPaginate(box.querySelector(".pdfc")); pages=pages.map(p=>p.map(x=>x.cloneNode(true))); } finally{ box.remove(); }
-  const jp=[]; for(let i=0;i<pages.length;i++) jp.push(await pdfRaster(pages[i],label,i+1,pages.length));
+  const jp=[]; for(let i=0;i<pages.length;i++) jp.push(await pdfRaster(pages[i],label,i+1,pages.length,qual));
   return new File([jpegPdf(jp,label)], label+".pdf", {type:"application/pdf"});
+}
+async function lessonPdf(l, withQ=true){
+  let html=`<h1>${esc(l.title)}</h1>${l.html}`;
+  if(withQ){ const qs=pdfQs(l.discipline,l.topic); if(qs.length){ const x=await pqHtml([{qs}]); html+=`<h2 class="pq-br">${T2("Questões do tema","Topic questions")}</h2>${x.q}<h2 class="pq-br">${T2("Gabarito","Answer key")}</h2>${x.g}`; } }
+  return pdfFromHtml(pdfLabel(l), html);
+}
+// questões de um tema, na ordem do Banco
+function pdfQs(dId,tId){ return [...S.qs.values()].filter(q=>q.discipline===dId&&q.topic===tId&&stdOk(q)).sort((a,b)=>(a.order??999)-(b.order??999)||a.id.localeCompare(b.id)); }
+// figura → data URL (null se falhar)
+async function pqImgData(url){
+  try{ const ac=new AbortController(), t=setTimeout(()=>ac.abort(),8000);
+    try{ const r=await fetch(url,{signal:ac.signal}); if(!r.ok) return null; const b=await r.blob();
+      return await new Promise((ok,no)=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.onerror=no; fr.readAsDataURL(b); }); }
+    finally{ clearTimeout(t); }
+  }catch(e){ return null; }
+}
+// grupos [{title?, qs}] → {q: blocos das questões, g: blocos do gabarito}; numeração contínua
+async function pqHtml(groups){
+  let n=0, q="", g=""; const lang=set().lang;
+  for(const gr of groups){ if(gr.title){ q+=`<h2>${esc(gr.title)}</h2>`; g+=`<h3>${esc(gr.title)}</h3>`; }
+    for(const x of gr.qs){ n++; const c=x.i18n?.[lang]||x.i18n?.pt||x.i18n?.en; if(!c){ n--; continue; }
+      let im=""; if(x.img?.url){ const d=await pqImgData(x.img.url); im=d?`<div class="pq-img"><img src="${d}" alt=""></div>`:`<div class="pq-img"><span>[${T2("figura: ver no app","figure: see in app")}]</span></div>`; }
+      q+=`<div class="pq"><div class="pq-h"><b>Q${n}</b> · ${"★".repeat(x.pri||1)}${x.exam?" · "+esc(x.exam):""}${x.exc?" · "+T2("EXCETO","EXCEPT"):""}</div><p class="pq-s">${safe(c.stem)}</p>${im}${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i> ${safe(o.t)}</div>`).join("")}</div>`;
+      const ok=c.opts[x.correct];
+      g+=`<div class="pq-g"><b class="n">Q${n} — ${L[x.correct]??"?"}</b> · ${safe(ok?.why||"")}${c.peg?` <em>${T2("Pegadinha","Trap")}:</em> ${safe(c.peg)}`:""}</div>`; } }
+  return {q,g};
+}
+// PDF único com as questões de toda a disciplina, agrupadas por tema (null se não houver)
+async function questionsPdf(d){
+  const groups=(d.topics||[]).map(t=>({title:nm(t),qs:pdfQs(d.id,t.id)})).filter(x=>x.qs.length); if(!groups.length) return null;
+  const x=await pqHtml(groups), label=`${d.period!=null?d.period+"º · ":""}${nm(d)} · 99 Questões`.replace(/[\/\\:*?"<>|]/g,"").trim();
+  return pdfFromHtml(label, `<h1>${T2("Questões","Questions")} · ${esc(nm(d))}</h1>${x.q}<h2 class="pq-br">${T2("Gabarito","Answer key")}</h2>${x.g}`, .8);
+}
+// pacote da disciplina: um PDF de lição por tema (sem questões) + o das questões por último
+async function discPdfFiles(dId, prog){
+  const d=discById(dId), ls=lessonsOf(dId), files=[], N=ls.length+1;
+  for(let i=0;i<ls.length;i++){ prog&&prog(i+1,N); files.push(await lessonPdf(ls[i],false)); }
+  prog&&prog(N,N); const f=d&&await questionsPdf(d); if(f) files.push(f); return files;
 }
 function pdfSave(f){ const a=document.createElement("a"); a.href=URL.createObjectURL(f); a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),8000); }
 async function pdfShare(fs){ try{ await navigator.share({files:fs}); }catch(e){ if(e?.name!=="AbortError") toast(T2("Não foi possível compartilhar: baixe o PDF","Could not share: download the PDF")); } }
@@ -1189,9 +1233,10 @@ function pdfSheet(){
    <div class="list" style="margin-top:12px">${fs.map((f,i)=>`<div class="li" style="grid-template-columns:1fr auto auto;align-items:center"><span class="t" style="font-size:13px">${esc(f.name)}</span>${can([f])?`<button class="btn small" data-act="pdfShare" data-i="${i}">↗</button>`:"<span></span>"}<button class="btn small" data-act="pdfDl" data-i="${i}">⬇</button></div>`).join("")}</div>`}`);
 }
 // gera 1 ou vários PDFs com feedback no botão
-async function pdfRun(ls, btn){
-  if(!ls.length||btn?.disabled) return; const txt=btn?.textContent; if(btn){ btn.disabled=true; btn.textContent=T2("Gerando PDF…","Generating PDF…"); }
-  try{ const files=[]; for(let i=0;i<ls.length;i++){ if(ls.length>1) toast(T2(`Gerando ${i+1}/${ls.length}…`,`Generating ${i+1}/${ls.length}…`)); files.push(await lessonPdf(ls[i])); }
+async function pdfRun(ls, btn, dId){
+  if(!(ls.length||dId)||btn?.disabled) return; const txt=btn?.textContent; if(btn){ btn.disabled=true; btn.textContent=T2("Gerando PDF…","Generating PDF…"); }
+  try{ let files=[]; if(dId) files=await discPdfFiles(dId,(i,N)=>toast(T2(`Gerando ${i}/${N}…`,`Generating ${i}/${N}…`))); else for(let i=0;i<ls.length;i++){ if(ls.length>1) toast(T2(`Gerando ${i+1}/${ls.length}…`,`Generating ${i+1}/${ls.length}…`)); files.push(await lessonPdf(ls[i])); }
+    if(!files.length) return;
     await pdfDeliver(files);
   }catch(e){ toast(T2("Erro ao gerar o PDF: ","PDF error: ")+(e?.message||e)); }
   finally{ if(btn?.isConnected){ btn.disabled=false; btn.textContent=txt; } }
@@ -1437,7 +1482,7 @@ document.addEventListener("click", async e=>{
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
   if(act==="lesson"){ S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); } return go("lesson"); }
   if(act==="lessonPdf"){ return pdfRun([S.lessons.get(S.lessonId)], a); }
-  if(act==="discPdf"){ const d=curDisc(); return d&&pdfRun(lessonsOf(d.id), a); }
+  if(act==="discPdf"){ const d=curDisc(); return d&&pdfRun(lessonsOf(d.id), a, d.id); }
   if(act==="pdfShare"){ const fs=S.pdfFiles||[]; return pdfShare(a.dataset.i==="all"?fs:[fs[a.dataset.i]]); }
   if(act==="pdfDl"){ return pdfSave(S.pdfFiles[a.dataset.i]); }
   if(act==="pdfDlAll"){ return (S.pdfFiles||[]).forEach((f,i)=>setTimeout(()=>pdfSave(f),i*400)); }

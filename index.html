@@ -443,7 +443,7 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 const T = {
 pt:{stats:"Números",home:"Início",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
- std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",
+ std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",std_banco:"Banco",std_tudo:"Tudo",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
  answered:"Respondidas",accuracy:"Acerto",coverage:"cobertura",bySub:"Desempenho por sub-bloco",last14:"Últimos 14 dias",correct:"acertos",wrong:"erros",
  quick:"Atalhos",scStudyD:"Comentário após cada resposta",scSimD:"Cronometrado, gabarito no fim",scFcD:"Revisões da disciplina + novos do tema",continueStudy:"Estudo comentado",quickSim:"Simulado rápido (10)",fcStart:"Flashcards do tema",
@@ -476,7 +476,7 @@ pt:{stats:"Números",home:"Início",plan:"Plano",study:"Estudar",review:"Revisã
  min:"min",qs:"questões",step:"Etapa",days:"d",today:"hoje",tomorrow:"amanhã"},
 en:{stats:"Stats",home:"Home",plan:"Plan",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
- std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",
+ std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",std_banco:"Bank",std_tudo:"Everything",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
  answered:"Answered",accuracy:"Accuracy",coverage:"coverage",bySub:"Performance by sub-block",last14:"Last 14 days",correct:"correct",wrong:"wrong",
  quick:"Shortcuts",scStudyD:"Explanation after each answer",scSimD:"Timed, answers at the end",scFcD:"Discipline reviews + new from topic",continueStudy:"Tutor mode",quickSim:"Quick test (10)",fcStart:"Topic flashcards",
@@ -624,8 +624,10 @@ function curTopic0(){ const d=curDisc(); if(!d) return null; const k=set().topic
 function topicCount(id){ let n=0; for(const q of S.qs.values()) if(q.topic===id) n++; return n; }
 function subOf(q){ return curTopic()?.pseudo ? q.topic : q.sub; }
 function nm(o){ return o?.name?.[set().lang] || o?.name?.pt || o?.name?.en || o?.id || ""; }
-function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); return s? nm(s) : id; }
-function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||(t.pseudo? !t.topics.includes(q.topic) : q.topic!==t.id)) return false; const st=set().std; return st==="all" || q.standard===st; }
+function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); return s? nm(s) : (id==="banco"?"Banco MED":id); }
+// Banco MED: standard "banco" só aparece em "Banco"/"Tudo"; "Ambos" = UFPR+USMLE (como antes)
+function stdM(q,st){ return st==="tudo" || (st==="all" ? q.standard!=="banco" : q.standard===st); }
+function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||(t.pseudo? !t.topics.includes(q.topic) : q.topic!==t.id)) return false; const st=set().std; return stdM(q,st); }
 function ctxQs(){ return [...S.qs.values()].filter(inCtx).sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); }
 function content(q){ // returns {c, lang, fallback}
   const L0=set().lang, other=L0==="pt"?"en":"pt";
@@ -655,7 +657,7 @@ function rateCard(q, grade){ // 0 errei, 1 difícil, 2 acertei → FSRS 1, 2, 3
 }
 function pruneLog(){ const keys=Object.keys(S.prog.log).sort(); while(keys.length>120){ delete S.prog.log[keys.shift()]; } }
 // revisão espaçada = baralho da disciplina inteira (como no Anki); "ctx" restringe ao tema/prova escolhido
-function discQs(){ const d=curDisc(); if(!d) return []; const st=set().std; return [...S.qs.values()].filter(q=>q.discipline===d.id && (st==="all"||q.standard===st)); }
+function discQs(){ const d=curDisc(); if(!d) return []; const st=set().std; return [...S.qs.values()].filter(q=>q.discipline===d.id && stdM(q,st)); }
 function revPool(){ return set().revScope==="ctx" ? ctxQs() : discQs(); }
 function dueQs(){ const end=startOfDay(now())+DAY; return revPool().filter(q=>{ const r=rec(q.id); return r && r.due!=null && r.due < end; }); }
 // cards: revisões vencidas do baralho + cards novos (nunca vistos) só do tema atual
@@ -690,14 +692,14 @@ function renderCtx(){
   $("#ctx").innerHTML = `${perSel}
    ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}" style="box-shadow:inset 4px 0 0 ${discColor(d)}">${dOpts||`<option>—</option>`}</select></label>
    <div class="sel"><button type="button" class="selbtn" id="selTopic" data-act="topicPick" aria-haspopup="dialog" aria-label="${tr("topic")}">${esc(t?nm(t):"—")}</button></div>`}
-   <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
+   <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
   const sp=$("#selPer"); if(sp) sp.onchange=e=>{ const v=e.target.value; set().per = v==="all" ? "all" : +v; if(!discs().some(x=>x.id===set().disc)){ set().disc=discs()[0]?.id||null; set().topic=null; } S.session=null; S.fcDeck=null; S.setup=null; saveProg(); render(); };
   if(S.view==="stats") return;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
 }
 /* ---------- seletor de tema (folha com busca, grupos por prova e números do tema) ---------- */
 function pickerStats(){ const d=curDisc(); const st=set().std; const end=startOfDay(now())+DAY; const agg={};
-  for(const q of S.qs.values()){ if(q.discipline!==d.id||(st!=="all"&&q.standard!==st)) continue;
+  for(const q of S.qs.values()){ if(q.discipline!==d.id||!stdM(q,st)) continue;
     const k=q.topic+"|"+(q.sub||""); const e=priOf(q)===3; for(const key of [q.topic, k]){ const a=agg[key]||(agg[key]={n:0,seen:0,ok:0,due:0,e3:0,e3s:0}); a.n++; if(e) a.e3++; const r=rec(q.id); if(r){ a.seen++; if(e) a.e3s++; if(r.ok) a.ok++; if(r.due!=null&&r.due<end) a.due++; } } }
   return agg; }
 function pickRow(act,val,label,a,{cur,lesson,dis,sub}={}){ a=a||{n:0,seen:0,ok:0,due:0}; const en=set().lang==="en";
@@ -930,7 +932,7 @@ const ddot=d=>`<i class="ddot" style="background:${discColor(d)}" aria-hidden="t
 const MES={jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11};
 function examDate(ex){ if(ex.date) return startOfDay(new Date(ex.date+"T12:00:00").getTime()); const m=(ex.name?.pt||"").match(/(\d{1,2})(?:[–-]\d{1,2})?\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i); if(!m) return null;
   const y=new Date(now()).getFullYear(); return startOfDay(new Date(y, MES[m[2].toLowerCase()], Number(m[1]), 12).getTime()); }
-function stdOk(q){ const st=set().std; return (st==="all"||q.standard===st) && perOk(q); }
+function stdOk(q){ const st=set().std; return stdM(q,st) && perOk(q); }
 function pct(a,b){ return b?Math.round(100*a/b)+"%":"—"; }
 function leechList(){ return [...S.qs.values()].filter(q=>stdOk(q)&&rec(q.id)&&(rec(q.id).n-rec(q.id).nOk)>=2).sort((a,b)=>((rec(b.id).n-rec(b.id).nOk)-(rec(a.id).n-rec(a.id).nOk))||((rec(a.id).ok?1:0)-(rec(b.id).ok?1:0))); }
 function vStats(v){
@@ -1077,7 +1079,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
    <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button></div>
    <div class="lwrap"><article class="lesson" lang="pt-BR">${l.html}</article><nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
-     <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
+     <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
 const WIDE_L=matchMedia("(min-width:1150px)");
 function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=$("#view .lesson"), nav=$("#ltoc"); if(!art||!nav) return;
@@ -1570,7 +1572,7 @@ function runSearch(raw){
   for(const x of idx.qs){
     if(f.per!=="all"&&x.p!==f.per) continue;
     const q=S.qs.get(x.id); if(!q) continue;
-    if(f.std!=="all"&&q.standard!==f.std) continue; if(f.real&&q.origin!=="real") continue; if(f.pri&&priOf(q)<f.pri) continue;
+    if(f.std!=="tudo"&&!stdM(q,f.std)) continue; if(f.real&&q.origin!=="real") continue; if(f.pri&&priOf(q)<f.pri) continue;
     if(f.st!=="all"){ const st=status(q.id); if(f.st==="wrong"&&st!=="bad") continue; if(f.st==="open"&&st!=="no") continue; }
     const strong=P.units.every(u=>u.res.some(r=>r.test(x.a)));
     if(!strong&&!P.units.every(u=>u.res.some(r=>r.test(x.a)||r.test(x.b)))) continue;
@@ -1586,7 +1588,7 @@ function runSearch(raw){
 function srChip(k,v,label){ const f=S.srch.f; const on=k==="real"?!!f.real===v:String(f[k])===String(v); return `<button type="button" class="chip" data-act="srF" data-sk="${k}" data-sv="${v}" aria-pressed="${on}">${label}</button>`; }
 function srFiltHTML(){ const ps=periods(); const en=set().lang==="en";
   return `${ps.length>1?`<div class="field"><span class="flabel">${T2("Período","Term")}</span><div class="chips">${srChip("per","all",T2("Todos","All"))}${ps.map(p=>srChip("per",p,en?"Term "+p:p+"º")).join("")}</div></div>`:""}
-   <div class="field"><span class="flabel">${T2("Padrão","Standard")}</span><div class="chips">${srChip("std","all",T2("Todos","All"))}${srChip("std","ufpr","UFPR")}${srChip("std","usmle","USMLE")}</div></div>
+   <div class="field"><span class="flabel">${T2("Padrão","Standard")}</span><div class="chips">${srChip("std","all",T2("Todos","All"))}${srChip("std","ufpr","UFPR")}${srChip("std","usmle","USMLE")}${srChip("std","banco","Banco")}${srChip("std","tudo",T2("Tudo","Everything"))}</div></div>
    <div class="field"><span class="flabel">${T2("Origem","Origin")}</span><div class="chips">${srChip("real",false,T2("Todas","All"))}${srChip("real",true,T2("Só provas reais","Real exams only"))}</div></div>
    <div class="field"><span class="flabel">${T2("Seu histórico","Your record")}</span><div class="chips">${srChip("st","all",T2("Todas","All"))}${srChip("st","wrong",T2("Que errei","Missed"))}${srChip("st","open",T2("Não respondidas","Unanswered"))}</div></div>
    <div class="field"><span class="flabel">${T2("Prioridade","Priority")}</span><div class="chips">${srChip("pri",0,T2("Todas","All"))}${srChip("pri",2,T2("★★ ou mais","★★ and up"))}${srChip("pri",3,"★★★")}</div></div>`; }
@@ -1667,7 +1669,7 @@ const addDays=(t,n)=>{ const d=new Date(t); d.setDate(d.getDate()+n); return d.g
 const exKey=(d,ex)=>d.id+"|"+ex.id;
 function planExDate(d,ex){ const o=PL().dates[exKey(d,ex)]; return o ? startOfDay(new Date(o+"T12:00:00").getTime()) : examDate(ex); }
 function planIsOff(t,P){ return P.offWd.includes(new Date(t).getDay()) || P.offDates.includes(dayKey(new Date(t))); }
-function planIndex(){ const m=new Map(); for(const q of S.qs.values()){ if(q.standard==="usmle") continue; const k=q.discipline+"|"+q.topic; let a=m.get(k); if(!a) m.set(k,a=[]); a.push(q); } return m; }
+function planIndex(){ const m=new Map(); for(const q of S.qs.values()){ if(q.standard==="usmle"||q.standard==="banco") continue; const k=q.discipline+"|"+q.topic; let a=m.get(k); if(!a) m.set(k,a=[]); a.push(q); } return m; }
 function planTopic(d,t,idx){ const qs=idx.get(d.id+"|"+t.id)||[]; const n=qs.length; let seen=0,ok=0,ps=0; const wrong=[];
   for(const q of qs){ ps+=priOf(q); const r=rec(q.id); if(r){ seen++; if(r.ok) ok++; else wrong.push(q); } }
   const need=Math.max(0,Math.ceil(n*PLAN_COV)-seen), acc=seen?ok/seen:null, w=n?ps/n:2;
@@ -1702,7 +1704,7 @@ function planCompute(){
   }
   // o que já foi feito hoje fica verde no topo da célula de hoje
   const seenDone=new Set(); for(const e of exams) for(const x of e.tps){ const id=x.d.id+"|"+x.t.id; if(seenDone.has(id)) continue; seenDone.add(id);
-    let c=0; for(const q of S.qs.values()) if(q.discipline===x.d.id&&q.topic===x.t.id&&q.standard!=="usmle"){ const r=rec(q.id); if(r&&r.ts>=today) c++; }
+    let c=0; for(const q of S.qs.values()) if(q.discipline===x.d.id&&q.topic===x.t.id&&q.standard!=="usmle"&&q.standard!=="banco"){ const r=rec(q.id); if(r&&r.ts>=today) c++; }
     if(c) (days.get(tk)||(days.set(tk,[]),days.get(tk))).unshift({k:"done",tp:x,n:c}); }
   return {exams,days,today,tk,doneToday};
 }
@@ -1815,7 +1817,7 @@ document.addEventListener("click", async e=>{
   if(act==="planOff"){ const P=PL(), k=a.dataset.day; P.offDates=P.offDates.includes(k)?P.offDates.filter(x=>x!==k):P.offDates.concat(k); saveProg(); return render(); }
   if(act==="planWeek"){ const v=Number(a.dataset.v); S.planWeek=v===0?0:(S.planWeek||0)+v; return render(); }
   if(act==="planStudy"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
-  if(act==="planRev"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.fcDeck=null; S.setup=null; const L=[...S.qs.values()].filter(q=>q.discipline===a.dataset.d&&q.topic===a.dataset.t&&q.standard!=="usmle"&&rec(q.id)&&!rec(q.id).ok); if(!L.length) return toast(tr("none")); saveProg(); S.session=buildSession("review",prioSort(shuffle(L)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
+  if(act==="planRev"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.fcDeck=null; S.setup=null; const L=[...S.qs.values()].filter(q=>q.discipline===a.dataset.d&&q.topic===a.dataset.t&&q.standard!=="usmle"&&q.standard!=="banco"&&rec(q.id)&&!rec(q.id).ok); if(!L.length) return toast(tr("none")); saveProg(); S.session=buildSession("review",prioSort(shuffle(L)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
   if(act==="planFinal"){ set().disc=a.dataset.d; a.dataset.act="examEssentials"; return a.click(); }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
@@ -1897,8 +1899,9 @@ function openKeys(){ const en=set().lang==="en"; const r=(k,t)=>`<div class="kro
 const CFG = window.GABARITO_CONFIG || {};
 let SB = null;
 function sbReady(){ return !!(SB && S.uid); }
-function rowToQ(r){ return Object.assign({id:r.id}, r.data); }
-function qToRow(q){ const {id, ...data}=q; return {id, discipline:data.discipline, topic:data.topic, data, updated_at:new Date().toISOString()}; }
+// Banco MED: a linha fica em discipline "banco" (RLS só para o admin); `link` encaixa a questão num tema existente
+function rowToQ(r){ const q=Object.assign({id:r.id}, r.data); if(q.standard==="banco"&&q.link){ q.bd=q.discipline; q.bt=q.topic; q.discipline=q.link.d; q.topic=q.link.t; q.sub="banco"; } return q; }
+function qToRow(q){ const {id, ...data}=q; if(data.bd){ data.discipline=data.bd; data.topic=data.bt; delete data.bd; delete data.bt; data.sub=data.sub||"banco"; } return {id, discipline:data.discipline, topic:data.topic, data, updated_at:new Date().toISOString()}; }
 // adapter with the subset of the artifact db API the UI uses
 const DBA = {
   doc(path){

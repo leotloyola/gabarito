@@ -418,8 +418,13 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
   html .wrap:has(.lwrap){max-width:1240px}
   html .wrap:has(.btbl){max-width:1500px}
   html body .wrap:has(.qgrid.l3){max-width:2300px}
-  body #view .qgrid.l3{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1.2fr);gap:36px}
+  body #view .qgrid.l3{grid-template-columns:minmax(0,.8fr) minmax(0,1fr) var(--lpw,minmax(0,1.5fr));gap:36px}
+  .qdrag{position:absolute;left:-26px;top:0;bottom:0;width:16px;cursor:col-resize;touch-action:none;z-index:2}
+  .qdrag::after{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--line);transition:background .15s,width .15s,left .15s}
+  .qdrag:hover::after{background:var(--accent);width:4px;left:6px}
   body #view .qgrid.l3 .qlesson{display:flex;flex-direction:column;gap:10px;position:sticky;top:14px;max-height:calc(100vh - 110px);min-width:0}
+  body.mp-on #view .qgrid.l3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  body.mp-on #view .qgrid.l3 .qlesson{display:none}
   body:not(.focus) #view .qgrid.l3 .qlesson{top:130px;max-height:calc(100vh - 230px)}
   .qlh{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .qlh b{font-size:13px;font-weight:600;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -941,7 +946,7 @@ function questionHTML(q, it, reveal, simMode){
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&WIDE_Q.matches&&LP;
-  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}"><article class="lesson" lang="pt-BR">${lsn.html}</article></div></aside>`:"";
+  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}"><article class="lesson" lang="pt-BR">${lsn.html}</article></div></aside>`:"";
   const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${lp?" l3":""}"><div class="qleft"><div class="tags">${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div>${pane}</div>`;
 }
@@ -1147,6 +1152,14 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
 const WIDE_L=matchMedia("(min-width:1150px)");
 const WIDE_Q=matchMedia("(min-width:1500px)"); let LP=true; try{ LP=localStorage.getItem("gab.lpane")!=="0"; }catch(e){}
+(()=>{ try{ const w=localStorage.getItem("gab.lpw"); if(w) document.documentElement.style.setProperty("--lpw",w+"px"); }catch(e){}
+  let dr=null; const R=document.documentElement.style;
+  document.addEventListener("pointerdown",e=>{ const h=e.target.closest&&e.target.closest(".qdrag"); if(!h) return; dr={g:h.closest(".qgrid"),h}; try{ h.setPointerCapture(e.pointerId); }catch(_){} document.body.style.userSelect="none"; e.preventDefault(); });
+  document.addEventListener("pointermove",e=>{ if(!dr) return; const r=dr.g.getBoundingClientRect(); dr.w=Math.round(Math.min(Math.max(r.right-e.clientX-18,320),Math.min(1400,r.width*.7))); R.setProperty("--lpw",dr.w+"px"); });
+  const end=()=>{ if(!dr) return; document.body.style.userSelect=""; try{ if(dr.w) localStorage.setItem("gab.lpw",dr.w); }catch(_){} dr=null; };
+  document.addEventListener("pointerup",end); document.addEventListener("pointercancel",end);
+  document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".qdrag")){ R.removeProperty("--lpw"); try{ localStorage.removeItem("gab.lpw"); }catch(_){} } });
+})();
 WIDE_Q.addEventListener&&WIDE_Q.addEventListener("change",()=>{ if(S.catalog) render(); });
 function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=$("#view .lesson"), nav=$("#ltoc"); if(!art||!nav) return;
   let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return;

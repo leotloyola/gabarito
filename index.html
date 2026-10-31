@@ -420,6 +420,8 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
   html body .wrap:has(.qgrid.l3){max-width:2300px}
   body #view .qgrid.l3{grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1.5fr);gap:36px}
   body #view .qgrid.l3 .qlesson{display:flex;flex-direction:column;gap:10px;position:sticky;top:14px;max-height:calc(100vh - 110px);min-width:0}
+  body.mp-on #view .qgrid.l3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  body.mp-on #view .qgrid.l3 .qlesson{display:none}
   body:not(.focus) #view .qgrid.l3 .qlesson{top:130px;max-height:calc(100vh - 230px)}
   .qlh{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .qlh b{font-size:13px;font-weight:600;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

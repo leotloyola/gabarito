@@ -275,13 +275,17 @@ a.li{text-decoration:none;color:inherit}
 /* painel do material de apoio (Drive /preview) à direita, telas >=1000px */
 #mpane{display:none}
 @media (min-width:1000px){
-  body.mp-on{--mpw:clamp(420px,46vw,980px)}
+  body.mp-on{--mpw:var(--mpwu,clamp(420px,46vw,980px))}
   body.mp-on .shell{margin-right:var(--mpw)}
   body.mp-on #mpane{display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;width:var(--mpw);z-index:40;background:var(--surface);border-left:1px solid var(--hair);box-shadow:var(--shadow)}
   #mpane .mph{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--hair)}
   #mpane .mph b{flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #mpane .mph small{color:var(--muted);white-space:nowrap}
   #mpane iframe{flex:1;width:100%;border:0;background:var(--bg)}
+  #mpane .mpdrag{position:absolute;left:-8px;top:0;bottom:0;width:16px;cursor:col-resize;touch-action:none;z-index:2}
+  #mpane .mpdrag::after{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--line);transition:background .15s,width .15s,left .15s}
+  #mpane .mpdrag:hover::after,body.mp-drag #mpane .mpdrag::after{background:var(--accent);width:4px;left:6px}
+  body.mp-drag #mpane iframe{pointer-events:none}
 }
 .li .st{font-size:11.5px;font-weight:500;align-self:start;font-variant-numeric:tabular-nums}
 .st.ok{color:var(--ok)} .st.bad{color:var(--bad)} .st.no{color:var(--subtle)}
@@ -1129,8 +1133,16 @@ function topicLinksHTML(t){ const L=t?.links; if(!L?.length) return ""; const ic
 // telas largas: material abre num painel à direita (pré-visualização do Drive); celular abre em outra aba
 const WIDE_M=matchMedia("(min-width:1000px)");
 function mpOpen(src,name,pg,href){ let el=document.getElementById("mpane"); if(!el){ el=document.createElement("aside"); el.id="mpane"; el.setAttribute("aria-label",T2("Material de apoio","Study material")); document.body.appendChild(el); }
-  el.innerHTML=`<div class="mph"><b title="${esc(name)}">${esc(name)}</b>${pg?`<small>${esc(pg)}</small>`:""}<a class="btn small ghost" href="${esc(href)}" target="_blank" rel="noopener" title="${T2("Abrir no Drive","Open in Drive")}">↗</a><button type="button" class="btn small ghost" data-mpclose aria-label="${T2("Fechar","Close")}">✕</button></div><iframe src="${esc(src)}" allow="autoplay; fullscreen" allowfullscreen title="${esc(name)}"></iframe>`;
+  el.innerHTML=`<div class="mpdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="mph"><b title="${esc(name)}">${esc(name)}</b>${pg?`<small>${esc(pg)}</small>`:""}<a class="btn small ghost" href="${esc(href)}" target="_blank" rel="noopener" title="${T2("Abrir no Drive","Open in Drive")}">↗</a><button type="button" class="btn small ghost" data-mpclose aria-label="${T2("Fechar","Close")}">✕</button></div><iframe src="${esc(src)}" allow="autoplay; fullscreen" allowfullscreen title="${esc(name)}"></iframe>`;
   document.body.classList.add("mp-on"); }
+(()=>{ const R=document.documentElement.style; try{ const w=localStorage.getItem("gab.mpw"); if(w) R.setProperty("--mpwu",w+"px"); }catch(e){}
+  let dr=null;
+  document.addEventListener("pointerdown",e=>{ const h=e.target.closest&&e.target.closest(".mpdrag"); if(!h) return; dr={}; try{ h.setPointerCapture(e.pointerId); }catch(_){} document.body.classList.add("mp-drag"); document.body.style.userSelect="none"; e.preventDefault(); });
+  document.addEventListener("pointermove",e=>{ if(!dr) return; dr.w=Math.round(Math.min(Math.max(innerWidth-e.clientX,360),innerWidth-420)); R.setProperty("--mpwu",dr.w+"px"); });
+  const end=()=>{ if(!dr) return; document.body.classList.remove("mp-drag"); document.body.style.userSelect=""; try{ if(dr.w) localStorage.setItem("gab.mpw",dr.w); }catch(_){} dr=null; };
+  document.addEventListener("pointerup",end); document.addEventListener("pointercancel",end);
+  document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".mpdrag")){ R.removeProperty("--mpwu"); try{ localStorage.removeItem("gab.mpw"); }catch(_){} } });
+})();
 function mpClose(){ document.body.classList.remove("mp-on"); const el=document.getElementById("mpane"); if(el) el.innerHTML=""; }
 document.addEventListener("click",e=>{ if(e.target.closest("[data-mpclose]")){ e.preventDefault(); return mpClose(); }
   const a=e.target.closest("a[data-mp]"); if(!a||!WIDE_M.matches||e.ctrlKey||e.metaKey||e.shiftKey) return; e.preventDefault(); e.stopPropagation(); mpOpen(a.dataset.mp,a.dataset.n,a.dataset.p,a.href); },true);

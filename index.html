@@ -270,6 +270,8 @@ details.srt>summary small{font-size:12px;color:var(--muted);text-align:right}
 
 .li .t{font-family:var(--f-read);font-size:15px;line-height:1.45;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink)}
 .li .m{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+a.li{text-decoration:none;color:inherit}
+.tlinks summary{cursor:pointer;list-style-position:inside}
 .li .st{font-size:11.5px;font-weight:500;align-self:start;font-variant-numeric:tabular-nums}
 .st.ok{color:var(--ok)} .st.bad{color:var(--bad)} .st.no{color:var(--subtle)}
 .empty{color:var(--subtle);text-align:center;padding:28px 12px;font-size:14px}
@@ -795,6 +797,7 @@ function vHome(v){
    <div class="due dc" style="--dc:${discColor(curDisc())}"><div><div class="eyebrow">${tr("dueToday")} · ${esc(scopeLabel())}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
    ${(()=>{ const t=curTopic(); return t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id)}</div>`:""; })()}
+   ${(()=>{ const t=curTopic(); return t&&!t.pseudo?topicLinksHTML(t):""; })()}
    ${planHomeHTML()}
    ${nextExamHTML()}
    <div class="kpis">
@@ -840,6 +843,7 @@ function vStudy(v){
    ${segS}
    <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("studySetup")}</h1></div>
    ${t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id,true)}</div>`:""}
+   ${t&&!t.pseudo?topicLinksHTML(t):""}
    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
       <button type="button" class="chip" data-su="mode" data-val="study" aria-pressed="${su.mode==="study"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mStudy")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mStudyD")}</span></button>
@@ -1102,6 +1106,9 @@ function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="gro
 function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
 function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
+function topicLinksHTML(t){ const L=t?.links; if(!L?.length) return ""; const ic={video:"▶",pdf:"📄",folder:"📁"};
+  const url=x=>x.t==="folder"?`https://drive.google.com/drive/folders/${encodeURIComponent(x.id)}`:`https://drive.google.com/file/d/${encodeURIComponent(x.id)}/view`;
+  return `<details class="panel tlinks"><summary><b>${T2("Material de apoio","Study material")}</b> <small style="color:var(--muted)">· ${L.length} ${T2("links (Drive)","links (Drive)")}</small></summary><div class="list" style="margin-top:8px">${L.map(x=>`<a class="li" href="${url(x)}" target="_blank" rel="noopener"><span class="t">${ic[x.t]||"🔗"} ${esc(x.n)}</span>${x.p?`<small style="color:var(--muted)">${esc(x.p)}</small>`:""}</a>`).join("")}</div></details>`; }
 function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id); const read=S.prog.read||{};
   if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>`;
   return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina inteira","Download whole discipline")} (${L.length} PDFs)</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }
@@ -1112,6 +1119,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   v.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
    <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button></div>
+   ${topicLinksHTML(t)}
    <div class="lwrap"><article class="lesson" lang="pt-BR">${l.html}</article><nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>

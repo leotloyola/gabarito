@@ -9,6 +9,7 @@ function fixture(){
   const exams=[{id:"P1",name:{pt:"P1 · 15/dez",en:"Exam 1"}},{id:"P2",name:{pt:"P2 · 20/dez",en:"Exam 2"}},{id:"FINAL",all:true,name:{pt:"Final · 30/dez",en:"Final"}}];
   const mk=(d,n)=>({id:d,name:{pt:n,en:n},exams,topics:["t1","t2","t3","t4"].map((t,i)=>({id:t,name:{pt:`${n} tema ${i+1}`,en:`${n} topic ${i+1}`},exam:i<2?"P1":"P2",subs:[{id:"s1",name:{pt:"Sub 1",en:"Sub 1"}},{id:"s2",name:{pt:"Sub 2",en:"Sub 2"}}]}))});
   const cat={disciplines:[{...mk("da","Disciplina A"),period:5},{...mk("db","Disciplina B"),period:4}]};
+  cat.disciplines[0].topics[0].links=[{t:"pdf",n:"PDF fictício",p:"p. 1–2",id:"x1"},{t:"video",n:"Vídeo fictício",id:"x2"},{t:"folder",n:"Pasta fictícia",id:"x3"}];
   const qs=[]; let k=0;
   for(const d of ["da","db"]) for(const t of ["t1","t2","t3","t4"]) for(let i=0;i<6;i++){ k++;
     const usmle=i===5; const opts=[0,1,2,3,4].map(j=>({t:`Alternativa ${j} da questão ${k}`,why:j===i%5?"<b>Correta</b> porque sim.":"Errada.",more:"Detalhe."}));
@@ -36,6 +37,7 @@ function fixture(){
     for(const v of ["home","plan","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
     for(const t of ["geral","provas","cobrados"]) await step("stats "+t, ()=>p.evaluate(t=>{ S.statsTab=t; go("stats"); render(); },t));
     await step("stats nome longo", async()=>{ const w=await p.evaluate(()=>{ const t=S.catalog.disciplines[0].topics[0], old=t.name; t.name={pt:"Fundamentos: fenomenologia, entrevista psiquiátrica e exame do estado mental completo",en:"x"}; S.statsTab="geral"; go("stats"); render(); const w=document.documentElement.scrollWidth-document.documentElement.clientWidth; t.name=old; return w; }); if(w>0) throw new Error("transborda "+w+"px"); });
+    await step("links do tema", async()=>{ const n=await p.evaluate(()=>{ set().topic="t1"; S.session=null; go("home"); const a=document.querySelectorAll(".tlinks a").length; S.lessonId="lesson:da:t1"; go("lesson"); return [a,document.querySelectorAll(".tlinks a").length]; }); if(n[0]!==3||n[1]!==3) throw new Error("links "+n); });
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
     await step("report sheet", async()=>{ await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });

@@ -398,6 +398,30 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
   .ltoc summary{list-style:none;pointer-events:none;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 10px}
   .ltoc summary::-webkit-details-marker{display:none}
 }
+/* ---- ultrawide (>=1500px): lição ao lado da questão, temas fixos à esquerda, plano em colunas ---- */
+.qlesson,#side{display:none}.plexams{display:contents}
+@media (min-width:1500px){
+  .wrap{max-width:1040px}
+  html .wrap:has(.lwrap){max-width:1240px}
+  html .wrap:has(.btbl){max-width:1500px}
+  html body .wrap:has(.qgrid.l3){max-width:2300px}
+  body #view .qgrid.l3{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1.2fr);gap:36px}
+  body #view .qgrid.l3 .qlesson{display:flex;flex-direction:column;gap:10px;position:sticky;top:14px;max-height:calc(100vh - 110px);min-width:0}
+  body:not(.focus) #view .qgrid.l3 .qlesson{top:130px;max-height:calc(100vh - 230px)}
+  .qlh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .qlh b{font-size:13px;font-weight:600;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qlh .row{flex-wrap:nowrap;gap:6px;flex:none}
+  .qlbody{overflow:auto;min-height:0;flex:1;border-radius:20px;scrollbar-width:thin}
+  #side{display:block;position:fixed;left:0;top:380px;bottom:0;width:232px;z-index:26;background:var(--surface);overflow:auto;padding:10px 10px 24px;border-top:1px solid var(--hair);scrollbar-width:thin}
+  body.focus #side{display:none}
+  #side .sidehd{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 6px 6px}
+  #side .prow{padding:8px 10px}#side .prow .pt b{font-size:13.5px}
+  html .wrap:has(.pgrid){max-width:2000px}
+  .plexams{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;align-items:start}
+  html .pgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start}
+  html .pday{grid-template-columns:minmax(0,1fr)}
+  html .pdl{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:6px}html .pdl .pdx{margin-top:0;margin-left:auto}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .plhome{display:block;width:100%;text-align:left;border:0;cursor:pointer;font:inherit;color:inherit}
 .plh{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:12px;font-size:13.5px}.plh .n{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.plh .p{color:var(--muted);font-size:12.5px;white-space:nowrap}.plh .track{margin-top:4px}
@@ -679,7 +703,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 
 /* ---------- chrome ---------- */
 function renderTabs(){
-  const due = dueQs().length;
+  const due = dueQs().length; renderSide();
   $("#tabs").innerHTML = ["home","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
 }
 function renderCtx(){
@@ -717,7 +741,7 @@ function pickSheet(title, body, n){ const en=set().lang==="en";
       sh.querySelectorAll("details.pg").forEach(g=>{ let vis=0; g.querySelectorAll(".prow").forEach(r=>{ const ok=!v||r.dataset.q.normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(v); r.hidden=!ok; if(ok) vis++; }); g.hidden=!vis; if(v) g.open=true; if(vis) any=true; });
       sh.querySelectorAll(".plist > .prow").forEach(r=>{ const ok=!v||r.dataset.q.normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(v); r.hidden=!ok; if(ok) any=true; });
       $("#pickNone").hidden=any; }; }); }
-function openTopicPicker(){ const d=curDisc(); if(!d) return; const t=curTopic(); const agg=pickerStats(); const en=set().lang==="en";
+function topicPickBody(){ const d=curDisc(); if(!d) return null; const t=curTopic(); const agg=pickerStats(); const en=set().lang==="en";
   const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; s.e3+=a.e3; s.e3s+=a.e3s; } return s; },{n:0,seen:0,ok:0,due:0,e3:0,e3s:0});
   const row=x=>pickRow("pickTopic",x.id,nm(x),agg[x.id],{cur:t&&t.id===x.id,lesson:!!lessonOf(d.id,x.id),dis:!topicCount(x.id)});
   const exs=d.exams||[]; let body="", n=(d.topics||[]).length;
@@ -729,7 +753,13 @@ function openTopicPicker(){ const d=curDisc(); if(!d) return; const t=curTopic()
       body+=grp(nm(ex),all+tps.map(row).join(""),open,a); }
     const rest=(d.topics||[]).filter(x=>!x.exam); if(rest.length) body+=grp(en?"Other":"Outros",rest.map(row).join(""),!t||rest.some(x=>x.id===t.id),sum(rest.map(x=>x.id)));
   } else body=(d.topics||[]).map(row).join("");
-  pickSheet(`${ddot(d)}${esc(nm(d))}`, body, n); }
+  return {d,body,n}; }
+function openTopicPicker(){ const r=topicPickBody(); if(r) pickSheet(`${ddot(r.d)}${esc(nm(r.d))}`, r.body, r.n); }
+// telas largas: lista de temas da disciplina sempre visível abaixo do menu
+function renderSide(){ let el=$("#side"); if(!el){ el=document.createElement("aside"); el.id="side"; el.setAttribute("aria-label",T2("Temas","Topics")); $(".shell").appendChild(el); }
+  const on=WIDE_Q.matches && S.catalog && ["home","study","bank"].includes(S.view) && !document.body.classList.contains("focus");
+  const r=on?topicPickBody():null; if(!r){ el.hidden=true; el.innerHTML=""; return; }
+  const top=el.scrollTop; el.hidden=false; el.innerHTML=`<div class="sidehd">${ddot(r.d)}${esc(nm(r.d))}</div>${r.body}`; el.scrollTop=top; }
 function openSubPicker(){ const d=curDisc(), t=curTopic(); if(!d||!t) return; const su=S.setup||(S.setup=defaultSetup()); const agg=pickerStats(); const en=set().lang==="en";
   let body;
   if(t.pseudo){ const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; } return s; },{n:0,seen:0,ok:0,due:0});
@@ -846,6 +876,7 @@ function vPlayer(v){
   if(!q){ s.items.splice(s.i,1); s.i=Math.min(s.i,s.items.length-1); return vPlayer(v); }
   const reveal = s.mode==="study" && it.pick!==null;
   if(it.t0==null && it.pick===null) it.t0=now();
+  const pb0=$("#view .qlbody"), keep=pb0?{id:pb0.dataset.l,top:pb0.scrollTop}:null;
   v.innerHTML = `
    <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
      <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
@@ -858,6 +889,7 @@ function vPlayer(v){
        : (s.mode==="sim" ? `<button class="btn primary" data-act="finish">${tr("finish")}</button>` : `<button class="btn primary" data-act="finish">${tr("finish")}</button>`)}
    </div>`;
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
+  const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
   hydrateAI(q);
 }
 function questionHTML(q, it, reveal, simMode){
@@ -893,7 +925,10 @@ function questionHTML(q, it, reveal, simMode){
     <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
-  return `<div class="qgrid"><div class="qleft"><div class="tags">${tags.join("")}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div></div>`;
+  const lp=!!lsn&&WIDE_Q.matches&&LP;
+  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}"><article class="lesson" lang="pt-BR">${lsn.html}</article></div></aside>`:"";
+  const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
+  return `<div class="qgrid${lp?" l3":""}"><div class="qleft"><div class="tags">${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div>${pane}</div>`;
 }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
@@ -1082,6 +1117,8 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
 const WIDE_L=matchMedia("(min-width:1150px)");
+const WIDE_Q=matchMedia("(min-width:1500px)"); let LP=true; try{ LP=localStorage.getItem("gab.lpane")!=="0"; }catch(e){}
+WIDE_Q.addEventListener&&WIDE_Q.addEventListener("change",()=>{ if(S.catalog) render(); });
 function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=$("#view .lesson"), nav=$("#ltoc"); if(!art||!nav) return;
   let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return;
   hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
@@ -1740,7 +1777,7 @@ function vPlan(v){
       <details class="ptps"><summary>${T2("Temas","Topics")} (${e.tps.length})</summary>${e.tps.map(x=>`<div class="pitem ${x.done?"ok":""}"><div class="pt"><b>${x.done?"✓ ":""}${esc(nm(x.t))}</b><small>${planStars(x.w)} · ${pct(x.seen,x.n)} ${T2("visto","seen")}${x.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(x.acc*100)}%`:""}</small></div><div class="pa">${planLinks(x)}</div></div>`).join("")}</details></div>`; }).join("");
   const a=new Date(start), b=new Date(addDays(start,6));
   v.innerHTML=`<div class="row" style="justify-content:space-between"><div><div class="eyebrow">${T2("Até as provas","Until the exams")}</div><h1>${T2("Plano de estudos","Study plan")}</h1></div><button class="btn small" data-act="planCfg">⚙ ${T2("Configurar","Settings")}</button></div>
-   ${C.exams.length?cards:`<div class="panel"><h2>${T2("Nenhuma prova futura","No upcoming exam")}</h2><p class="lede">${T2("Defina a data das provas em Configurar. O plano distribui os temas (★ primeiro, os mais fracos antes) pelos dias livres, e se atrasar ele remaneja sozinho.","Set the exam dates in Settings. The plan spreads topics (★ and weakest first) over free days and re-plans itself if you fall behind.")}</p></div>`}
+   <div class="plexams">${C.exams.length?cards:`<div class="panel"><h2>${T2("Nenhuma prova futura","No upcoming exam")}</h2><p class="lede">${T2("Defina a data das provas em Configurar. O plano distribui os temas (★ primeiro, os mais fracos antes) pelos dias livres, e se atrasar ele remaneja sozinho.","Set the exam dates in Settings. The plan spreads topics (★ and weakest first) over free days and re-plans itself if you fall behind.")}</p></div>`}</div>
    <div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="planWeek" data-v="-1" aria-label="${T2("Semana anterior","Previous week")}">‹</button><button class="btn small ghost" data-act="planWeek" data-v="0">${fmtDM(a)} – ${fmtDM(b)}${wk?"":" · "+T2("esta semana","this week")}</button><button class="btn small ghost" data-act="planWeek" data-v="1" aria-label="${T2("Próxima semana","Next week")}">›</button></div>
    <div class="pgrid">${rows}</div>
    <p class="lede" style="font-size:12px">${T2("Verde = feito (o app marca sozinho quando você responde as questões). Meta de "+P.cap+" questões novas por dia. Erros voltam na data da revisão espaçada.","Green = done (the app ticks it when you answer the questions). Goal: "+P.cap+" new questions/day. Misses return on their spaced-review date.")}</p>`;
@@ -1798,6 +1835,7 @@ document.addEventListener("click", async e=>{
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
+  if(act==="lpane"){ LP=!LP; try{ localStorage.setItem("gab.lpane",LP?"1":"0"); }catch(e){} return render(); }
   if(act==="lesson"){ S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); } return go("lesson"); }
   if(act==="lessonPdf"){ return pdfRun([S.lessons.get(S.lessonId)], a); }
   if(act==="discPdf"){ const d=curDisc(); return d&&pdfRun(lessonsOf(d.id), a, d.id); }

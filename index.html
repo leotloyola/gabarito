@@ -272,6 +272,17 @@ details.srt>summary small{font-size:12px;color:var(--muted);text-align:right}
 .li .m{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
 a.li{text-decoration:none;color:inherit}
 .tlinks summary{cursor:pointer;list-style-position:inside}
+/* painel do material de apoio (Drive /preview) à direita, telas >=1000px */
+#mpane{display:none}
+@media (min-width:1000px){
+  body.mp-on{--mpw:clamp(420px,46vw,980px)}
+  body.mp-on .shell{margin-right:var(--mpw)}
+  body.mp-on #mpane{display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;width:var(--mpw);z-index:40;background:var(--surface);border-left:1px solid var(--hair);box-shadow:var(--shadow)}
+  #mpane .mph{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--hair)}
+  #mpane .mph b{flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #mpane .mph small{color:var(--muted);white-space:nowrap}
+  #mpane iframe{flex:1;width:100%;border:0;background:var(--bg)}
+}
 .li .st{font-size:11.5px;font-weight:500;align-self:start;font-variant-numeric:tabular-nums}
 .st.ok{color:var(--ok)} .st.bad{color:var(--bad)} .st.no{color:var(--subtle)}
 .empty{color:var(--subtle);text-align:center;padding:28px 12px;font-size:14px}
@@ -1108,7 +1119,17 @@ function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
 function topicLinksHTML(t){ const L=t?.links; if(!L?.length) return ""; const ic={video:"▶",pdf:"📄",folder:"📁"};
   const url=x=>x.t==="folder"?`https://drive.google.com/drive/folders/${encodeURIComponent(x.id)}`:`https://drive.google.com/file/d/${encodeURIComponent(x.id)}/view`;
-  return `<details class="panel tlinks"><summary><b>${T2("Material de apoio","Study material")}</b> <small style="color:var(--muted)">· ${L.length} ${T2("links (Drive)","links (Drive)")}</small></summary><div class="list" style="margin-top:8px">${L.map(x=>`<a class="li" href="${url(x)}" target="_blank" rel="noopener"><span class="t">${ic[x.t]||"🔗"} ${esc(x.n)}</span>${x.p?`<small style="color:var(--muted)">${esc(x.p)}</small>`:""}</a>`).join("")}</div></details>`; }
+  const prev=x=>x.t==="folder"?`https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(x.id)}#list`:`https://drive.google.com/file/d/${encodeURIComponent(x.id)}/preview`;
+  return `<details class="panel tlinks"><summary><b>${T2("Material de apoio","Study material")}</b> <small style="color:var(--muted)">· ${L.length} ${T2("links (Drive)","links (Drive)")}</small></summary><div class="list" style="margin-top:8px">${L.map(x=>`<a class="li" href="${url(x)}" target="_blank" rel="noopener" data-mp="${prev(x)}" data-n="${esc(x.n)}" data-p="${esc(x.p||"")}"><span class="t">${ic[x.t]||"🔗"} ${esc(x.n)}</span>${x.p?`<small style="color:var(--muted)">${esc(x.p)}</small>`:""}</a>`).join("")}</div></details>`; }
+// telas largas: material abre num painel à direita (pré-visualização do Drive); celular abre em outra aba
+const WIDE_M=matchMedia("(min-width:1000px)");
+function mpOpen(src,name,pg,href){ let el=document.getElementById("mpane"); if(!el){ el=document.createElement("aside"); el.id="mpane"; el.setAttribute("aria-label",T2("Material de apoio","Study material")); document.body.appendChild(el); }
+  el.innerHTML=`<div class="mph"><b title="${esc(name)}">${esc(name)}</b>${pg?`<small>${esc(pg)}</small>`:""}<a class="btn small ghost" href="${esc(href)}" target="_blank" rel="noopener" title="${T2("Abrir no Drive","Open in Drive")}">↗</a><button type="button" class="btn small ghost" data-mpclose aria-label="${T2("Fechar","Close")}">✕</button></div><iframe src="${esc(src)}" allow="autoplay; fullscreen" allowfullscreen title="${esc(name)}"></iframe>`;
+  document.body.classList.add("mp-on"); }
+function mpClose(){ document.body.classList.remove("mp-on"); const el=document.getElementById("mpane"); if(el) el.innerHTML=""; }
+document.addEventListener("click",e=>{ if(e.target.closest("[data-mpclose]")){ e.preventDefault(); return mpClose(); }
+  const a=e.target.closest("a[data-mp]"); if(!a||!WIDE_M.matches||e.ctrlKey||e.metaKey||e.shiftKey) return; e.preventDefault(); e.stopPropagation(); mpOpen(a.dataset.mp,a.dataset.n,a.dataset.p,a.href); },true);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.body.classList.contains("mp-on")){ e.preventDefault(); e.stopImmediatePropagation(); mpClose(); } },true);
 function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id); const read=S.prog.read||{};
   if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>`;
   return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina inteira","Download whole discipline")} (${L.length} PDFs)</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }

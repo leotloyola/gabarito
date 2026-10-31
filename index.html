@@ -282,9 +282,11 @@ a.li{text-decoration:none;color:inherit}
   #mpane .mph b{flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #mpane .mph small{color:var(--muted);white-space:nowrap}
   #mpane iframe{flex:1;width:100%;border:0;background:var(--bg)}
-  #mpane .mpdrag{position:absolute;left:-8px;top:0;bottom:0;width:16px;cursor:col-resize;touch-action:none;z-index:2}
-  #mpane .mpdrag::after{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--line);transition:background .15s,width .15s,left .15s}
-  #mpane .mpdrag:hover::after,body.mp-drag #mpane .mpdrag::after{background:var(--accent);width:4px;left:6px}
+  #mpane .mpdrag{position:absolute;left:-12px;top:0;bottom:0;width:24px;cursor:col-resize;touch-action:none;z-index:2}
+  #mpane .mpdrag::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--line);transition:background .15s}
+  #mpane .mpdrag::after{content:"";position:absolute;left:7px;top:50%;width:10px;height:56px;margin-top:-28px;border-radius:6px;background:var(--surface);box-shadow:0 0 0 1.5px var(--line),var(--shadow);transition:background .15s,box-shadow .15s}
+  #mpane .mpdrag:hover::before,body.mp-drag #mpane .mpdrag::before{background:var(--accent)}
+  #mpane .mpdrag:hover::after,body.mp-drag #mpane .mpdrag::after{background:var(--accent);box-shadow:0 0 0 1.5px var(--accent)}
   body.mp-drag #mpane iframe{pointer-events:none}
 }
 .li .st{font-size:11.5px;font-weight:500;align-self:start;font-variant-numeric:tabular-nums}

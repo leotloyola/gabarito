@@ -572,6 +572,7 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 .ann-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.ann-tools{display:flex;gap:5px;flex-wrap:wrap}.ann-tools .btn{font-size:11.5px;padding:5px 8px}.ann-surface{position:relative;display:flow-root;isolation:isolate}.ann-content{position:relative;z-index:0}.ann-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;touch-action:pan-y}.ann-surface.ann-enabled .ann-canvas{pointer-events:auto;cursor:crosshair}.ann-surface.ann-enabled{user-select:none;-webkit-user-select:none}.ann-toolbar .btn[aria-pressed="true"]{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
 
 body.qnav-on main{padding-bottom:calc(var(--nav-h) + 106px + env(safe-area-inset-bottom,0px))}
+body.qnav-on .qnav-space{height:calc(var(--nav-h) + 124px + env(safe-area-inset-bottom,0px));flex:0 0 auto}
 body.qnav-on .qnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);width:min(760px,calc(100vw - 32px));z-index:24;margin:0}
 body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 @media(min-width:960px){body:not(.focus).qnav-on .qnav{left:calc(50% + var(--navw,232px)/2)}}
@@ -1077,7 +1078,7 @@ function vPlayer(v){
      <span class="qnav-status">${s.i+1} / ${s.items.length}</span>
      ${s.i<s.items.length-1 ? `<button class="btn ${ (reveal || (s.mode==="sim"&&it.pick!==null)) ? "primary":""}" data-act="next">${tr("next")} →</button>`
        : (s.mode==="sim" ? `<button class="btn primary" data-act="finish">${tr("finish")}</button>` : `<button class="btn primary" data-act="finish">${tr("finish")}</button>`)}
-   </div>`;
+   </div><div class="qnav-space" aria-hidden="true"></div>`;
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
   const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
   hydrateAI(q);

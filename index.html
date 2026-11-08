@@ -209,6 +209,9 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .timer{font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
 .tags{display:flex;flex-wrap:wrap;gap:6px}
 .tag{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border:0;border-radius:999px;background:var(--pill);color:var(--muted);white-space:nowrap}
+.qlang{display:inline-flex;border-radius:999px;box-shadow:0 0 0 1px var(--line) inset;overflow:hidden;flex:none}
+.qlang button{font:500 10px/1 var(--f-ui);letter-spacing:.08em;padding:5px 10px;border:0;background:transparent;color:var(--muted);cursor:pointer;min-height:22px}
+.qlang button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .tag.real{background:var(--warn-soft);color:var(--warn);box-shadow:0 0 0 1px var(--warn-line) inset}
 .tag.gen{background:var(--bad-soft);color:var(--bad)}
 .tag.exc{background:var(--accent-soft);color:var(--accent)}
@@ -696,7 +699,7 @@ function previewDays(r, g){ return FSRS.next(Object.assign({},r||{}), g, now()).
 /* ---------- state ---------- */
 const LS_KEY = "gabarito-cache-v1";
 const S = {
-  db:null, user:null, sample:null, downloads:null, uid:null, owner:false,
+  qLang:{}, db:null, user:null, sample:null, downloads:null, uid:null, owner:false,
   dbState:"loading", catalog:null, qs:new Map(), lessons:new Map(), lessonId:null, qUnsub:null, catUnsub:null,
   prog:{settings:{lang:"pt",std:"ufpr",disc:null,topic:null,theme:"sys",fs:1},q:{},fc:{},log:{},sims:[]},
   progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, detail:new Set(), fcDeck:null, ai:{}, gen:null
@@ -784,12 +787,13 @@ function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); r
 function stdM(q,st){ return st==="tudo" || (st==="all" ? q.standard!=="banco" : q.standard===st); }
 function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||(t.pseudo? !t.topics.includes(q.topic) : q.topic!==t.id)) return false; const st=set().std; return stdM(q,st); }
 function ctxQs(){ return [...S.qs.values()].filter(inCtx).sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); }
+function qLangOf(q){ const o=S.qLang[q.id]; return (o&&q.i18n?.[o])?o:set().lang; } // idioma escolhido dentro da questão
 function content(q){ // returns {c, lang, fallback}
-  const L0=set().lang, other=L0==="pt"?"en":"pt";
+  const L0=qLangOf(q), other=L0==="pt"?"en":"pt";
   if(q.i18n?.[L0]) return {c:q.i18n[L0], lang:L0, fallback:false};
   return {c:q.i18n?.[other], lang:other, fallback:true};
 }
-function tagsOf(q){ return q.tags?.[set().lang] || q.tags?.pt || q.tags?.en || []; }
+function tagsOf(q){ return q.tags?.[qLangOf(q)] || q.tags?.[set().lang] || q.tags?.pt || q.tags?.en || []; }
 
 /* ---------- progress ---------- */
 function rec(id){ return S.prog.q[id]; }
@@ -1039,6 +1043,7 @@ function questionHTML(q, it, reveal, simMode){
   if(openReports(q).length) tags.push(`<span class="tag old" title="${T2("Você contestou esta questão","You reported this question")}">⚑ ${T2("Contestada","Reported")}</span>`);
   if(c.outdated) tags.push(`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`);
   if(q.exc) tags.push(`<span class="tag exc">${set().lang==="en"?"Except / incorrect":"Exceto / incorreta"}</span>`);
+  const qlb = (q.i18n?.pt&&q.i18n?.en) ? `<span class="qlang" role="group" aria-label="${T2("Idioma da questão","Question language")}">${["pt","en"].map(x=>`<button type="button" data-act="qlang" data-q="${esc(q.id)}" data-v="${x}" aria-pressed="${lang===x}" title="${x==="pt"?T2("Ver em português (I)","Show in Portuguese (I)"):T2("Ver em inglês (I)","Show in English (I)")}">${x.toUpperCase()}</button>`).join("")}</span>` : "";
   const hasMore = c.opts.some(o=>o.more) || !!c.pegMore;
   const det = hasMore && (S.detail.has(q.id) ? !set().detail : !!set().detail);
   const opts = perm.map((orig,pos)=>{
@@ -1071,7 +1076,7 @@ function questionHTML(q, it, reveal, simMode){
   const lp=!!lsn&&WIDE_Q.matches&&LP;
   const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}"><article class="lesson" lang="pt-BR">${lsn.html}</article></div></aside>`:"";
   const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="qgrid${lp?" l3":""}"><div class="qleft"><div class="tags">${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div>${pane}</div>`;
+  return `<div class="qgrid${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div>${pane}</div>`;
 }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
@@ -2080,6 +2085,7 @@ document.addEventListener("click", async e=>{
   if(act==="exit"){ clearInterval(timerInt); const fs=S.session?.from; S.session=null; return fs==="search"?go("search"):render(); }
   if(act==="newSession"){ S.session=null; return go("study"); }
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
+  if(act==="qlang"){ const id=a.dataset.q, q=S.qs.get(id); if(!q) return; const v=a.dataset.v||(content(q).lang==="pt"?"en":"pt"); if(v===set().lang) delete S.qLang[id]; else S.qLang[id]=v; const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
   if(act==="detail"){ const id=a.dataset.q; if(S.detail.has(id)) S.detail.delete(id); else S.detail.add(id); const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
   if(act==="toggleDetail"){ set().detail=!set().detail; S.detail.clear(); saveProg(); render(); return openSettings(); }
   if(act==="explain") return explain(a.dataset.q, a);
@@ -2128,11 +2134,12 @@ document.addEventListener("keydown", e=>{
   if(k==="arrowleft"){ click('#view [data-act="prev"]'); return; }
   if(k==="l"){ click('#view .tags [data-act="lesson"]'); return; }
   if(k==="m"){ click('#view [data-act="detail"]'); return; }
+  if(k==="i"){ click('#view .qlang [aria-pressed="false"]'); return; }
   if(k==="f"){ click('#view [data-act="fs"]'); return; }
 });
 function openKeys(){ const en=set().lang==="en"; const r=(k,t)=>`<div class="krow"><span>${k.split(" ").map(x=>`<kbd>${x}</kbd>`).join(" ")}</span><span>${t}</span></div>`;
   openSheet(`<div class="row" style="justify-content:space-between"><h2>⌨ ${en?"Keyboard shortcuts":"Atalhos de teclado"}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
-   <div class="kgrp"><div class="eyebrow">${en?"Questions":"Questões"}</div>${r("A–E 1–5",en?"Pick option":"Marcar alternativa")}${r("Enter →",en?"Next (finish on the last)":"Próxima (no fim, finalizar)")}${r("←",en?"Previous":"Anterior")}${r("M",en?"More / less detail":"Mais / menos detalhe")}${r("L",en?"Open topic lesson":"Abrir a lição do tema")}${r("F",en?"Full screen":"Tela cheia")}</div>
+   <div class="kgrp"><div class="eyebrow">${en?"Questions":"Questões"}</div>${r("A–E 1–5",en?"Pick option":"Marcar alternativa")}${r("Enter →",en?"Next (finish on the last)":"Próxima (no fim, finalizar)")}${r("←",en?"Previous":"Anterior")}${r("M",en?"More / less detail":"Mais / menos detalhe")}${r("L",en?"Open topic lesson":"Abrir a lição do tema")}${r("I",en?"Switch question language (PT/EN)":"Trocar idioma da questão (PT/EN)")}${r("F",en?"Full screen":"Tela cheia")}</div>
    <div class="kgrp"><div class="eyebrow">Flashcards</div>${r("Espaço Enter",en?"Show answer":"Mostrar resposta")}${r("1 2 3",en?"Missed · Hard · Got it":"Errei · Difícil · Acertei")}</div>
    <div class="kgrp"><div class="eyebrow">${en?"General":"Geral"}</div>${r("Esc",en?"Close / go back":"Fechar / voltar")}${r("?",en?"This list":"Esta lista")}</div>`); }
 

@@ -784,7 +784,7 @@ function subOf(q){ return curTopic()?.pseudo ? q.topic : q.sub; }
 function nm(o){ return o?.name?.[set().lang] || o?.name?.pt || o?.name?.en || o?.id || ""; }
 function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); return s? nm(s) : (id==="banco"?"Banco MED":id); }
 // Banco MED: standard "banco" só aparece em "Banco"/"Tudo"; "Ambos" = UFPR+USMLE (como antes)
-function stdM(q,st){ return st==="tudo" || (st==="all" ? q.standard!=="banco" : q.standard===st); }
+function stdM(q,st){ if(curPer()==="usmle") return q.standard==="usmle"; return st==="tudo" || (st==="all" ? q.standard!=="banco" : q.standard===st); }
 function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t) return false; if(q.discipline!==d.id||(t.pseudo? !t.topics.includes(q.topic) : q.topic!==t.id)) return false; const st=set().std; return stdM(q,st); }
 function ctxQs(){ return [...S.qs.values()].filter(inCtx).sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); }
 function qLangOf(q){ const o=S.qLang[q.id]; return (o&&q.i18n?.[o])?o:set().lang; } // idioma escolhido dentro da questão
@@ -851,8 +851,8 @@ function renderCtx(){
   $("#ctx").innerHTML = `${perSel}
    ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}" style="box-shadow:inset 4px 0 0 ${discColor(d)}">${dOpts||`<option>—</option>`}</select></label>
    <div class="sel"><button type="button" class="selbtn" id="selTopic" data-act="topicPick" aria-haspopup="dialog" aria-label="${tr("topic")}">${esc(t?nm(t):"—")}</button></div>`}
-   <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
-  const sp=$("#selPer"); if(sp) sp.onchange=e=>{ const v=e.target.value; set().per = (v==="all"||v==="usmle") ? v : +v; if(v==="usmle"&&(set().std==="ufpr"||set().std==="banco")) set().std="usmle"; if(!discs().some(x=>x.id===set().disc)){ set().disc=discs()[0]?.id||null; set().topic=null; } S.session=null; S.fcDeck=null; S.setup=null; saveProg(); render(); };
+   ${cp==="usmle"?"":`<div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`}`;
+  const sp=$("#selPer"); if(sp) sp.onchange=e=>{ const v=e.target.value; set().per = (v==="all"||v==="usmle") ? v : +v; if(v==="usmle") set().std="usmle"; if(!discs().some(x=>x.id===set().disc)){ set().disc=discs()[0]?.id||null; set().topic=null; } S.session=null; S.fcDeck=null; S.setup=null; saveProg(); render(); };
   if(S.view==="stats") return;
   $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; if(discById(e.target.value)?.period==null&&(set().std==="ufpr"||set().std==="banco")) set().std="usmle"; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
 }

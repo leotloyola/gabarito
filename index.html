@@ -722,7 +722,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function safe(html){ // allow a tiny tag set from content
   let s = esc(html);
-  return s.replace(/&lt;(\/?)(b|i|em|strong|sub|sup|br)&gt;/g, "<$1$2>");
+  s = s.replace(/&lt;(\/?)(b|i|em|strong|sub|sup|br)&gt;/g, "<$1$2>");
+  return s.replace(/&lt;a href=&quot;(https:\/\/drive\.google\.com\/[^&]+)&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;([^<]+)&lt;\/a&gt;/g, '<a href="$1" target="_blank" rel="noopener">$2</a>');
 }
 function md(text){ // minimal markdown for Claude answers
   const lines = esc(text).split("\n"); let out=[], list=null, tbl=null;

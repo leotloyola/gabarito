@@ -494,6 +494,76 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 .pitem .pa{display:flex;gap:6px;flex-wrap:wrap}.pnote{font-size:12.5px;color:var(--muted);padding:4px 2px}.pnote.ok{color:var(--ok)}
 .plrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}.plrow label{display:flex;align-items:center;gap:6px;font-size:13px;min-width:0}
 input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+
+/* Reading and feedback refinements: shared tokens preserve light/system theme choices. */
+:root[data-theme="dark"]{
+  --bg:#101316;--surface:#191e23;--surface-2:#22292f;
+  --ink:#e6ebef;--ink-2:#cbd4dc;--muted:#a7b3be;--subtle:#96a3af;
+  --line:#35404a;--hair:rgba(207,222,234,.12);
+  --accent:#83d8c8;--accent-ink:#102b27;--accent-soft:#193b35;
+  --ok:#83d8b3;--ok-soft:#182f29;--ok-bar:#4e9e7d;
+  --bad:#f1a0aa;--bad-soft:#362329;--bad-bar:#b66b78;
+  --warn:#e6c580;--warn-soft:#302b20;--warn-line:#695a35;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){
+  --bg:#101316;--surface:#191e23;--surface-2:#22292f;
+  --ink:#e6ebef;--ink-2:#cbd4dc;--muted:#a7b3be;--subtle:#96a3af;
+  --line:#35404a;--hair:rgba(207,222,234,.12);
+  --accent:#83d8c8;--accent-ink:#102b27;--accent-soft:#193b35;
+  --ok:#83d8b3;--ok-soft:#182f29;--ok-bar:#4e9e7d;
+  --bad:#f1a0aa;--bad-soft:#362329;--bad-bar:#b66b78;
+  --warn:#e6c580;--warn-soft:#302b20;--warn-line:#695a35;
+}}
+.qgrid .tags{gap:6px;align-items:center}
+.qgrid .tag{font-size:10px;letter-spacing:.025em;text-transform:none;white-space:normal;overflow-wrap:anywhere}
+.qgrid .stem{font-size:calc(19px * var(--fs));line-height:1.8;max-width:68ch;margin:12px 0 18px;overflow-wrap:anywhere}
+.qgrid .opt{border-radius:14px;padding:16px 18px;box-shadow:inset 0 0 0 1px var(--line)}
+.qgrid .opt:not([disabled]):hover{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--accent)}
+.qgrid .opt.picked{box-shadow:inset 0 0 0 2px var(--accent)}
+.qgrid .opt.correct{box-shadow:inset 0 0 0 1px var(--ok-bar)}
+.qgrid .opt.wrong{box-shadow:inset 0 0 0 1px var(--bad-bar)}
+.qgrid .otext{font-size:calc(17px * var(--fs));line-height:1.65;overflow-wrap:anywhere}
+.qgrid .orow{align-items:baseline;flex-wrap:wrap;column-gap:12px;row-gap:6px}
+.qgrid .letter{width:20px;color:var(--muted)}
+.qgrid .otext{flex:1 1 120px}
+.qgrid .mark{font-size:10px;letter-spacing:.02em;max-width:100%;white-space:normal}
+.answer-feedback{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.answer-correct,.answer-picked{padding:20px;border-radius:16px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ok)}
+.answer-picked{border-left-color:var(--bad)}
+.answer-feedback h3{font-size:12px;font-weight:600;line-height:1.5;margin:0 0 12px;color:var(--ok)}
+.answer-picked h3{color:var(--bad)}
+.answer-comment-title{font-size:14px;font-weight:600;line-height:1.65;margin-bottom:10px;overflow-wrap:anywhere}
+.answer-comment-text{font-size:calc(15.5px * var(--fs));line-height:1.85;color:var(--ink-2);max-width:70ch;overflow-wrap:anywhere}
+.answer-depth{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.answer-depth>summary,.answer-source>summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);padding:6px 0;min-height:36px}
+.answer-depth[open]>.answer-comment-text{margin-top:10px}
+.answer-distractors{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.answer-distractors>summary{cursor:pointer;padding:17px 18px;font-size:14px;font-weight:500;line-height:1.6}
+.answer-distractors>summary span{color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.answer-distractor-list{padding:0 18px 18px}
+.answer-distractor-list>.answer-comment{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.answer-distractor-list>.answer-comment:first-child{margin-top:0}
+.answer-source{border-top:1px solid var(--line);padding:8px 0;color:var(--muted);font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.qgrid .result{padding:12px 0 0;font-size:14px;line-height:1.6}
+.qnav{display:grid;grid-template-columns:48px minmax(45px,1fr) minmax(130px,auto);align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:18px;background:color-mix(in srgb,var(--surface) 94%,transparent);box-shadow:0 8px 30px rgba(0,0,0,.15)}
+.qnav .btn{min-height:46px}
+.qnav .btn.icon{min-width:0;width:48px;padding:10px}
+.qnav .btn.primary{background:var(--accent);color:var(--accent-ink)}
+.qnav-status{font-size:12px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qimg button{position:relative;border-radius:14px;overflow:hidden;background:var(--surface-2)}
+.qimg button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.qimg img{max-height:56vh;border-radius:14px;object-fit:contain}
+.qimg-zoom{position:absolute;bottom:10px;right:10px;font:500 12px var(--f-ui);padding:7px 11px;border-radius:999px;color:var(--ink);background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.qimg figcaption{color:var(--muted);line-height:1.65;margin-top:10px;text-align:left}
+@media(max-width:599px){
+  .qgrid .stem{font-size:calc(18px * var(--fs));line-height:1.8}
+  .qgrid .opt{padding:14px}
+  .answer-correct,.answer-picked{padding:17px}
+  .qnav{gap:8px;padding:8px;grid-template-columns:44px minmax(30px,1fr) minmax(120px,auto)}
+  .qnav .btn.icon{width:44px}
+}
+@media(prefers-reduced-motion:reduce){.qgrid .opt{transition:none}}
+
 </style>
 </head>
 <body>
@@ -941,6 +1011,7 @@ function vPlayer(v){
    ${questionHTML(q, it, reveal, s.mode==="sim")}
    <div class="qnav">
      <button class="btn icon" data-act="prev" ${s.i===0?"disabled":""} aria-label="${tr("prev")}">←</button>
+     <span class="qnav-status">${s.i+1} / ${s.items.length}</span>
      ${s.i<s.items.length-1 ? `<button class="btn ${ (reveal || (s.mode==="sim"&&it.pick!==null)) ? "primary":""}" data-act="next">${tr("next")} →</button>`
        : (s.mode==="sim" ? `<button class="btn primary" data-act="finish">${tr("finish")}</button>` : `<button class="btn primary" data-act="finish">${tr("finish")}</button>`)}
    </div>`;
@@ -967,17 +1038,26 @@ function questionHTML(q, it, reveal, simMode){
     const o=c.opts[orig]; let cls="opt", mark="";
     if(reveal){ if(orig===q.correct){cls+=" correct";mark=orig===pick?tr("answer")+" · ✓":tr("answer");} else if(orig===pick){cls+=" wrong";mark=tr("yourAns");} }
     else if(simMode && orig===pick){ cls+=" picked"; }
-    const verdict = orig===q.correct ? tr("answer") : (q.exc ? tr("trueStmt") : tr("whyNot"));
-    const why = reveal ? `<div class="why"><span class="v ${orig!==q.correct&&q.exc?"neutral":""}">${verdict}</span>${safe(det&&o.more?o.more:o.why)}</div>` : "";
-    return `<button type="button" class="${cls}" data-pick="${orig}" ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div>${why}</button>`;
+    return `<button type="button" class="${cls}" data-pick="${orig}" ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div></button>`;
   }).join("");
   const fb = (fallback && q.standard!=="usmle") ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
+  const explanation = orig=>{
+    const o=c.opts[orig], letter=L[perm.indexOf(orig)];
+    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${safe(o.why||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div>${o.more?`<details class="answer-depth" ${det?"open":""}><summary>${T2("Aprofundar o raciocínio","Explore the reasoning")}</summary><div class="answer-comment-text">${safe(o.more)}</div></details>`:""}</div>`;
+  };
+  const otherOptions=perm.filter(orig=>orig!==q.correct&&orig!==pick);
+  const feedback = reveal ? `<section class="answer-feedback" aria-label="${T2("Correção comentada","Answer explanation")}">
+    <div class="answer-correct"><h3>${T2("Por que esta é a resposta","Why this is the answer")}</h3>${explanation(q.correct)}</div>
+    ${pick!==null&&pick!==q.correct?`<div class="answer-picked"><h3>${T2("Sobre a sua escolha","About your choice")}</h3>${explanation(pick)}</div>`:""}
+    ${otherOptions.length?`<details class="answer-distractors"><summary>${T2("Entender as demais alternativas","Review the other options")} <span>${otherOptions.length}</span></summary><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></details>`:""}
+  </section>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
+    ${feedback}
     ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore:c.peg)}</div>`:""}
-    ${c.src?`<div class="box src"><h3>${tr("source")}</h3>${safe(c.src)}</div>`:""}
+    ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
     <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
@@ -1415,9 +1495,10 @@ async function pdfRun(ls, btn, dId){
 }
 
 /* ---------- IMAGENS DAS QUESTÕES ---------- */
-function qImg(q){ const im=q.img; if(!im||!im.url) return ""; return `<figure class="qimg"><button type="button" data-act="imgZoom" data-q="${esc(q.id)}" aria-label="${T2("Ampliar imagem","Zoom image")}"><img src="${esc(im.url)}" alt="${esc(im.alt||"")}" loading="lazy" decoding="async"></button>${im.alt?`<figcaption>${esc(im.alt)}</figcaption>`:""}</figure>`; }
-function openImg(qid){ const q=S.qs.get(qid); if(!q?.img?.url) return; openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Imagem","Image")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
-  <div class="zoomwrap"><img src="${esc(q.img.url)}" alt="${esc(q.img.alt||"")}"></div>${q.img.alt?`<p class="lede" style="font-size:13px">${esc(q.img.alt)}</p>`:""}<p class="lede" style="font-size:12px">${T2("Use o gesto de pinça para ampliar.","Pinch to zoom.")}</p>`); }
+function qImg(q){ const im=q.img; if(!im||!im.url) return ""; return `<figure class="qimg"><button type="button" data-act="imgZoom" data-q="${esc(q.id)}" aria-label="${T2("Ampliar imagem","Zoom image")}"><img src="${esc(im.url)}" alt="${esc(im.alt||"")}" loading="lazy" decoding="async"><span class="qimg-zoom" aria-hidden="true">⤢ ${T2("Ampliar","Enlarge")}</span></button>${im.alt?`<figcaption>${esc(im.alt)}</figcaption>`:""}</figure>`; }
+function openImg(qid){ const q=S.qs.get(qid); if(!q?.img?.url) return; openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Imagem","Image")}</h2><button class="btn small ghost" data-act="closeSheet" aria-label="${T2("Fechar imagem","Close image")}">✕</button></div>
+    <div class="row" role="group" aria-label="${T2("Ampliação da imagem","Image magnification")}" style="margin:12px 0">${[100,150,200].map(z=>`<button type="button" class="btn small" data-act="imgScale" data-scale="${z}" aria-pressed="${z===100}">${z===100?T2("Ajustar","Fit"):z+"%"}</button>`).join("")}</div>
+    <div class="zoomwrap" tabindex="0" role="region" aria-label="${T2("Imagem ampliada, role para explorar","Enlarged image, scroll to explore")}"><img src="${esc(q.img.url)}" alt="${esc(q.img.alt||"")}"></div>${q.img.alt?`<p class="lede" style="font-size:13px">${esc(q.img.alt)}</p>`:""}<p class="lede" style="font-size:12px">${T2("Escolha a ampliação e role para explorar a imagem. No celular, você também pode usar o gesto de pinça.","Choose a magnification and scroll to explore. On mobile, you can also pinch to zoom.")}</p>`); }
 /* ---------- CONTESTAR GABARITO ---------- */
 const REP_KINDS=[["key",["Gabarito errado","Wrong answer key"]],["text",["Erro no enunciado/alternativa","Error in stem/option"]],["expl",["Comentário errado ou confuso","Wrong/unclear explanation"]],["old",["Desatualizada","Outdated"]],["other",["Outro","Other"]]];
 function repResolved(r){ return S.catalog?.resolved?.[r.id]||null; }
@@ -1934,6 +2015,7 @@ document.addEventListener("click", async e=>{
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
+  if(act==="imgScale"){ const im=$("#layer .zoomwrap img"); if(im){ im.style.width=Number(a.dataset.scale)+"%"; im.style.maxWidth="none"; document.querySelectorAll('#layer [data-act="imgScale"]').forEach(b=>b.setAttribute("aria-pressed",String(b===a))); } return; }
   if(act==="imgZoom"){ return openImg(a.dataset.q); }
   if(act==="report"){ return openReport(a.dataset.q); }
   if(act==="repKind"){ S.rep.kind=a.dataset.val; if(S.rep.kind!=="key") S.rep.alt=null; return S.repDraw(); }
@@ -2010,9 +2092,10 @@ document.addEventListener("change", e=>{
   const ci=e.target.closest("[data-pinc]"); if(ci){ const P=PL(); if(ci.checked) delete P.hide[ci.dataset.pinc]; else P.hide[ci.dataset.pinc]=1; saveProg(); render(); }
 });
 document.addEventListener("keydown", e=>{
-  if(e.target.closest("input,textarea,select")||e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.target.closest("input,textarea,select,[contenteditable='true']")||e.ctrlKey||e.metaKey||e.altKey) return;
   if(e.key==="Escape" && $("#layer").innerHTML){ closeSheet(); return; }
   if($("#layer").innerHTML) return;
+  if(e.target.closest("summary")) return; // Enter/Space operate disclosure controls, not session navigation.
   const k=e.key.toLowerCase(); const click=sel=>{ const b=document.querySelector(sel); if(b&&!b.disabled){ b.click(); e.preventDefault(); return true; } return false; };
   if(k==="?"){ e.preventDefault(); return openKeys(); }
   if(k==="/"&&S.view!=="search"&&!inSession()){ e.preventDefault(); S.srBack=S.view; return go("search"); }
@@ -2164,3 +2247,5 @@ boot();
 </script>
 </body>
 </html>
+
+

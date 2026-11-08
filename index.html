@@ -725,6 +725,8 @@ function safe(html){ // allow a tiny tag set from content
   s = s.replace(/&lt;(\/?)(b|i|em|strong|sub|sup|br)&gt;/g, "<$1$2>");
   return s.replace(/&lt;a href=&quot;(https:\/\/drive\.google\.com\/[^&]+)&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;([^<]+)&lt;\/a&gt;/g, '<a href="$1" target="_blank" rel="noopener">$2</a>');
 }
+// links do Drive (figuras/tabelas) que estão só na versão curta: repete no fim da versão detalhada
+function driveLinks(short,long){ const L=(String(short||"").match(/<a href="https:\/\/drive\.google\.com\/[^"]+" target="_blank" rel="noopener">[^<]+<\/a>/g)||[]).filter((x,i,A)=>{ const h=x.match(/href="([^"]+)"/)[1]; return !String(long||"").includes(h) && A.findIndex(y=>y.includes(h))===i; }); return L.length?"<br><br><strong>"+T2("Recursos visuais","Visual resources")+":</strong><br>"+L.join("<br>"):""; }
 function md(text){ // minimal markdown for Claude answers
   const lines = esc(text).split("\n"); let out=[], list=null, tbl=null;
   const inline = s => s.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*(?!\s)(.+?)\*/g,"$1<i>$2</i>").replace(/`(.+?)`/g,'<code>$1</code>');
@@ -1059,7 +1061,7 @@ function questionHTML(q, it, reveal, simMode){
     ${feedback}
     ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
-    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore:c.peg)}</div>`:""}
+    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore+driveLinks(c.peg,c.pegMore):c.peg)}</div>`:""}
     ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
     <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";

@@ -755,8 +755,10 @@ function applyTheme(){ const t=set().theme; const r=document.documentElement; if
 // período: set().per = número (ex. 5) ou "all"; sem escolha → período da disciplina atual (ou o mais alto)
 function allDiscs(){ return S.catalog?.disciplines || []; }
 function periods(){ return [...new Set(allDiscs().map(d=>d.period).filter(p=>p!=null))].sort((a,b)=>a-b); }
-function curPer(){ const p=set().per, ps=periods(); if(p==="all"||!ps.length) return "all"; if(ps.includes(p)) return p; const d=allDiscs().find(x=>x.id===set().disc); return d?.period ?? ps[ps.length-1]; }
-function inPer(d){ const p=curPer(); return p==="all" || d.period==null || d.period===p; }
+// disciplinas sem `period` (ex. USMLE UWorld) ficam na opção "USMLE" do seletor
+function hasFree(){ return allDiscs().some(d=>d.period==null); }
+function curPer(){ const p=set().per, ps=periods(); if(p==="all"||!ps.length) return "all"; if(p==="usmle"&&hasFree()) return "usmle"; if(ps.includes(p)) return p; const d=allDiscs().find(x=>x.id===set().disc); return d ? (d.period ?? "usmle") : ps[ps.length-1]; }
+function inPer(d){ const p=curPer(); return p==="all" || (p==="usmle" ? d.period==null : d.period===p); }
 // menus: alfabética (pt, sem acento) dentro de cada período; cores seguem a ordem do catálogo (allDiscs)
 function discs(){ return allDiscs().filter(inPer).sort((a,b)=>(a.period??99)-(b.period??99) || nm(a).localeCompare(nm(b),"pt",{sensitivity:"base"})); }
 let _dmCat=null,_dm=null;
@@ -836,14 +838,14 @@ function renderCtx(){
   const st=set().std, lg=set().lang;
   if(S.view==="lesson"||S.view==="search"){ $("#ctx").innerHTML=""; return; }
   const ps=periods(), cp=curPer(), en=lg==="en";
-  const perSel = ps.length ? `<label class="sel per"><span class="lab">${en?"Year/term":"Período"}</span><select id="selPer" aria-label="${en?"Term":"Período"}">${ps.map(x=>`<option value="${x}" ${cp===x?"selected":""}>${en?"Term "+x:x+"º período"}</option>`).join("")}<option value="all" ${cp==="all"?"selected":""}>${en?"All terms":"Todos os períodos"}</option></select></label>` : "";
+  const perSel = ps.length ? `<label class="sel per"><span class="lab">${en?"Year/term":"Período"}</span><select id="selPer" aria-label="${en?"Term":"Período"}">${ps.map(x=>`<option value="${x}" ${cp===x?"selected":""}>${en?"Term "+x:x+"º período"}</option>`).join("")}${hasFree()?`<option value="usmle" ${cp==="usmle"?"selected":""}>USMLE · UWorld</option>`:""}<option value="all" ${cp==="all"?"selected":""}>${en?"All terms":"Todos os períodos"}</option></select></label>` : "";
   $("#ctx").innerHTML = `${perSel}
    ${S.view==="stats"?"":`<label class="sel"><span class="lab">${tr("discipline")}</span><select id="selDisc" aria-label="${tr("discipline")}" style="box-shadow:inset 4px 0 0 ${discColor(d)}">${dOpts||`<option>—</option>`}</select></label>
    <div class="sel"><button type="button" class="selbtn" id="selTopic" data-act="topicPick" aria-haspopup="dialog" aria-label="${tr("topic")}">${esc(t?nm(t):"—")}</button></div>`}
    <div class="seg" role="group" aria-label="Padrão">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${st===x}">${tr("std_"+x)}</button>`).join("")}</div>`;
-  const sp=$("#selPer"); if(sp) sp.onchange=e=>{ const v=e.target.value; set().per = v==="all" ? "all" : +v; if(!discs().some(x=>x.id===set().disc)){ set().disc=discs()[0]?.id||null; set().topic=null; } S.session=null; S.fcDeck=null; S.setup=null; saveProg(); render(); };
+  const sp=$("#selPer"); if(sp) sp.onchange=e=>{ const v=e.target.value; set().per = (v==="all"||v==="usmle") ? v : +v; if(v==="usmle"&&(set().std==="ufpr"||set().std==="banco")) set().std="usmle"; if(!discs().some(x=>x.id===set().disc)){ set().disc=discs()[0]?.id||null; set().topic=null; } S.session=null; S.fcDeck=null; S.setup=null; saveProg(); render(); };
   if(S.view==="stats") return;
-  $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
+  $("#selDisc").onchange=e=>{ set().disc=e.target.value; set().topic=null; if(discById(e.target.value)?.period==null&&(set().std==="ufpr"||set().std==="banco")) set().std="usmle"; S.session=null; S.fcDeck=null; saveProg(); subscribeQs(); go(S.view); };
 }
 /* ---------- seletor de tema (folha com busca, grupos por prova e números do tema) ---------- */
 function pickerStats(){ const d=curDisc(); const st=set().std; const end=startOfDay(now())+DAY; const agg={};
@@ -1865,7 +1867,7 @@ function srResultsHTML(R){
   return h;
 }
 function srOpenTopic(dId,tId){
-  const d=discById(dId); if(!d) return; if(curPer()!=="all"&&d.period!=null&&d.period!==curPer()) set().per=d.period;
+  const d=discById(dId); if(!d) return; if(curPer()!=="all"&&(d.period??"usmle")!==curPer()) set().per=d.period??"usmle";
   const stds=new Set(); S.srRes?.groups.forEach(g=>{ if(g.d===dId) g.topics.forEach(tp=>{ if(tp.t===tId) tp.q.forEach(o=>stds.add(o.q.standard)); }); });
   const cur=set().std; if(cur!=="all"&&stds.size&&(stds.size>1||!stds.has(cur))) set().std=stds.size===1?[...stds][0]:"all";
   set().disc=dId; set().topic=tId; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); go("study");

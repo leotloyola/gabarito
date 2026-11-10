@@ -1124,13 +1124,33 @@ function questionHTML(q, it, reveal, simMode){
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore+driveLinks(c.peg,c.pegMore):c.peg)}${q.standard==="usmle"?driveInline(c.peg+(det&&c.pegMore?" "+c.pegMore:"")):""}</div>`:""}
     ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
-    <div class="row"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
+    <div class="row"><button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&WIDE_Q.matches&&LP;
   const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}"><article class="lesson" lang="pt-BR">${lsn.html}</article></div></aside>`:"";
   const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div>${pane}</div>`;
+}
+/* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
+function askClaude(id){
+  const q=S.qs.get(id); if(!q) return; const {c}=content(q); if(!c) return;
+  const it=S.session?.items?.find(x=>x.id===id); const perm=it?.perm||c.opts.map((_,i)=>i); const pick=it?.pick;
+  const Ls="ABCDE", pos=o=>Ls[perm.indexOf(o)];
+  const ord=perm.map(o=>({o,t:c.opts[o]}));
+  const txt=[
+    "Estou estudando esta questão e tenho dúvidas. Responda em português, de forma direta e técnica, e comece perguntando qual é a minha dúvida (se eu não a tiver escrito abaixo).",
+    "",
+    "QUESTÃO"+(q.exam?" ("+q.exam+")":"")+":",plain(c.stem),"",
+    "ALTERNATIVAS:",...ord.map(x=>pos(x.o)+") "+plain(x.t.t)),"",
+    "GABARITO: "+pos(q.correct)+(pick!=null?" · Minha resposta: "+pos(pick):""),"",
+    "COMENTÁRIO:",...ord.map(x=>pos(x.o)+") "+plain(x.t.why)),
+    c.peg?"\nPEGADINHA: "+plain(c.peg):""
+  ].join("\n");
+  const url="https://claude.ai/new?q="+encodeURIComponent(txt);
+  const copy=()=>{ try{ return navigator.clipboard.writeText(txt); }catch(e){ return Promise.reject(e); } };
+  if(url.length<=6000){ window.open(url,"_blank","noopener"); copy().catch(()=>{}); toast(T2("Abrindo o Claude… (texto também copiado)","Opening Claude… (text also copied)")); }
+  else { copy().then(()=>toast(T2("Texto copiado, cole no Claude","Text copied, paste it in Claude")),()=>toast(T2("Não consegui copiar o texto","Could not copy the text"))); window.open("https://claude.ai/new","_blank","noopener"); }
 }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
@@ -2109,6 +2129,7 @@ document.addEventListener("click", async e=>{
   if(act==="imgZoom"){ return openImg(a.dataset.q); }
   if(act==="driveOpen"){ return openDrive(a.dataset.id); }
   if(act==="report"){ return openReport(a.dataset.q); }
+  if(act==="askClaude"){ return askClaude(a.dataset.q); }
   if(act==="repKind"){ S.rep.kind=a.dataset.val; if(S.rep.kind!=="key") S.rep.alt=null; return S.repDraw(); }
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));

@@ -1006,7 +1006,7 @@ function vHome(v){
 }
 
 /* ---------- STUDY: setup ---------- */
-function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"all", prio:"all", order:"pri", count:10, shuffleQ:false, shuffleO:true}; }
+function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"open", prio:"all", order:"pri", count:0, shuffleQ:false, shuffleO:true}; }
 // prioridade 1–3 (★ detalhe · ★★ importante · ★★★ essencial): incidência nas provas + importância clínica + USMLE (calculada no repositório de conteúdo)
 function priOf(q){ return q.pri||2; }
 function prioSort(list){ return list.map((q,i)=>[q,i]).sort((a,b)=>priOf(b[0])-priOf(a[0])||a[1]-b[1]).map(x=>x[0]); }
@@ -2118,7 +2118,7 @@ document.addEventListener("click", async e=>{
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
-  if(act==="startMarkedReview"){ const pool=markedQuestions(); if(!pool.length)return; S.session=buildSession("review",pool,defaultSetup()); return go("review"); }
+  if(act==="startMarkedReview"){ const pool=markedQuestions(); if(!pool.length)return; S.session=buildSession("review",pool,Object.assign(defaultSetup(),{count:10})); return go("review"); }
   if(act==="markToggle"){ const id=a.dataset.q; markToggle(id); if($("#layer").innerHTML) bankPreview(id); else render(); return; }
   if(act==="annToggle"){ const id=a.dataset.q; S.annId=S.annId===id?null:id; S.annTool=S.annTool||"pen"; if($("#layer").innerHTML){bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render(); return; }
   if(act==="annTool"){ S.annTool=a.dataset.v; if($("#layer").innerHTML){const id=S.annId;bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render(); return; }

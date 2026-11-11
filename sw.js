@@ -1,5 +1,5 @@
 // Gabarito service worker — app shell offline; banco (Supabase) sempre pela rede
-const CACHE = "gabarito-v62";
+const CACHE = "gabarito-v63";
 const SHELL = ["./", "index.html", "config.js", "sinonimos.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "icons/apple-touch-icon.png", "icons/favicon-64.png",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
@@ -14,6 +14,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.hostname.endsWith("supabase.co") || url.hostname.endsWith("supabase.in")) return; // dados: só rede
+  if (url.hostname.endsWith("googleapis.com") || url.hostname.endsWith("accounts.google.com")) return; // Drive API / login Google: só rede
   if (req.mode === "navigate") {
     e.respondWith(fetch(req).then(r => { const cp = r.clone(); caches.open(CACHE).then(c => c.put("index.html", cp)); return r; }).catch(() => caches.match("index.html")));
     return;

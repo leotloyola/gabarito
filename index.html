@@ -287,6 +287,8 @@ a.li{text-decoration:none;color:inherit}
   #mpane .mph small{color:var(--muted);white-space:nowrap}
   #mpane .mpfb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--hair);font-size:12px;color:var(--muted)}
   #mpane .mpfb span{flex:1;min-width:160px}
+  #mpane .mpbody{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+  #mpane .mpbody iframe{flex:1}
   #mpane iframe{flex:1;width:100%;border:0;background:var(--bg)}
   #mpane .mpdrag{position:absolute;left:-12px;top:0;bottom:0;width:24px;cursor:col-resize;touch-action:none;z-index:2}
   #mpane .mpdrag::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--line);transition:background .15s}
@@ -360,6 +362,10 @@ body.g-drag iframe{pointer-events:none}
 .qimg img{display:block;max-width:100%;max-height:52vh;margin:0 auto;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line)}
 .qimg figcaption{font-size:12px;color:var(--muted);margin-top:6px;text-align:center}
 .dfig{position:relative} .dfig iframe{display:block;width:100%;aspect-ratio:4/3;border:0;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line)} .dfig .btn{margin-top:6px}
+.gbox{width:100%} .gbox .gmsg{padding:18px 14px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.gbox img.gimg{display:block;max-width:100%;border-radius:12px;background:#fff}
+.gbox .gpdf{display:flex;flex-direction:column;gap:8px;background:var(--bg)} .gbox .gpg{background:#fff;border-radius:6px;box-shadow:0 0 0 1px var(--line);overflow:hidden} .gbox .gpg canvas{display:block;width:100%;height:auto}
+.dview[data-gdrive]{overflow:auto;max-height:70vh} .dfig[data-gdrive] .gbox{max-height:60vh;overflow:auto}
 .dview iframe{display:block;width:100%;height:70vh;border:0;border-radius:12px;background:#fff}
 .zoomwrap{overflow:auto;touch-action:pinch-zoom pan-x pan-y;border-radius:12px;background:#fff;max-height:70vh} .zoomwrap img{display:block;width:100%;height:auto}
 details.adv{border-top:1px solid var(--line);padding-top:10px}
@@ -1332,8 +1338,8 @@ function topicLinksHTML(t){ const L=t?.links; if(!L?.length) return ""; const ic
   return `<details class="panel tlinks"><summary><b>${T2("Material de apoio","Study material")}</b> <small style="color:var(--muted)">· ${L.length} ${T2("links (Drive)","links (Drive)")}</small></summary><div class="list" style="margin-top:8px">${L.map(x=>`<a class="li" href="${url(x)}" target="_blank" rel="noopener" data-mp="${prev(x)}" data-n="${esc(x.n)}" data-p="${esc(x.p||"")}"><span class="t">${ic[x.t]||"🔗"} ${esc(x.n)}</span>${x.p?`<small style="color:var(--muted)">${esc(x.p)}</small>`:""}</a>`).join("")}</div></details>`; }
 // telas largas: material abre num painel à direita (pré-visualização do Drive); celular abre em outra aba
 const WIDE_M=matchMedia("(min-width:1000px)");
-function mpOpen(src,name,pg,href){ let el=document.getElementById("mpane"); if(!el){ el=document.createElement("aside"); el.id="mpane"; el.setAttribute("aria-label",T2("Material de apoio","Study material")); document.body.appendChild(el); }
-  el.innerHTML=`<div class="mpdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="mph"><b title="${esc(name)}">${esc(name)}</b>${pg?`<small>${esc(pg)}</small>`:""}<a class="btn small ghost" href="${esc(href)}" target="_blank" rel="noopener" data-ext="1" title="${T2("Abrir no Drive","Open in Drive")}">↗</a><button type="button" class="btn small ghost" data-mpclose aria-label="${T2("Fechar","Close")}">✕</button></div><div class="mpfb"><span>${T2("Erro 401 ou pedido de login? O navegador está bloqueando o Google dentro do app.","401 error or sign-in prompt? The browser is blocking Google inside the app.")}</span><a class="btn small" href="${esc(href)}" target="_blank" rel="noopener" data-ext="1">${T2("Abrir no Drive","Open in Drive")}</a><button type="button" class="btn small ghost" data-mpext>${T2("Sempre abrir fora","Always open outside")}</button></div><iframe src="${esc(driveAu(src))}" allow="autoplay; fullscreen" allowfullscreen title="${esc(name)}"></iframe>`;
+function mpOpen(src,name,pg,href){ const gm=String(src).match(/\/file\/d\/([\w-]+)\//); let el=document.getElementById("mpane"); if(!el){ el=document.createElement("aside"); el.id="mpane"; el.setAttribute("aria-label",T2("Material de apoio","Study material")); document.body.appendChild(el); }
+  el.innerHTML=`<div class="mpdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="mph"><b title="${esc(name)}">${esc(name)}</b>${pg?`<small>${esc(pg)}</small>`:""}<a class="btn small ghost" href="${esc(href)}" target="_blank" rel="noopener" data-ext="1" title="${T2("Abrir no Drive","Open in Drive")}">↗</a><button type="button" class="btn small ghost" data-mpclose aria-label="${T2("Fechar","Close")}">✕</button></div><div class="mpfb"><span>${T2("Erro 401 ou pedido de login? O navegador está bloqueando o Google dentro do app.","401 error or sign-in prompt? The browser is blocking Google inside the app.")}</span><a class="btn small" href="${esc(href)}" target="_blank" rel="noopener" data-ext="1">${T2("Abrir no Drive","Open in Drive")}</a><button type="button" class="btn small ghost" data-mpext>${T2("Sempre abrir fora","Always open outside")}</button></div>${gm?`<div class="mpbody" data-gdrive="${esc(gm[1])}" data-gp="${esc(pg||"")}">`:""}<iframe src="${esc(driveAu(src))}" allow="autoplay; fullscreen" allowfullscreen title="${esc(name)}"></iframe>${gm?"</div>":""}`;
   document.body.classList.add("mp-on"); }
 (()=>{ const R=document.documentElement.style; try{ const w=localStorage.getItem("gab.mpw"); if(w) R.setProperty("--mpwu",w+"px"); }catch(e){}
   let dr=null;
@@ -1592,14 +1598,64 @@ const DRIVE_RE=/https:\/\/drive\.google\.com\/file\/d\/([\w-]+)/;
 function driveTouch(){ return matchMedia("(pointer:coarse)").matches || (navigator.maxTouchPoints||0)>0; }
 function driveEmbeds(stem,label){ const ids=[...new Set((String(stem||"").match(new RegExp(DRIVE_RE.source,"g"))||[]).map(u=>u.match(DRIVE_RE)[1]))]; return ids.map(id=>{ const href="https://drive.google.com/file/d/"+encodeURIComponent(id)+"/view";
   
-  return '<figure class="qimg dfig"><iframe src="'+esc(driveAu('https://drive.google.com/file/d/'+id+'/preview'))+'" loading="eager" title="'+esc(label||T2("Imagem do enunciado","Stem image"))+'" allow="autoplay; fullscreen" allowfullscreen></iframe><button type="button" class="btn small" data-act="driveOpen" data-id="'+esc(id)+'">⤢ '+T2("Ampliar","Enlarge")+'</button></figure>';
+  return '<figure class="qimg dfig" data-gdrive="'+esc(id)+'"><iframe src="'+esc(driveAu('https://drive.google.com/file/d/'+id+'/preview'))+'" loading="eager" title="'+esc(label||T2("Imagem do enunciado","Stem image"))+'" allow="autoplay; fullscreen" allowfullscreen></iframe><button type="button" class="btn small" data-act="driveOpen" data-id="'+esc(id)+'">⤢ '+T2("Ampliar","Enlarge")+'</button></figure>';
  }).join(""); }
+/* ---------- Drive via API (login Google dentro do app; contorna o 401 do iframe) ---------- */
+const GSCOPE="https://www.googleapis.com/auth/drive.readonly";
+const G={tok:null,exp:0,cache:new Map()};
+try{ const j=JSON.parse(sessionStorage.getItem("gab.gtok")||"null"); if(j&&j.exp>Date.now()){ G.tok=j.t; G.exp=j.exp; } }catch(_){}
+function gOn(){ return !!(window.GABARITO_CONFIG||{}).GOOGLE_CLIENT_ID; }
+function gLoad(src){ return new Promise((ok,no)=>{ const el=document.createElement("script"); el.src=src; el.onload=ok; el.onerror=()=>no(new Error("load")); document.head.appendChild(el); }); }
+async function gToken(interactive){
+  if(G.tok&&G.exp>Date.now()+60000) return G.tok;
+  if(!window.google?.accounts?.oauth2) await gLoad("https://accounts.google.com/gsi/client");
+  return new Promise((ok,no)=>{
+    const c=google.accounts.oauth2.initTokenClient({ client_id:window.GABARITO_CONFIG.GOOGLE_CLIENT_ID, scope:GSCOPE, login_hint:window.__email||undefined,
+      callback:r=>{ if(r&&r.access_token){ G.tok=r.access_token; G.exp=Date.now()+(r.expires_in||3600)*1000; try{ sessionStorage.setItem("gab.gtok",JSON.stringify({t:G.tok,exp:G.exp})); }catch(_){} ok(G.tok); } else no(new Error("auth")); },
+      error_callback:()=>no(new Error("auth")) });
+    c.requestAccessToken({prompt:interactive?"":"none"});
+  });
+}
+async function gApi(q,interactive){ const t=await gToken(interactive); const r=await fetch("https://www.googleapis.com/drive/v3/files/"+q,{headers:{Authorization:"Bearer "+t}}); if(r.status===401){ G.tok=null; try{ sessionStorage.removeItem("gab.gtok"); }catch(_){} throw new Error("auth"); } if(!r.ok) throw new Error("http"+r.status); return r; }
+function gFile(id,interactive){ if(G.cache.has(id)) return G.cache.get(id);
+  const p=(async()=>{ const m=await (await gApi(encodeURIComponent(id)+"?fields=mimeType,name&supportsAllDrives=true",interactive)).json(); const mime=m.mimeType||"";
+    if(mime.startsWith("video/")) return {mime,name:m.name};
+    const b=await (await gApi(encodeURIComponent(id)+"?alt=media&supportsAllDrives=true",interactive)).blob(); return {mime,name:m.name,blob:b}; })();
+  G.cache.set(id,p); p.catch(()=>G.cache.delete(id)); return p; }
+async function gPdf(box,blob,startPg){
+  if(!window.pdfjsLib){ await gLoad("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"); const w=await (await fetch("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js")).text(); pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([w],{type:"text/javascript"})); }
+  const pdf=await pdfjsLib.getDocument({data:await blob.arrayBuffer()}).promise;
+  const wrap=document.createElement("div"); wrap.className="gpdf"; box.innerHTML=""; box.appendChild(wrap);
+  const p1=await pdf.getPage(1), v1=p1.getViewport({scale:1}), ratio=v1.height/v1.width, pages=[];
+  const io=new IntersectionObserver(es=>es.forEach(async e=>{ if(!e.isIntersecting) return; const d=e.target; if(d.dataset.r) return; d.dataset.r="1"; io.unobserve(d);
+      const pg=await pdf.getPage(+d.dataset.n), w=Math.max(d.clientWidth,300), sc=(w*Math.min(devicePixelRatio||1,2))/pg.getViewport({scale:1}).width, vp=pg.getViewport({scale:sc});
+      const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height; d.innerHTML=""; d.style.aspectRatio=""; d.appendChild(cv); await pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise; }),{root:null,rootMargin:"600px 0px"});
+  for(let i=1;i<=pdf.numPages;i++){ const d=document.createElement("div"); d.className="gpg"; d.dataset.n=i; d.style.aspectRatio=(1/ratio).toFixed(4); wrap.appendChild(d); pages.push(d); io.observe(d); }
+  const n=Math.min(Math.max(parseInt(startPg)||0,0),pdf.numPages); if(n>1) requestAnimationFrame(()=>pages[n-1].scrollIntoView({block:"start"}));
+}
+async function gMount(host,id,interactive){
+  const href="https://drive.google.com/file/d/"+encodeURIComponent(id)+"/view";
+  host.querySelectorAll("iframe,.gbox").forEach(n=>n.remove());
+  const box=document.createElement("div"); box.className="gbox"; host.insertBefore(box,host.firstChild);
+  const ext='<a class="btn small" href="'+esc(href)+'" target="_blank" rel="noopener" data-ext="1">'+T2("Abrir no Drive","Open in Drive")+'</a>';
+  box.innerHTML='<div class="gmsg">'+T2("Carregando do Drive…","Loading from Drive…")+'</div>';
+  try{ const f=await gFile(id,interactive);
+    if(f.mime.startsWith("image/")){ box.innerHTML=""; const im=document.createElement("img"); im.className="gimg"; im.alt=f.name||""; im.src=URL.createObjectURL(f.blob); box.appendChild(im); }
+    else if(f.mime==="application/pdf"){ await gPdf(box,f.blob,(String(host.dataset.gp||"").match(/\d+/)||[])[0]); }
+    else box.innerHTML='<div class="gmsg">'+esc(f.name||"")+"<br>"+T2("Este tipo de arquivo abre no Drive.","This file type opens in Drive.")+ext+'</div>';
+  }catch(e){
+    if(e.message==="auth"){ box.innerHTML='<div class="gmsg">'+T2("Entre com sua conta Google para ver este arquivo dentro do app.","Sign in with Google to view this file inside the app.")+'<button type="button" class="btn small primary" data-gsign>'+T2("Entrar com Google","Sign in with Google")+'</button></div>'; box.querySelector("[data-gsign]").onclick=()=>gMount(host,id,true); }
+    else box.innerHTML='<div class="gmsg">'+T2("Não consegui carregar o arquivo ("+esc(e.message)+").","Could not load the file ("+esc(e.message)+").")+ext+'</div>';
+  }
+}
+function gScan(){ if(!gOn()) return; document.querySelectorAll("[data-gdrive]:not([data-gdone])").forEach(h=>{ h.dataset.gdone="1"; gMount(h,h.dataset.gdrive,false); }); }
+(()=>{ const go=()=>{ if(!gOn()) return; let t=0; new MutationObserver(()=>{ cancelAnimationFrame(t); t=requestAnimationFrame(gScan); }).observe(document.body,{childList:true,subtree:true}); gScan(); }; if(document.body) go(); else document.addEventListener("DOMContentLoaded",go); })();
 function driveFig(stem){return driveEmbeds(stem,T2("Imagem do enunciado","Stem image"));}
 function driveInline(stem){return driveEmbeds(stem,T2("Recurso visual","Visual resource"));}
 function openDrive(id,label){ const href="https://drive.google.com/file/d/"+encodeURIComponent(id)+"/view";
   
   openSheet('<div class="row" style="justify-content:space-between"><h2>'+esc(label||T2("Imagem","Image"))+'</h2><button class="btn small ghost" data-act="closeSheet" aria-label="'+T2("Fechar","Close")+'">✕</button></div>'+
-    '<div class="dview"><iframe src="'+esc(driveAu('https://drive.google.com/file/d/'+id+'/preview'))+'" title="'+esc(label||"Drive")+'" allow="autoplay"></iframe></div>'+
+    '<div class="dview" data-gdrive="'+esc(id)+'"><iframe src="'+esc(driveAu('https://drive.google.com/file/d/'+id+'/preview'))+'" title="'+esc(label||"Drive")+'" allow="autoplay"></iframe></div>'+
     '<p class="lede" style="font-size:12px">'+T2("Se aparecer pedido de login ou erro, entre na sua conta Google neste navegador ou","If you see a sign-in prompt or an error, sign in to Google in this browser or")+' <a href="'+esc(href)+'" target="_blank" rel="noopener" data-ext="1">'+T2("abra no Drive","open in Drive")+'</a>.</p>'); }
 function openImg(qid){ const q=S.qs.get(qid); if(!q?.img?.url) return; openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Imagem","Image")}</h2><button class="btn small ghost" data-act="closeSheet" aria-label="${T2("Fechar imagem","Close image")}">✕</button></div>
     <div class="row" role="group" aria-label="${T2("Ampliação da imagem","Image magnification")}" style="margin:12px 0">${[100,150,200].map(z=>`<button type="button" class="btn small" data-act="imgScale" data-scale="${z}" aria-pressed="${z===100}">${z===100?T2("Ajustar","Fit"):z+"%"}</button>`).join("")}</div>

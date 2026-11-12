@@ -546,13 +546,14 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 .qgrid .tags{gap:6px;align-items:center}
 .qgrid .tag{font-size:10px;letter-spacing:.025em;text-transform:none;white-space:normal;overflow-wrap:anywhere}
 .qgrid .stem{font-size:calc(19px * var(--fs));line-height:1.8;max-width:68ch;margin:12px 0 18px;overflow-wrap:anywhere}
-.qgrid .opt{border-radius:14px;padding:16px 18px;box-shadow:inset 0 0 0 1px var(--line)}
+.qgrid .opt{border-radius:12px;padding:9px 14px;box-shadow:inset 0 0 0 1px var(--line)}
 .qgrid .opt:not([disabled]):hover{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--accent)}
 .qgrid .opt.picked{box-shadow:inset 0 0 0 2px var(--accent)}
 .qgrid .opt.correct{box-shadow:inset 0 0 0 1px var(--ok-bar)}
 .qgrid .opt.wrong{box-shadow:inset 0 0 0 1px var(--bad-bar)}
-.qgrid .otext{font-size:calc(17px * var(--fs));line-height:1.65;overflow-wrap:anywhere}
-.qgrid .orow{align-items:baseline;flex-wrap:wrap;column-gap:12px;row-gap:6px}
+.qgrid .otext{font-size:calc(17px * var(--fs));line-height:1.45;overflow-wrap:anywhere}
+.qgrid .orow{align-items:baseline;flex-wrap:wrap;column-gap:12px;row-gap:2px}
+.qgrid .opts{gap:6px}
 .qgrid .letter{width:20px;color:var(--muted)}
 .qgrid .otext{flex:1 1 120px}
 .qgrid .mark{font-size:10px;letter-spacing:.02em;max-width:100%;white-space:normal}
@@ -586,12 +587,13 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 .qimg figcaption{color:var(--muted);line-height:1.65;margin-top:10px;text-align:left}
 @media(max-width:599px){
   .qgrid .stem{font-size:calc(18px * var(--fs));line-height:1.8}
-  .qgrid .opt{padding:14px}
+  .qgrid .opt{padding:9px 12px}
   .answer-correct,.answer-picked{padding:17px}
   .qnav{gap:8px;padding:8px;grid-template-columns:44px minmax(30px,1fr) minmax(120px,auto)}
   .qnav .btn.icon{width:44px}
 }
 @media(prefers-reduced-motion:reduce){.qgrid .opt{transition:none}}
+@media(pointer:coarse) and (min-width:600px){.qgrid .stem{font-size:calc(19px * var(--fs) - 1pt)}.qgrid .otext{font-size:calc(17px * var(--fs) - 1pt)}}
 
 .ann-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.ann-tools{display:flex;gap:5px;flex-wrap:wrap}.ann-tools .btn{font-size:11.5px;padding:5px 8px}.ann-surface{position:relative;display:flow-root;isolation:isolate}.ann-content{position:relative;z-index:0}.ann-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;touch-action:pan-y}.ann-surface.ann-enabled .ann-canvas{pointer-events:auto;cursor:crosshair}.ann-surface.ann-enabled{user-select:none;-webkit-user-select:none}.ann-toolbar .btn[aria-pressed="true"]{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
 
@@ -601,6 +603,7 @@ body.qnav-on .qnav{position:fixed;left:50%;transform:translateX(-50%);bottom:cal
 body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 @media(min-width:960px){body:not(.focus).qnav-on .qnav{left:calc(50% + var(--navw,232px)/2)}}
 .qgrid.uw .opts{gap:6px}.qgrid.uw .opt{padding:9px 11px}.qgrid.uw .otext{font-size:15px;line-height:1.5}.qgrid.uw .answer-feedback{gap:8px}.qgrid.uw .answer-correct,.qgrid.uw .answer-picked{padding:12px}.qgrid.uw .answer-feedback h3{margin-bottom:6px}.qgrid.uw .answer-comment-title{margin-bottom:5px}.qgrid.uw .answer-comment-text{font-size:14px;line-height:1.6}.qgrid.uw .answer-distractors>summary{padding:11px 13px}
+@media(pointer:coarse) and (min-width:600px){.qgrid.uw .otext{font-size:calc(15px - 1pt)}}
 .ann-palette{display:flex;gap:5px;align-items:center}.ann-color{width:24px;height:24px;min-width:24px;padding:0;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}.ann-color[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
 </style>
 </head>
@@ -641,7 +644,7 @@ pt:{stats:"Números",home:"Início",plan:"Plano",study:"Estudar",review:"Revisã
  start:"Começar",available:"questões disponíveis",none:"Nenhuma questão com esses filtros.",
  q:"Questão",of:"de",prev:"Anterior",next:"Próxima",finish:"Finalizar",confirmFinish:"Toque de novo para finalizar",
  right:"Acertou",wrongAns:"Errou · gabarito",answer:"Gabarito",whyNot:"Por que não",trueStmt:"Afirmativa verdadeira",yourAns:"Sua resposta",
- more:"Detalhar justificativas",less:"Versão enxuta",alwaysDetail:"Sempre mostrar justificativas detalhadas",trap:"Pegadinha · memorize",trapUs:"Trap · remember",source:"Fonte",
+ more:"Aprofundar o raciocínio",less:"Versão enxuta",alwaysDetail:"Sempre aprofundar o raciocínio",trap:"Pegadinha · memorize",trapUs:"Trap · remember",source:"Fonte",
  explain:"Explicar mais com Claude",explaining:"Pensando…",stop:"Parar",aiTitle:"Claude · aprofundamento",
  translate:"Traduzir com Claude",onlyIn:"Esta questão ainda não está em português. Mostrando o original em inglês.",onlyInEn:"This question is not available in English yet. Showing the Portuguese original.",
  saveTr:"Salvar tradução no banco",trSaved:"Tradução salva",
@@ -674,7 +677,7 @@ en:{stats:"Stats",home:"Home",plan:"Plan",study:"Study",review:"Review",cards:"F
  start:"Start",available:"questions available",none:"No questions match these filters.",
  q:"Question",of:"of",prev:"Previous",next:"Next",finish:"Finish",confirmFinish:"Tap again to finish",
  right:"Correct",wrongAns:"Incorrect · answer",answer:"Answer",whyNot:"Why not",trueStmt:"True statement",yourAns:"Your answer",
- more:"Show detailed explanations",less:"Concise version",alwaysDetail:"Always show detailed explanations",trap:"Trap · remember",trapUs:"Trap · remember",source:"Source",
+ more:"Explore the reasoning",less:"Concise version",alwaysDetail:"Always explore the reasoning",trap:"Trap · remember",trapUs:"Trap · remember",source:"Source",
  explain:"Explain more with Claude",explaining:"Thinking…",stop:"Stop",aiTitle:"Claude · deep dive",
  translate:"Translate with Claude",onlyIn:"This question is not available in Portuguese yet. Showing the English original.",onlyInEn:"This question is not available in English yet. Showing the Portuguese original.",
  saveTr:"Save translation to bank",trSaved:"Translation saved",
@@ -1132,13 +1135,13 @@ function questionHTML(q, it, reveal, simMode){
   const fb = (fallback && q.standard!=="usmle") ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const explanation = orig=>{
     const o=c.opts[orig], letter=L[perm.indexOf(orig)];
-    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${safe(o.why||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div>${o.more&&q.standard!=="usmle"?`<details class="answer-depth" ${det?"open":""}><summary>${T2("Aprofundar o raciocínio","Explore the reasoning")}</summary><div class="answer-comment-text">${safe(o.more)}</div></details>`:""}</div>`;
+    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${safe(o.why||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div>${det&&o.more&&q.standard!=="usmle"?`<div class="answer-depth"><div class="answer-comment-text">${safe(o.more)}</div></div>`:""}</div>`;
   };
   const otherOptions=perm.filter(orig=>orig!==q.correct&&orig!==pick);
   const feedback = reveal ? `<section class="answer-feedback" aria-label="${T2("Correção comentada","Answer explanation")}">
     <div class="answer-correct"><h3>${T2("Por que esta é a resposta","Why this is the answer")}</h3>${explanation(q.correct)}</div>
     ${pick!==null&&pick!==q.correct?`<div class="answer-picked"><h3>${T2("Sobre a sua escolha","About your choice")}</h3>${explanation(pick)}</div>`:""}
-    ${otherOptions.length?`<details class="answer-distractors"><summary>${T2("Entender as demais alternativas","Review the other options")} <span>${otherOptions.length}</span></summary><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></details>`:""}
+    ${otherOptions.length?`<details class="answer-distractors"${det?" open":""}><summary>${T2("Entender as demais alternativas","Review the other options")} <span>${otherOptions.length}</span></summary><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></details>`:""}
   </section>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>

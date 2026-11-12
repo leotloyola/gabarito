@@ -1624,7 +1624,7 @@ function driveEmbeds(stem,label){ const ids=[...new Set((String(stem||"").match(
 /* ---------- Drive via API (login Google dentro do app; contorna o 401 do iframe) ---------- */
 const GSCOPE="https://www.googleapis.com/auth/drive.readonly";
 const G={tok:null,exp:0,cache:new Map()};
-try{ const j=JSON.parse(sessionStorage.getItem("gab.gtok")||"null"); if(j&&j.exp>Date.now()){ G.tok=j.t; G.exp=j.exp; } }catch(_){}
+try{ const j=JSON.parse(localStorage.getItem("gab.gtok")||"null"); if(j&&j.exp>Date.now()){ G.tok=j.t; G.exp=j.exp; } }catch(_){}
 function gOn(){ return !!(window.GABARITO_CONFIG||{}).GOOGLE_CLIENT_ID; }
 function gLoad(src){ return new Promise((ok,no)=>{ const el=document.createElement("script"); el.src=src; el.onload=ok; el.onerror=()=>no(new Error("load")); document.head.appendChild(el); }); }
 async function gToken(interactive){
@@ -1632,12 +1632,12 @@ async function gToken(interactive){
   if(!window.google?.accounts?.oauth2) await gLoad("https://accounts.google.com/gsi/client");
   return new Promise((ok,no)=>{
     const c=google.accounts.oauth2.initTokenClient({ client_id:window.GABARITO_CONFIG.GOOGLE_CLIENT_ID, scope:GSCOPE, login_hint:window.__email||undefined,
-      callback:r=>{ if(r&&r.access_token){ G.tok=r.access_token; G.exp=Date.now()+(r.expires_in||3600)*1000; try{ sessionStorage.setItem("gab.gtok",JSON.stringify({t:G.tok,exp:G.exp})); }catch(_){} ok(G.tok); } else no(new Error("auth")); },
+      callback:r=>{ if(r&&r.access_token){ G.tok=r.access_token; G.exp=Date.now()+(r.expires_in||3600)*1000; try{ localStorage.setItem("gab.gtok",JSON.stringify({t:G.tok,exp:G.exp})); }catch(_){} ok(G.tok); } else no(new Error("auth")); },
       error_callback:()=>no(new Error("auth")) });
     c.requestAccessToken({prompt:interactive?"":"none"});
   });
 }
-async function gApi(q,interactive){ const t=await gToken(interactive); const r=await fetch("https://www.googleapis.com/drive/v3/files/"+q,{headers:{Authorization:"Bearer "+t}}); if(r.status===401){ G.tok=null; try{ sessionStorage.removeItem("gab.gtok"); }catch(_){} throw new Error("auth"); } if(!r.ok) throw new Error("http"+r.status); return r; }
+async function gApi(q,interactive){ const t=await gToken(interactive); const r=await fetch("https://www.googleapis.com/drive/v3/files/"+q,{headers:{Authorization:"Bearer "+t}}); if(r.status===401){ G.tok=null; try{ localStorage.removeItem("gab.gtok"); }catch(_){} throw new Error("auth"); } if(!r.ok) throw new Error("http"+r.status); return r; }
 function gFile(id,interactive){ if(G.cache.has(id)) return G.cache.get(id);
   const p=(async()=>{ const m=await (await gApi(encodeURIComponent(id)+"?fields=mimeType,name&supportsAllDrives=true",interactive)).json(); const mime=m.mimeType||"";
     if(mime.startsWith("video/")) return {mime,name:m.name};

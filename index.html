@@ -404,6 +404,21 @@ nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:
   .sheet{left:50%;right:auto;transform:translateX(-50%);width:min(680px,100%);bottom:auto;top:10vh;border-radius:28px;max-height:80vh}
 }
 @media (max-width:380px){ .kpi{padding:14px 10px 12px} .kpi .v{font-size:22px} .big{font-size:40px} .due{padding:18px 16px} }
+/* menu lateral recolhível (>=960px) */
+.navtog{display:none}
+@media (min-width:960px){
+  nav.tabs button.navtog{display:flex;margin-top:8px;color:var(--subtle);border-top:1px solid var(--hair);border-radius:0 0 999px 999px}
+  nav.tabs button.navtog svg{transition:transform .2s ease}
+  body.navc{--navw:68px}
+  body.navc nav.tabs{padding-left:8px;padding-right:8px;overflow:visible}
+  body.navc nav.tabs button{justify-content:center;padding:0;gap:0;border-radius:14px}
+  body.navc nav.tabs button>span:not(.badge){display:none}
+  body.navc nav.tabs button .badge{position:absolute;top:4px;right:4px;margin:0}
+  body.navc nav.tabs button.navtog{border-radius:14px}
+  body.navc nav.tabs button.navtog svg{transform:rotate(180deg)}
+  body.navc .gdrag[data-g="nav"]{display:none!important}
+  html body.navc #side{display:none}
+}
 /* focus mode: hide app chrome during a session */
 body.focus .top, body.focus nav.tabs{display:none}
 body.focus main{padding-top:max(10px,env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
@@ -897,7 +912,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length; renderSide();
-  $("#tabs").innerHTML = ["home","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+  $("#tabs").innerHTML = ["home","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
 }
 function renderCtx(){
   const cp=curPer(), root=curDisc(), isUSMLE=cp==="usmle"&&root?.id==="usmle";
@@ -1348,6 +1363,12 @@ function mpOpen(src,name,pg,href){ const gm=String(src).match(/\/file\/d\/([\w-]
   const end=()=>{ if(!dr) return; document.body.classList.remove("mp-drag"); document.body.style.userSelect=""; try{ if(dr.w) localStorage.setItem("gab.mpw",dr.w); }catch(_){} dr=null; };
   document.addEventListener("pointerup",end); document.addEventListener("pointercancel",end);
   document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".mpdrag")){ R.removeProperty("--mpwu"); try{ localStorage.removeItem("gab.mpw"); }catch(_){} } });
+})();
+/* menu lateral recolhível: estado em localStorage */
+(()=>{ const K="gab.navc", b=document.body;
+  try{ if(localStorage.getItem(K)==="1") b.classList.add("navc"); }catch(e){}
+  document.addEventListener("click",e=>{ const t=e.target.closest&&e.target.closest("[data-navtog]"); if(!t) return; e.stopPropagation();
+    const on=b.classList.toggle("navc"); try{ localStorage.setItem(K,on?"1":"0"); }catch(_){} },true);
 })();
 (()=>{ const R=document.documentElement.style, K={nav:["--navw","gab.navw"],q:["--qlw","gab.qlw"],toc:["--tocw","gab.tocw"]};
   try{ for(const g in K){ const w=localStorage.getItem(K[g][1]); if(w) R.setProperty(K[g][0],w+"px"); } }catch(e){}

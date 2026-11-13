@@ -596,14 +596,33 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 @media(prefers-reduced-motion:reduce){.qgrid .opt{transition:none}}
 @media(pointer:coarse) and (min-width:600px){.qgrid .stem{font-size:calc(19px * var(--fs) - 1pt)}.qgrid .otext{font-size:calc(17px * var(--fs) - 1pt)}}
 
-.ann-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.ann-tools{display:flex;gap:5px;flex-wrap:wrap}.ann-tools .btn{font-size:11.5px;padding:5px 8px}.ann-surface{position:relative;display:flow-root;isolation:isolate}.ann-content{position:relative;z-index:0}.ann-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;touch-action:pan-y}.ann-surface.ann-enabled .ann-canvas{pointer-events:auto;cursor:crosshair}.ann-surface.ann-enabled{user-select:none;-webkit-user-select:none}.ann-toolbar .btn[aria-pressed="true"]{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+.ann-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.ann-surface{position:relative;display:flow-root;isolation:isolate}.ann-content{position:relative;z-index:0}
+.ann-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.ann-svg.mk{z-index:3;mix-blend-mode:multiply}.ann-svg.ink{z-index:4}
+.ann-input{position:absolute;inset:0;z-index:5;display:none;touch-action:none;cursor:crosshair}.ann-enabled .ann-input{display:block}.ann-enabled{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.ann-enabled{outline:2px dashed color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:4px;border-radius:6px}
+.ann-float{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 24px);padding:8px 10px;border-radius:18px;background:var(--surface);box-shadow:0 6px 28px rgba(0,0,0,.18),0 0 0 1px var(--line)}
+.ann-float .btn{font-size:12.5px;padding:7px 10px;min-height:36px}.ann-sep{width:1px;align-self:stretch;background:var(--line);margin:2px 2px}
+.ann-sizes{display:flex;gap:4px}.ann-size{width:34px;height:34px;padding:0;border-radius:50%;border:0;background:var(--surface-2);display:flex;align-items:center;justify-content:center;cursor:pointer}.ann-size i{display:block;width:var(--d);height:var(--d);border-radius:50%;background:var(--ink)}.ann-size[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+body.ann-on main{padding-bottom:96px}
+.qleft .ann-surface.ann-enabled{min-height:45vh}@media(min-width:900px){.qleft .ann-surface{min-height:45vh}}
+body.qnav-on .ann-float{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 86px)}
+@media (max-width:700px){.ann-lbl{display:none}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ann-svg.mk{mix-blend-mode:normal;opacity:.4}}:root[data-theme="dark"] .ann-svg.mk{mix-blend-mode:normal;opacity:.4}
+:root.lsn-light .lesson .ann-svg.mk,:root.lsn-light .qlesson .ann-svg.mk,:root.lsn-light .lwrap .ann-svg.mk{mix-blend-mode:multiply;opacity:1}
+/* lição em fundo claro no tablet, mesmo com o app no escuro */
+:root.lsn-light .lwrap>.ann-surface,:root.lsn-light .lesson,:root.lsn-light .qlesson{--bg:#F5F5F4;--surface:#FFFFFF;--surface-2:#F4F4F5;--pill:rgba(228,228,231,.5);--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:#A1A1AA;--line:#E4E4E7;--hair:rgba(24,24,27,.06);--accent:#0F766E;--accent-ink:#FFFFFF;--accent-soft:#F0FDFA;--usmle:#4338CA;--usmle-soft:#EEF2FF;--usmle-line:#C7D2FE;--ok:#059669;--ok-soft:#ECFDF5;--ok-bar:#6EE7B7;--bad:#E11D48;--bad-soft:#FFF1F2;--bad-bar:#FDA4AF;--warn:#B45309;--warn-soft:#FFFBEB;--warn-line:#FDE68A;color-scheme:light}
+:root.lsn-light .lesson{background:#FFFFFF;color:#27272A}
+:root.lsn-light .qlesson .qlh b{color:var(--ink-2)}:root.lsn-light .qlesson .qlbody{background:#FFFFFF}
+:root.lsn-light .qlesson{background:#FFFFFF;border-radius:20px;padding:10px 10px 0;color:var(--ink)}
+:root.lsn-light .qlesson .btn:not(.primary){background:var(--surface-2);color:var(--ink)}
+:root.lsn-light .lesson .call.usmle{background:var(--usmle-soft);box-shadow:0 0 0 1px var(--usmle-line) inset}:root.lsn-light .lesson .call.usmle .ct{color:var(--usmle)}
 
 body.qnav-on main{padding-bottom:calc(var(--nav-h) + 106px + env(safe-area-inset-bottom,0px))}
 body.qnav-on .qnav-space{height:calc(var(--nav-h) + 124px + env(safe-area-inset-bottom,0px));flex:0 0 auto}
 body.qnav-on .qnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);width:min(760px,calc(100vw - 32px));z-index:24;margin:0}
 body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 @media(min-width:960px){body:not(.focus).qnav-on .qnav{left:calc(50% + var(--navw,232px)/2)}}
-.ann-palette{display:flex;gap:5px;align-items:center}.ann-color{width:24px;height:24px;min-width:24px;padding:0;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}.ann-color[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.ann-palette{display:flex;gap:5px;align-items:center}.ann-color{width:30px;height:30px;min-width:30px;padding:0;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}.ann-color[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
 </style>
 </head>
 <body>
@@ -794,7 +813,7 @@ function fmtTime(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60), r=s%
 let toastTimer=null;
 function toast(msg){ let el=$("#toast"); if(!el){el=document.createElement("div");el.id="toast";el.className="toast";el.setAttribute("role","status");document.body.appendChild(el);} el.textContent=msg; el.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.hidden=true,2600); }
 function arm(btn, label, fn){ if(btn.dataset.armed){ delete btn.dataset.armed; fn(); return; } const old=btn.textContent; btn.dataset.armed="1"; btn.textContent=label; setTimeout(()=>{ if(btn.dataset.armed){ delete btn.dataset.armed; btn.textContent=old; } },3000); }
-function applyTheme(){ const t=set().theme; const r=document.documentElement; if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme"); r.style.setProperty("--fs", set().fs||1); }
+function applyTheme(){ const t=set().theme; const r=document.documentElement; if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme"); r.style.setProperty("--fs", set().fs||1); if(typeof applyLessonLight==="function") applyLessonLight(); }
 
 /* ---------- catalog / filters ---------- */
 // período: set().per = número (ex. 5) ou "all"; sem escolha → período da disciplina atual (ou o mais alto)
@@ -834,41 +853,147 @@ function tagsOf(q){ return q.tags?.[qLangOf(q)] || q.tags?.[set().lang] || q.tag
 function isMarked(id){ return !!S.prog.marked?.[id]?.on; }
 function markedQuestions(list=ctxQs()){ return list.filter(q=>isMarked(q.id)); }
 function markToggle(id){ S.prog.marked=S.prog.marked||{}; S.prog.marked[id]={on:!isMarked(id),ts:now()}; saveProg(); }
-function annotationStrokes(id){ return S.prog.annotations?.[id]?.strokes||[]; }
-const ANN_COLORS={pen:["#E11D48","#2563EB","#111827","#FFFFFF"],marker:["#FFE04A","#78D7A3","#FF8FB5"]};
-function annColor(tool){const fallback=tool==="marker"?"#FFE04A":"#E11D48";try{return localStorage.getItem("gab.ann.color."+tool)||fallback;}catch(_){return fallback;}}
-function annPalette(tool){ const list=ANN_COLORS[tool]||[], selected=annColor(tool), label=tool==="pen"?T2("Cor da caneta","Pen color"):T2("Cor do marca-texto","Highlighter color"); return '<span class="ann-palette" role="group" aria-label="'+label+'">'+list.map(c=>'<button type="button" class="ann-color" data-act="annColor" data-tool="'+tool+'" data-v="'+c+'" style="--swatch:'+c+'" aria-label="'+label+' '+c+'" title="'+c+'" aria-pressed="'+(selected===c)+'"></button>').join("")+'</span>'; }
-function annotationControls(q){
-  if(!S.qs.has(q.id)) return "";
-  const marked=isMarked(q.id), active=S.annId===q.id, count=annotationStrokes(q.id).length, id=esc(q.id), tool=S.annTool||"pen";
-  const btn=(t,label,active)=>'<button type="button" class="btn small '+(active?"primary":"")+'" data-act="annTool" data-v="'+t+'">'+label+'</button>';
-  return '<div class="ann-toolbar"><button type="button" class="btn small '+(marked?"primary":"")+'" data-act="markToggle" data-q="'+id+'" aria-pressed="'+marked+'">'+(marked?"🔖 "+tr("unmarkQuestion"):"☆ "+tr("markQuestion"))+'</button><button type="button" class="btn small '+(active?"primary":"")+'" data-act="annToggle" data-q="'+id+'" aria-pressed="'+active+'">✍ '+(active?tr("annotationOn"):tr("annotate"))+(count?" · "+count:"")+'</button>'+(active?'<span class="ann-tools">'+btn("pen",tr("pen"),tool==="pen")+btn("marker",tr("highlighter"),tool==="marker")+btn("eraser",tr("eraser"),tool==="eraser")+(tool==="pen"||tool==="marker"?annPalette(tool):"")+'<button type="button" class="btn small" data-act="annUndo" data-q="'+id+'" '+(count?"":"disabled")+'">'+tr("undo")+'</button><button type="button" class="btn small" data-act="annClear" data-q="'+id+'" '+(count?"":"disabled")+' title="'+tr("clearNotes")+'">⌫</button></span>':"")+'</div>';
+/* ---------- ANOTAÇÕES (S Pen): caneta com pressão, marca-texto que endireita, borracha por traço ---------- */
+function annotationStrokes(key){ return S.prog.annotations?.[key]?.strokes||[]; }
+function annSet(key,strokes,hist=true){ S.prog.annotations=S.prog.annotations||{}; if(hist){ ANN.hist.push({key,prev:annotationStrokes(key)}); if(ANN.hist.length>80) ANN.hist.shift(); } S.prog.annotations[key]={ts:now(),strokes}; saveProg(); }
+const ANN_COLORS={pen:["#111827","#E11D48","#2563EB","#16A34A","#FFFFFF"],marker:["#FFE04A","#78D7A3","#FF8FB5","#7DD3FC"]};
+const ANN_SIZES={pen:[1.8,3,5],marker:[12,18,26],eraser:[8,16,28]};
+function annPref(k,d){ try{ return localStorage.getItem("gab.ann."+k)||d; }catch(_){ return d; } }
+function annColor(tool){ return annPref("color."+tool, tool==="marker"?"#FFE04A":"#E11D48"); }
+function annSizeIx(tool){ const i=+annPref("size."+tool,"1"); return i>=0&&i<3?i:1; }
+function annSize(tool){ return ANN_SIZES[tool][annSizeIx(tool)]; }
+function annKeys(owner){ return Object.keys(S.prog.annotations||{}).filter(k=>k===owner||k.startsWith(owner+"#")); }
+function annCount(owner){ return annKeys(owner).reduce((n,k)=>n+annotationStrokes(k).length,0); }
+function annBar(owner,mark){
+  const active=S.annId===owner, o=esc(owner), tool=S.annTool||"pen", count=annCount(owner);
+  let h='<div class="ann-toolbar" data-ann-bar="'+o+'" data-mark="'+(mark?1:0)+'">';
+  if(mark){ const m=isMarked(owner); h+='<button type="button" class="btn small '+(m?"primary":"")+'" data-act="markToggle" data-q="'+o+'" aria-pressed="'+m+'">'+(m?"🔖 "+tr("unmarkQuestion"):"☆ "+tr("markQuestion"))+'</button>'; }
+  h+='<button type="button" class="btn small '+(active?"primary":"")+'" data-act="annToggle" data-q="'+o+'" aria-pressed="'+active+'">✍ '+(active?tr("annotationOn"):tr("annotate"))+(count?" · "+count:"")+'</button>';
+  if(active){
+    const tb=(t,ic,l)=>'<button type="button" class="btn small '+(tool===t?"primary":"")+'" data-act="annTool" data-v="'+t+'" aria-pressed="'+(tool===t)+'" title="'+l+'">'+ic+' <span class="ann-lbl">'+l+'</span></button>';
+    const pal=(tool==="pen"||tool==="marker")?'<span class="ann-palette" role="group" aria-label="'+T2("Cor","Color")+'">'+ANN_COLORS[tool].map(c=>'<button type="button" class="ann-color" data-act="annColor" data-tool="'+tool+'" data-v="'+c+'" style="--swatch:'+c+'" aria-label="'+T2("Cor","Color")+' '+c+'" aria-pressed="'+(annColor(tool)===c)+'"></button>').join("")+'</span>':"";
+    const sz='<span class="ann-sizes" role="group" aria-label="'+T2("Espessura","Thickness")+'">'+[0,1,2].map(i=>'<button type="button" class="ann-size" data-act="annSize" data-tool="'+tool+'" data-v="'+i+'" aria-pressed="'+(annSizeIx(tool)===i)+'" aria-label="'+T2("Espessura","Thickness")+' '+(i+1)+'"><i style="--d:'+[4,8,13][i]+'px"></i></button>').join("")+'</span>';
+    h+='<div class="ann-float" role="toolbar" aria-label="'+tr("annotations")+'">'+tb("pen","✒️",tr("pen"))+tb("marker","🖍",tr("highlighter"))+tb("eraser","🧽",tr("eraser"))+'<span class="ann-sep"></span>'+pal+sz+'<span class="ann-sep"></span><button type="button" class="btn small" data-act="annUndo" data-q="'+o+'" '+(count||ANN.hist.length?"":"disabled")+' title="'+tr("undo")+'">↶</button><button type="button" class="btn small" data-act="annClear" data-q="'+o+'" '+(count?"":"disabled")+' title="'+tr("clearNotes")+'">🗑</button><button type="button" class="btn small primary" data-act="annToggle" data-q="'+o+'">✓</button></div>';
+  }
+  return h+'</div>';
 }
-function annotationSurface(q,html){
-  if(!S.qs.has(q.id)) return html;
-  const active=S.annId===q.id;
-  return `<div class="ann-surface${active?" ann-enabled":""}" data-ann-surface data-q="${esc(q.id)}"><div class="ann-content">${html}</div><canvas class="ann-canvas" aria-hidden="true"></canvas></div>`;
+function annotationControls(q){ return S.qs.has(q.id)?annBar(q.id,true):""; }
+function annSurfaceHTML(key,owner,html){ return '<div class="ann-surface'+(S.annId===owner?" ann-enabled":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
+function annotationSurface(q,html,part){ return S.qs.has(q.id)?annSurfaceHTML(part?q.id+"#"+part:q.id,q.id,html):html; }
+const ANN={observer:null,observed:new WeakSet(),stroke:null,touch:null,hist:[],seq:0,pen:false};
+function annBlocks(surface){ let el=surface.querySelector(".ann-content"); while(el&&el.children.length===1&&/^(DIV|ARTICLE|SECTION)$/.test(el.firstElementChild.tagName)) el=el.firstElementChild; return el?[...el.children]:[]; }
+function annGeo(surface){ const sr=surface.getBoundingClientRect(); return {W:sr.width,H:sr.height,sr,bl:annBlocks(surface).map(b=>{ const r=b.getBoundingClientRect(); return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height}; })}; }
+function annMap(st,g){
+  if(st.v!==2) return (st.points||[]).map(p=>[p[0]*g.W,p[1]*g.H,.5]);
+  const B=st.b>=0&&g.bl.length?g.bl[Math.min(st.b,g.bl.length-1)]:{x:0,y:0,w:g.W,h:g.H};
+  const sx=st.bw&&B.w?B.w/st.bw:1; let sy=st.bh&&B.h?B.h/st.bh:sx; if(!(sy>.6&&sy<1.7)) sy=sx;
+  return (st.pts||[]).map(p=>[B.x+p[0]*sx,B.y+p[1]*sy,p[2]]);
 }
-const ANN={observer:null,observed:new WeakSet(),stroke:null};
-function annDraw(surface,extra){
-  const canvas=surface?.querySelector(".ann-canvas"); if(!canvas) return;
-  const rect=surface.getBoundingClientRect(), dpr=Math.min(devicePixelRatio||1,2); if(!rect.width||!rect.height) return;
-  const w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr); if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
-  const g=canvas.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,rect.width,rect.height);
-  const strokes=annotationStrokes(surface.dataset.q).concat(extra?[extra]:[]);
-  for(const st of strokes){if(!st.points?.length)continue;g.save();g.globalCompositeOperation=st.tool==="eraser"?"destination-out":"source-over";g.globalAlpha=st.tool==="marker"?.38:1;g.strokeStyle=st.color||(st.tool==="marker"?"#FFE04A":"#E11D48");g.lineWidth=st.width||3;g.lineCap="round";g.lineJoin="round";g.beginPath();g.moveTo(st.points[0][0]*rect.width,st.points[0][1]*rect.height);for(let i=1;i<st.points.length;i++)g.lineTo(st.points[i][0]*rect.width,st.points[i][1]*rect.height);g.stroke();g.restore();}
+const annF=v=>Math.round(v*10)/10;
+function annLine(p){ return p.map((q,i)=>(i?"L":"M")+annF(q[0])+","+annF(q[1])).join(""); }
+function annPenPath(pts,base){
+  const n=pts.length; if(!n) return "";
+  const r=[]; for(let i=0;i<n;i++){ const w=base*(.35+.9*(pts[i][2]??.5))/2; r.push(i?r[i-1]*.55+w*.45:w); }
+  if(n===1){ const [x,y]=pts[0],R=Math.max(r[0],.9); return "M"+annF(x-R)+","+annF(y)+"a"+annF(R)+","+annF(R)+" 0 1,0 "+annF(2*R)+",0a"+annF(R)+","+annF(R)+" 0 1,0 "+annF(-2*R)+",0Z"; }
+  const L=[],R=[];
+  for(let i=0;i<n;i++){ const a=pts[Math.max(0,i-1)],b=pts[Math.min(n-1,i+1)]; let tx=b[0]-a[0],ty=b[1]-a[1]; const d=Math.hypot(tx,ty)||1; tx/=d; ty/=d; L.push([pts[i][0]-ty*r[i],pts[i][1]+tx*r[i]]); R.push([pts[i][0]+ty*r[i],pts[i][1]-tx*r[i]]); }
+  const cur=P=>{ let s=""; for(let i=1;i<P.length-1;i++) s+="Q"+annF(P[i][0])+","+annF(P[i][1])+" "+annF((P[i][0]+P[i+1][0])/2)+","+annF((P[i][1]+P[i+1][1])/2); const z=P[P.length-1]; return s+"L"+annF(z[0])+","+annF(z[1]); };
+  const Rv=R.reverse(), re=annF(r[n-1]), rs=annF(r[0]);
+  return "M"+annF(L[0][0])+","+annF(L[0][1])+cur(L)+"A"+re+","+re+" 0 0,0 "+annF(Rv[0][0])+","+annF(Rv[0][1])+cur(Rv)+"A"+rs+","+rs+" 0 0,0 "+annF(L[0][0])+","+annF(L[0][1])+"Z";
 }
+// Marca-texto como no Samsung Notes: traço quase reto vira reta; até 15° da horizontal/vertical, trava no eixo
+function annStraighten(p){
+  if(p.length<2) return p;
+  const a=p[0],z=p[p.length-1],dx=z[0]-a[0],dy=z[1]-a[1],len=Math.hypot(dx,dy); if(len<10) return p;
+  let dev=0; for(const q of p) dev=Math.max(dev,Math.abs((q[0]-a[0])*dy-(q[1]-a[1])*dx)/len);
+  if(dev>Math.max(7,len*.09)) return p;
+  const ang=Math.abs(Math.atan2(dy,dx)*180/Math.PI), h=Math.min(ang,180-ang);
+  if(h<=15) return [a,[z[0],a[1],z[2]]];
+  if(Math.abs(ang-90)<=15) return [a,[a[0],z[1],z[2]]];
+  return [a,z];
+}
+function annEl(st,p){
+  if(st.tool==="marker") return '<path d="'+annLine(p.length===1?[p[0],[p[0][0]+.5,p[0][1]]]:p)+'" fill="none" stroke="'+esc(st.color||"#FFE04A")+'" stroke-width="'+(st.width||18)+'" stroke-linecap="butt" stroke-linejoin="round"/>';
+  return '<path d="'+annPenPath(p,st.width||3)+'" fill="'+esc(st.color||"#E11D48")+'"/>';
+}
+function annDraw(surface,keep){
+  const mk=surface?.querySelector(".ann-svg.mk"), ink=surface?.querySelector(".ann-svg.ink"); if(!mk||!ink) return;
+  const g=annGeo(surface); if(!g.W||!g.H) return;
+  for(const s of [mk,ink]){ s.setAttribute("viewBox","0 0 "+annF(g.W)+" "+annF(g.H)); }
+  const strokes=keep||annotationStrokes(surface.dataset.key); let m="",k="",er="";
+  for(const st of strokes){ const p=annMap(st,g); if(!p.length) continue;
+    if(st.tool==="eraser"){ er+='<path d="'+annLine(p)+'" stroke="#000" stroke-width="'+(st.width||26)+'" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'; continue; }
+    if(st.tool==="marker") m+=annEl(st,p); else k+=annEl(st,p); }
+  const wrap=(body,s)=>{ if(!er) return body; const id="annm"+(++ANN.seq); return '<defs><mask id="'+id+'" maskUnits="userSpaceOnUse" x="0" y="0" width="'+g.W+'" height="'+g.H+'"><rect width="100%" height="100%" fill="#fff"/>'+er+'</mask></defs><g mask="url(#'+id+')">'+body+'</g>'; };
+  mk.innerHTML=wrap(m)+'<g class="live"></g>'; ink.innerHTML=wrap(k)+'<g class="live"></g>';
+}
+function annLive(){ const A=ANN.stroke; if(!A||A.tool==="eraser") return; const svg=A.surface.querySelector(A.tool==="marker"?".ann-svg.mk":".ann-svg.ink"), live=svg?.querySelector(".live"); if(!live) return;
+  live.innerHTML=annEl(A,A.tool==="marker"?annStraighten(A.raw):A.raw); }
 function annInit(root=document){
-  const list=[];if(root.matches?.("[data-ann-surface]"))list.push(root);list.push(...(root.querySelectorAll?.("[data-ann-surface]")||[]));
-  if(typeof ResizeObserver!=="undefined"&&!ANN.observer) ANN.observer=new ResizeObserver(es=>es.forEach(e=>annDraw(e.target)));
-  for(const surface of list){if(ANN.observer&&!ANN.observed.has(surface)){ANN.observer.observe(surface);ANN.observed.add(surface);}annDraw(surface);}
+  const list=[]; if(root.matches?.("[data-ann-surface]")) list.push(root); list.push(...(root.querySelectorAll?.("[data-ann-surface]")||[]));
+  if(typeof ResizeObserver!=="undefined"&&!ANN.observer) ANN.observer=new ResizeObserver(es=>es.forEach(e=>{ if(!ANN.stroke||ANN.stroke.surface!==e.target) annDraw(e.target); }));
+  for(const s of list){ if(ANN.observer&&!ANN.observed.has(s)){ ANN.observer.observe(s); ANN.observed.add(s); } annDraw(s); }
+  annFloatPos();
 }
-function annPoint(e,surface){const r=surface.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))];}
-function annFinish(e){if(!ANN.stroke||(e&&e.pointerId!==ANN.stroke.pointerId))return;const {id,surface,stroke}=ANN.stroke;ANN.stroke=null;if(stroke.points.length){S.prog.annotations=S.prog.annotations||{};const old=annotationStrokes(id);S.prog.annotations[id]={ts:now(),strokes:old.concat([stroke])};saveProg();}annDraw(surface);}
-document.addEventListener("pointerdown",e=>{const c=e.target.closest?.(".ann-canvas");if(!c||!c.closest(".ann-enabled")||e.pointerType!=="pen")return;const surface=c.closest("[data-ann-surface]"),id=surface.dataset.q;if(S.annId!==id)return;const base=S.annTool||"pen",eraser=e.button===2||e.button===5||!!(e.buttons&(2|32)),tool=eraser?"eraser":base,width=tool==="marker"?18:tool==="eraser"?26:3;const stroke={tool,color:annColor(tool),width,points:[annPoint(e,surface)]};ANN.stroke={id,surface,stroke,pointerId:e.pointerId};try{c.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();annDraw(surface,stroke);});
-document.addEventListener("pointermove",e=>{if(!ANN.stroke||e.pointerId!==ANN.stroke.pointerId||e.pointerType!=="pen")return;const {surface,stroke}=ANN.stroke,p=annPoint(e,surface);if(stroke.tool==="marker"){if(stroke.points.length===1)stroke.points.push(p);else stroke.points[1]=p;}else stroke.points.push(p);annDraw(surface,stroke);e.preventDefault();});
-document.addEventListener("pointerup",e=>annFinish(e));document.addEventListener("pointercancel",e=>annFinish(e));
+// a barra flutuante fica sempre visível; a original vira só o botão "Concluir"
+function annFloatPos(){ let host=document.getElementById("annHost"); if(!host){ host=document.createElement("div"); host.id="annHost"; document.body.appendChild(host); } const f=document.querySelector("[data-ann-bar] .ann-float"); host.innerHTML=""; if(f) host.appendChild(f); document.body.classList.toggle("ann-on",!!f); }
+function annRefresh(owner){
+  if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
+  document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
+  document.querySelectorAll("[data-ann-surface]").forEach(s=>s.classList.toggle("ann-enabled",s.dataset.owner===S.annId));
+  annInit($("#view"));
+}
+function annPt(e,g){ return [e.clientX-g.sr.left,e.clientY-g.sr.top,e.pointerType==="pen"||e.pressure>0&&e.pressure!==.5?Math.max(.05,Math.min(1,e.pressure||.5)):.5]; }
+function annSegDist(p,a,b){ const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy; let t=l?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l:0; t=Math.max(0,Math.min(1,t)); return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy); }
+function annErase(A,p){
+  const rad=A.width/2; let hit=false;
+  A.keep=A.keep.filter((st,i)=>{ const m=A.mapped.get(st); if(!m||!m.length) return true; const R=rad+(st.width||3)/2;
+    for(let j=0;j<m.length;j++){ if(annSegDist(p,m[j],m[Math.min(j+1,m.length-1)])<=R){ hit=true; return false; } } return true; });
+  if(hit) annDraw(A.surface,A.keep);
+}
+function annScroller(el){ for(let n=el.parentElement;n&&n!==document.body;n=n.parentElement){ const o=getComputedStyle(n).overflowY; if((o==="auto"||o==="scroll")&&n.scrollHeight>n.clientHeight+1) return n; } return document.scrollingElement||document.documentElement; }
+function annFinish(e){
+  const A=ANN.stroke; if(!A||(e&&e.pointerId!==A.pointerId)) return; ANN.stroke=null;
+  if(A.tool==="eraser"){ if(A.keep.length!==A.start.length) annSet(A.key,A.keep); annDraw(A.surface); annRefreshBars(); return; }
+  let p=A.tool==="marker"?annStraighten(A.raw):A.raw; if(!p.length){ annDraw(A.surface); return; }
+  const g=A.geo, y0=p[0][1]; let bi=-1,best=1e9; g.bl.forEach((b,i)=>{ const d=y0<b.y?b.y-y0:y0>b.y+b.h?y0-b.y-b.h:0; if(d<best){best=d;bi=i;} });
+  const B=bi>=0?g.bl[bi]:{x:0,y:0,w:g.W,h:g.H};
+  const st={v:2,tool:A.tool,color:A.color,width:A.width,b:bi,bw:annF(B.w),bh:annF(B.h),pts:p.map(q=>[annF(q[0]-B.x),annF(q[1]-B.y),Math.round(q[2]*100)/100])};
+  annSet(A.key,annotationStrokes(A.key).concat([st])); annDraw(A.surface); annRefreshBars();
+}
+function annRefreshBars(){ document.querySelectorAll("[data-ann-bar],#annHost").forEach(b=>{ if(b.id==="annHost"){ const c=annCount(S.annId||""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); return; } const o=b.dataset.annBar; if(o!==S.annId) return; const btn=b.querySelector('[data-act="annToggle"]'); const c=annCount(o); if(btn&&!btn.closest(".ann-float")) btn.textContent="✍ "+tr("annotationOn")+(c?" · "+c:""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); }); }
+document.addEventListener("pointerdown",e=>{
+  if(ANN.touch?.raf){ cancelAnimationFrame(ANN.touch.raf); ANN.touch.raf=0; }
+  if(e.pointerType==="pen"&&!ANN.pen){ ANN.pen=true; applyLessonLight(); }
+  const inp=e.target.closest?.(".ann-input"); if(!inp) return;
+  const surface=inp.closest("[data-ann-surface]"); if(!surface||surface.dataset.owner!==S.annId) return;
+  try{ inp.setPointerCapture(e.pointerId); }catch(_){}
+  if(e.pointerType==="touch"){ // dedo rola a tela (rejeição de palma: só a caneta desenha)
+    if(ANN.touch&&!ANN.touch.done) return; ANN.touch={id:e.pointerId,x0:e.clientX,y0:e.clientY,y:e.clientY,x:e.clientX,t:performance.now(),t0:performance.now(),v:0,moved:false,sc:annScroller(surface)}; return; }
+  if(ANN.stroke) return;
+  const eraser=e.button===2||e.button===5||!!(e.buttons&(2|32)), tool=eraser?"eraser":(S.annTool||"pen");
+  const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool,color:annColor(tool),width:annSize(tool),pointerId:e.pointerId,raw:[annPt(e,g)]};
+  if(tool==="eraser"){ A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)])); annErase(A,A.raw[0]); }
+  ANN.stroke=A; e.preventDefault(); annLive();
+});
+document.addEventListener("pointermove",e=>{
+  const T=ANN.touch; if(T&&e.pointerId===T.id&&!T.done){ const t=performance.now(),dy=e.clientY-T.y,dx=e.clientX-T.x; T.sc.scrollTop-=dy; if(dx&&T.sc!==document.scrollingElement) T.sc.scrollLeft-=dx; T.v=.8*(dy/Math.max(1,t-T.t))+.2*T.v; T.y=e.clientY; T.x=e.clientX; T.t=t; if(Math.hypot(e.clientX-T.x0,e.clientY-T.y0)>8) T.moved=true; e.preventDefault(); return; }
+  const A=ANN.stroke; if(!A||e.pointerId!==A.pointerId) return;
+  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; for(const ev of (evs.length?evs:[e])){ const p=annPt(ev,A.geo), l=A.raw[A.raw.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])<.7) continue; A.raw.push(p); if(A.tool==="eraser") annErase(A,p); }
+  annLive(); e.preventDefault();
+});
+function annTouchEnd(e){ const T=ANN.touch; if(!T||e.pointerId!==T.id||T.done) return; T.done=true;
+  if(!T.moved&&performance.now()-T.t0<450&&e.type==="pointerup"){ // toque curto: repassa o clique (ex.: escolher alternativa)
+    const els=document.elementsFromPoint(e.clientX,e.clientY).filter(x=>!x.classList?.contains("ann-input")&&!x.closest?.("svg.ann-svg")); const t=els[0]; if(t&&t.click) t.click(); return; }
+  let v=T.v; if(performance.now()-T.t>80) v=0; const sc=T.sc; const step=()=>{ if(Math.abs(v)<.02){ T.raf=0; return; } sc.scrollTop-=v*16; v*=.95; T.raf=requestAnimationFrame(step); }; T.raf=requestAnimationFrame(step); }
+document.addEventListener("pointerup",e=>{ annTouchEnd(e); annFinish(e); }); document.addEventListener("pointercancel",e=>{ annTouchEnd(e); annFinish(e); });
+document.addEventListener("contextmenu",e=>{ if(e.target.closest?.(".ann-enabled .ann-input")) e.preventDefault(); });
 window.addEventListener("resize",()=>annInit());
+/* ---------- LIÇÃO EM FUNDO CLARO NO TABLET ---------- */
+const TABLET_Q=matchMedia("(pointer:coarse) and (min-width:600px)");
+function isTablet(){ return TABLET_Q.matches||ANN.pen; }
+function applyLessonLight(){ const m=set().lessonLight||"auto"; document.documentElement.classList.toggle("lsn-light", m==="on"||(m==="auto"&&isTablet())); }
+try{ TABLET_Q.addEventListener("change",applyLessonLight); }catch(_){}
 
 /* ---------- progress ---------- */
 function rec(id){ return S.prog.q[id]; }
@@ -1153,9 +1278,9 @@ function questionHTML(q, it, reveal, simMode){
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&WIDE_Q.matches&&LP;
-  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}"><article class="lesson" lang="pt-BR">${lsn.html}</article></div></aside>`:"";
+  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div>${annBar("L:"+lsn.id,false)}<div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsn.html}</article>`)}</div></aside>`:"";
   const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright"><div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}</div>${pane}</div>`;
+  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
 function askClaude(id){
@@ -1444,9 +1569,9 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const nQ=[...S.qs.values()].filter(q=>q.discipline===l.discipline&&q.topic===l.topic&&stdOk(q)).length;
   v.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button></div>
+   <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
-   <div class="lwrap"><article class="lesson" lang="pt-BR">${l.html}</article><nav class="ltoc" id="ltoc" hidden></nav></div>
+   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${l.html}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
@@ -1837,6 +1962,7 @@ function openSettings(){
   openSheet(`<div class="row" style="justify-content:space-between"><h2>${tr("settings")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
    <div class="field"><span class="flabel">${tr("lang")}</span><div class="chips">${["pt","en"].map(x=>`<button type="button" class="chip" data-setl="${x}" aria-pressed="${st.lang===x}">${x==="pt"?"Português":"English"}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("theme")}</span><div class="chips">${[["sys",tr("tSys")],["light",tr("tLight")],["dark",tr("tDark")]].map(([k,l])=>`<button type="button" class="chip" data-sett="${k}" aria-pressed="${st.theme===k}">${l}</button>`).join("")}</div></div>
+   <div class="field"><span class="flabel">${T2("Fundo da lição","Lesson background")}</span><div class="chips">${[["auto",T2("Claro no tablet","Light on tablet")],["on",T2("Sempre claro","Always light")],["off",T2("Seguir o tema","Follow theme")]].map(([k,l])=>`<button type="button" class="chip" data-setll="${k}" aria-pressed="${(st.lessonLight||"auto")===k}">${l}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
    <div class="toggle"><span>${tr("alwaysDetail")}</span><button type="button" class="switch" role="switch" data-act="toggleDetail" aria-checked="${!!st.detail}" aria-label="${tr("alwaysDetail")}"></button></div>
@@ -2220,6 +2346,7 @@ document.addEventListener("click", async e=>{
      return; }
   const sl=e.target.closest("[data-setl]"); if(sl){ set().lang=sl.dataset.setl; saveProg(); render(); openSettings(); return; }
   const stt=e.target.closest("[data-sett]"); if(stt){ set().theme=stt.dataset.sett; applyTheme(); saveProg(); openSettings(); return; }
+  const sll=e.target.closest("[data-setll]"); if(sll){ set().lessonLight=sll.dataset.setll; applyLessonLight(); saveProg(); openSettings(); return; }
   const sf=e.target.closest("[data-setf]"); if(sf){ set().fs=Number(sf.dataset.setf); applyTheme(); saveProg(); openSettings(); return; }
   const gb=e.target.closest("[data-g]"); if(gb&&S.gen){ const k=gb.dataset.g; S.gen[k]= k==="qty"?Number(gb.dataset.v):gb.dataset.v; openGen(); return; }
   const a=e.target.closest("[data-act]"); if(!a) return; const act=a.dataset.act;
@@ -2242,11 +2369,14 @@ document.addEventListener("click", async e=>{
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
   if(act==="startMarkedReview"){ const pool=markedQuestions(); if(!pool.length)return; S.session=buildSession("review",pool,Object.assign(defaultSetup(),{count:10})); return go("review"); }
   if(act==="markToggle"){ const id=a.dataset.q; markToggle(id); if($("#layer").innerHTML) bankPreview(id); else render(); return; }
-  if(act==="annToggle"){ const id=a.dataset.q; S.annId=S.annId===id?null:id; S.annTool=S.annTool||"pen"; if($("#layer").innerHTML){bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render(); return; }
-  if(act==="annTool"){ S.annTool=a.dataset.v; if($("#layer").innerHTML){const id=S.annId;bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render(); return; }
-  if(act==="annColor"){ const tool=a.dataset.tool,color=a.dataset.v; if(!(ANN_COLORS[tool]||[]).includes(color))return; try{localStorage.setItem("gab.ann.color."+tool,color);}catch(_){} if($("#layer").innerHTML){const id=S.annId;bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render(); return; }
-  if(act==="annUndo"){ const id=a.dataset.q; S.prog.annotations=S.prog.annotations||{}; S.prog.annotations[id]={ts:now(),strokes:annotationStrokes(id).slice(0,-1)}; saveProg(); if($("#layer").innerHTML){bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render(); return; }
-  if(act==="annClear"){ const id=a.dataset.q; return arm(a,T2("Apagar todas as anotações desta questão?","Clear all annotations for this question?"),()=>{S.prog.annotations=S.prog.annotations||{};S.prog.annotations[id]={ts:now(),strokes:[]};saveProg();if($("#layer").innerHTML){bankPreview(id);requestAnimationFrame(()=>annInit($("#layer")));}else render();}); }
+  if(act==="annToggle"){ const id=a.dataset.q; S.annId=S.annId===id?null:id; S.annTool=S.annTool||"pen"; annRefresh(id); return; }
+  if(act==="annTool"){ S.annTool=a.dataset.v; annRefresh(S.annId); return; }
+  if(act==="annColor"){ const tool=a.dataset.tool,color=a.dataset.v; if(!(ANN_COLORS[tool]||[]).includes(color))return; try{localStorage.setItem("gab.ann.color."+tool,color);}catch(_){} annRefresh(S.annId); return; }
+  if(act==="annSize"){ const tool=a.dataset.tool,v=a.dataset.v; if(!ANN_SIZES[tool]||!/^[012]$/.test(v))return; try{localStorage.setItem("gab.ann.size."+tool,v);}catch(_){} annRefresh(S.annId); return; }
+  if(act==="annUndo"){ const id=a.dataset.q, keys=annKeys(id); let i=ANN.hist.length-1; while(i>=0&&!(ANN.hist[i].key===id||ANN.hist[i].key.startsWith(id+"#"))) i--;
+    if(i>=0){ const h=ANN.hist.splice(i,1)[0]; annSet(h.key,h.prev,false); } else { const k=keys.filter(k=>annotationStrokes(k).length).pop(); if(k) annSet(k,annotationStrokes(k).slice(0,-1),false); }
+    annRefresh(id); return; }
+  if(act==="annClear"){ const id=a.dataset.q; return arm(a,id.startsWith("L:")?T2("Apagar todas as anotações desta lição?","Clear all annotations for this lesson?"):T2("Apagar todas as anotações desta questão?","Clear all annotations for this question?"),()=>{ annKeys(id).forEach(k=>{ if(annotationStrokes(k).length) annSet(k,[]); }); annRefresh(id); }); }
   if(act==="imgScale"){ const im=$("#layer .zoomwrap img"); if(im){ im.style.width=Number(a.dataset.scale)+"%"; im.style.maxWidth="none"; document.querySelectorAll('#layer [data-act="imgScale"]').forEach(b=>b.setAttribute("aria-pressed",String(b===a))); } return; }
   if(act==="imgZoom"){ return openImg(a.dataset.q); }
   if(act==="driveOpen"){ return openDrive(a.dataset.id); }

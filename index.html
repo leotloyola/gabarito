@@ -1249,7 +1249,8 @@ function questionHTML(q, it, reveal, simMode){
   if(q.exc) tags.push(`<span class="tag exc">${set().lang==="en"?"Except / incorrect":"Exceto / incorreta"}</span>`);
   const qlb = (q.i18n?.pt&&q.i18n?.en) ? `<span class="qlang" role="group" aria-label="${T2("Idioma da questão","Question language")}">${["pt","en"].map(x=>`<button type="button" data-act="qlang" data-q="${esc(q.id)}" data-v="${x}" aria-pressed="${lang===x}" title="${x==="pt"?T2("Ver em português (I)","Show in Portuguese (I)"):T2("Ver em inglês (I)","Show in English (I)")}">${x.toUpperCase()}</button>`).join("")}</span>` : "";
   const hasMore = q.standard==="usmle" ? !!c.pegMore : (c.opts.some(o=>o.more) || !!c.pegMore);
-  const det = hasMore && (S.detail.has(q.id) ? !set().detail : !!set().detail);
+  const detBase = !!set().detail || (reveal && pick!==null && pick!==q.correct); // errou: abre o aprofundamento
+  const det = hasMore && (S.detail.has(q.id) ? !detBase : detBase);
   const opts = perm.map((orig,pos)=>{
     const o=c.opts[orig]; let cls="opt", mark="";
     if(reveal){ if(orig===q.correct){cls+=" correct";mark=orig===pick?tr("answer")+" · ✓":tr("answer");} else if(orig===pick){cls+=" wrong";mark=tr("yourAns");} }

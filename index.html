@@ -1008,7 +1008,7 @@ function vHome(v){
    ${S.dbState==="off"&&S.qs.size?`<div class="banner">${tr("noDb")}</div>`:""}
    <div class="due dc" style="--dc:${discColor(curDisc())}"><div><div class="eyebrow">${tr("dueToday")} · ${esc(scopeLabel())}</div><div class="big">${due}</div>${due?"":`<div class="lede" style="margin-top:6px">${tr("dueNone")}</div>`}</div>
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
-   ${(()=>{ const t=curTopic(); return t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id)}</div>`:""; })()}
+   ${(()=>{ const t=curTopic(); return t&&!t.pseudo?`<div class="row">${lessonOf(curDisc()?.id,t.id)?lessonBtn(curDisc().id,t.id):lessonReqBtn(curDisc()?.id,t.id)}</div>`:""; })()}
    ${(()=>{ const t=curTopic(); return t&&!t.pseudo?topicLinksHTML(t):""; })()}
    ${planHomeHTML()}
    ${nextExamHTML()}
@@ -1046,7 +1046,7 @@ function vStudy(v){
   if(S.session && S.session.kind!=="review") return vPlayer(v);
   const su = S.setup || (S.setup=defaultSetup()); const t=curTopic(); const pool=setupPool(su);
   const chip=(k,val,label)=>`<button type="button" class="chip" data-su="${k}" data-val="${val}" aria-pressed="${String(su[k])===String(val)}">${label}</button>`;
-  const hasFull=!!fullExamsHTML(); const hasL=!!lessonsOf(curDisc()?.id).length; const tab=(hasFull&&S.studyTab==="full")?"full":(hasL&&S.studyTab==="lessons")?"lessons":"build";
+  const hasFull=!!fullExamsHTML(); const hasL=!!(curDisc()?.topics||[]).length; const tab=(hasFull&&S.studyTab==="full")?"full":(hasL&&S.studyTab==="lessons")?"lessons":"build";
   const hasGen=ctxQs().some(q=>q.origin==="generated");
   const segS=(hasFull||hasL)?`<div class="seg" role="group" style="align-self:flex-start"><button type="button" data-act="studyTab" data-val="build" aria-pressed="${tab==="build"}">${T2("Sessão","Session")}</button>${hasFull?`<button type="button" data-act="studyTab" data-val="full" aria-pressed="${tab==="full"}">${T2("Provas","Exams")}</button>`:""}${hasL?`<button type="button" data-act="studyTab" data-val="lessons" aria-pressed="${tab==="lessons"}">${T2("Lições","Lessons")}</button>`:""}</div>`:"";
   if(tab==="lessons"){ v.innerHTML=`${segS}<div><div class="eyebrow">${esc(nm(curDisc()))}</div><h1>${T2("Lições","Lessons")}</h1><p class="lede">${T2("Resumos de alto rendimento: o que cai na UFPR, pegadinhas, algoritmos e o que muda no USMLE.","High-yield summaries: what UFPR tests, traps, algorithms and USMLE notes.")}</p></div>${lessonsListHTML()}`; return; }
@@ -1054,7 +1054,7 @@ function vStudy(v){
   v.innerHTML = `
    ${segS}
    <div><div class="eyebrow">${esc(nm(t))}</div><h1>${tr("studySetup")}</h1></div>
-   ${t&&!t.pseudo&&lessonOf(curDisc()?.id,t.id)?`<div class="row">${lessonBtn(curDisc().id,t.id,true)}</div>`:""}
+   ${t&&!t.pseudo?`<div class="row">${lessonOf(curDisc()?.id,t.id)?lessonBtn(curDisc().id,t.id,true):lessonReqBtn(curDisc()?.id,t.id,true)}</div>`:""}
    ${t&&!t.pseudo?topicLinksHTML(t):""}
    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
@@ -1349,6 +1349,42 @@ function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="gro
 function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
 function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
+function lessonReqBtn(dId,tId,small){ if(!dId||!tId||lessonOf(dId,tId)) return ""; return `<button class="btn ${small?"small ":""}ghost" data-act="askLesson" data-d="${esc(dId)}" data-t="${esc(tId)}">✉ ${T2("Pedir lição ao Claude","Request lesson from Claude")}</button>`; }
+/* ---------- PEDIR LIÇÃO (monta o pedido e leva ao chat do projeto Claude; nada é enviado a servidor do app) ---------- */
+const LESSON_REQ_URL="https://claude.ai/code/project/chan_012B9Hee7R5azBd7bsJfQDT7";
+function copyText(txt){
+  const fb=()=>{ const ta=document.createElement("textarea"); ta.value=txt; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;top:0;left:0;opacity:0"; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){} ta.remove(); return ok?Promise.resolve():Promise.reject(new Error("copy")); };
+  try{ if(navigator.clipboard?.writeText) return navigator.clipboard.writeText(txt).catch(fb); }catch(e){}
+  return fb();
+}
+function lessonRequestText(d,t){
+  const per=d.period?d.period+"º período":"USMLE (sem período)";
+  const subs=(t.subs||[]).map(s=>s.pt||s.en||s.id).filter(Boolean);
+  const nQ=[...S.qs.values()].filter(q=>q.discipline===d.id&&q.topic===t.id).length;
+  const links=(t.links||[]).map(x=>`- ${x.n||x.t}${x.p?" (p. "+x.p+")":""}: https://drive.google.com/${x.t==="folder"?"drive/folders/":"file/d/"}${x.id}`);
+  return [
+    "Pedido de lição (feito pelo botão \"Pedir lição\" do app Gabarito).",
+    "",
+    `Disciplina: ${d.name?.pt||nm(d)} (id \`${d.id}\`${d.code?", "+d.code:""}, ${per})`,
+    `Tema: ${t.name?.pt||nm(t)} (id \`${t.id}\`)${t.exam?" · "+t.exam:""}`,
+    t.aula?"Aula: "+t.aula:null,
+    subs.length?"Subtemas: "+subs.join("; "):null,
+    `Questões no app sobre o tema: ${nQ}`,
+    links.length?"Material já ligado ao tema:\n"+links.join("\n"):null,
+    "",
+    "Faça a lição deste tema seguindo o CLAUDE.md do gabarito-conteudo (formato de licoes/, modelo licoes/anestesio/rpa.md).",
+    "Busque no meu Drive, na pasta desta disciplina (IDs em fontes/inventario-*.md), as aulas e o material referentes ao tema e leia só o necessário.",
+    "Use o modelo principal para escrever e conferir a lição (qualidade de material de estudo); se faltar material ou algum arquivo for grande demais, me avise.",
+    "Ao terminar: validar, commit, push e confirmar que a lição apareceu no app."
+  ].filter(x=>x!=null).join("\n");
+}
+function askLesson(dId,tId){
+  const d=discById(dId); const t=(d?.topics||[]).find(x=>x.id===tId); if(!d||!t) return;
+  const txt=lessonRequestText(d,t);
+  const p=copyText(txt);
+  window.open(LESSON_REQ_URL,"_blank","noopener");
+  p.then(()=>toast(T2("Pedido copiado: cole no chat do projeto e envie","Request copied: paste it in the project chat and send")),()=>{ toast(T2("Não consegui copiar; o pedido ficou na tela","Could not copy; request shown on screen")); window.prompt(T2("Copie o pedido:","Copy the request:"),txt); });
+}
 function topicLinksHTML(t){ const L=t?.links; if(!L?.length) return ""; const ic={video:"▶",pdf:"📄",folder:"📁"};
   const url=x=>x.t==="folder"?`https://drive.google.com/drive/folders/${encodeURIComponent(x.id)}`:`https://drive.google.com/file/d/${encodeURIComponent(x.id)}/view`;
   const prev=x=>x.t==="folder"?`https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(x.id)}#list`:`https://drive.google.com/file/d/${encodeURIComponent(x.id)}/preview`;
@@ -1398,8 +1434,10 @@ document.addEventListener("click",e=>{ if(e.target.closest("[data-mpclose]")){ e
   const a=e.target.closest("a[data-mp]"); if(!a||ext||!WIDE_M.matches||e.ctrlKey||e.metaKey||e.shiftKey) return; e.preventDefault(); e.stopPropagation(); mpOpen(a.dataset.mp,a.dataset.n,a.dataset.p,a.href); },true);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.body.classList.contains("mp-on")){ e.preventDefault(); e.stopImmediatePropagation(); mpClose(); } },true);
 function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id); const read=S.prog.read||{};
-  if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>`;
-  return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina inteira","Download whole discipline")} (${L.length} PDFs)</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>`; }
+  const miss=(d.topics||[]).filter(t=>!lessonOf(d.id,t.id));
+  const missH=miss.length?`<div class="eyebrow" style="margin:16px 4px 8px">${T2("Temas sem lição","Topics without a lesson")} · ${miss.length}</div><div class="panel"><div class="list">${miss.map(t=>`<button type="button" class="li" data-act="askLesson" data-d="${esc(d.id)}" data-t="${esc(t.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(nm(t))}</b><br><small style="color:var(--subtle)">${esc(t.exam||"")}${t.exam?" · ":""}${T2("toque para pedir a lição ao Claude","tap to request the lesson from Claude")}</small></span><span class="st no">✉</span></button>`).join("")}</div></div>`:"";
+  if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>${missH}`;
+  return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina inteira","Download whole discipline")} (${L.length} PDFs)</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>${missH}`; }
 function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; return vStudy(v); }
   const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const isRead=!!(S.prog.read||{})[l.id];
@@ -2214,6 +2252,7 @@ document.addEventListener("click", async e=>{
   if(act==="driveOpen"){ return openDrive(a.dataset.id); }
   if(act==="report"){ return openReport(a.dataset.q); }
   if(act==="askClaude"){ return askClaude(a.dataset.q); }
+  if(act==="askLesson"){ return askLesson(a.dataset.d,a.dataset.t); }
   if(act==="repKind"){ S.rep.kind=a.dataset.val; if(S.rep.kind!=="key") S.rep.alt=null; return S.repDraw(); }
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));

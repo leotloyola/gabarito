@@ -1045,11 +1045,11 @@ document.addEventListener("pointermove",e=>{
   // Galaxy Tab/Chrome: com o botão lateral apertado, encostar a caneta NÃO gera pointerdown; chegam só pointermove com buttons=1 (e um contextmenu depois). Isso vira borracha.
   if(!ANN.stroke&&!ANN.penDown&&e.pointerType==="pen"&&(e.buttons&1)){ const surface=e.target.closest?.(".ann-input")?.closest("[data-ann-surface]");
     if(surface&&surface.dataset.owner===S.annId){ const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool:"eraser",color:"",width:annSize("eraser"),pointerId:e.pointerId,raw:[annPt(e,g)],ghost:true};
-      A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)])); A.lastOn=e.pressure>0; if(A.lastOn) annErase(A,A.raw[0]); ANN.stroke=A; e.preventDefault(); return; } }
+      A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)])); annErase(A,A.raw[0]); ANN.stroke=A; e.preventDefault(); return; } }
   if(ANN.stroke?.ghost&&e.pointerId===ANN.stroke.pointerId&&!(e.buttons&1)){ annFinish(null,ANN.stroke); ANN.stroke=null; return; }
   const A=ANN.stroke; if(!A||e.pointerId!==A.pointerId) return;
   if(A.tool!=="eraser"&&annBtnErase(e)) annToEraser(A,annPt(e,A.geo)); // apertou o botão no meio do traço
-  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; for(const ev of (evs.length?evs:[e])){ const p=annPt(ev,A.geo), l=A.raw[A.raw.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])<.7) continue; A.raw.push(p); if(A.tool==="eraser"){ if(A.ghost){ const on=ev.pressure>0; if(on) annErase(A,p,A.lastOn?l:null); A.lastOn=on; } else annErase(A,p,l); } }
+  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; for(const ev of (evs.length?evs:[e])){ const p=annPt(ev,A.geo), l=A.raw[A.raw.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])<.7) continue; A.raw.push(p); if(A.tool==="eraser"){ annErase(A,p,l); } }
   annLive(); e.preventDefault();
 });
 ["pointerdown","pointerup","pointercancel"].forEach(t=>document.addEventListener(t,e=>{ if(e.pointerType==="pen") ANN.penDown=t==="pointerdown"; },true));
@@ -1061,7 +1061,7 @@ function annToEraser(A,pt){ if(A.raw.length>2) annFinish(null,{...A});
 // registro contínuo dos eventos da caneta no app (últimos 400), para diagnosticar a borracha numa questão real
 const PENLOG=[]; let PENLAST="", PENREP=0; const PENT0=performance.now();
 function penLog(t){ if(t===PENLAST){ PENREP++; PENLOG[PENLOG.length-1]=PENLOG[PENLOG.length-1].replace(/ ×\d+$/,"")+" ×"+(PENREP+1); return; } PENLAST=t; PENREP=0; PENLOG.push(((performance.now()-PENT0)/1000).toFixed(1)+"s "+t); if(PENLOG.length>400) PENLOG.shift(); }
-["pointerdown","pointermove","pointerup","pointercancel"].forEach(ty=>document.addEventListener(ty,e=>{ if(e.pointerType!=="pen") return; const where=e.target.closest?.(".ann-input")?(e.target.closest(".ann-enabled")?"ANOT":"anot-off"):"fora"; penLog(ty.replace("pointer","")+" b="+e.button+" bs="+e.buttons+" p="+(e.pressure||0).toFixed(2)+" "+where+" ann="+(S.annId?"on":"off")+" tool="+(ANN.stroke?ANN.stroke.tool:"-")+" hov="+(ANN.btnHover?1:0)); },true));
+["pointerdown","pointermove","pointerup","pointercancel"].forEach(ty=>document.addEventListener(ty,e=>{ if(e.pointerType!=="pen") return; const where=e.target.closest?.(".ann-input")?(e.target.closest(".ann-enabled")?"ANOT":"anot-off"):"fora"; penLog(ty.replace("pointer","")+" b="+e.button+" bs="+e.buttons+" p="+(e.pressure||0).toFixed(2)+" w="+Math.round(e.width||0)+"x"+Math.round(e.height||0)+" t="+Math.round(e.tiltX||0)+","+Math.round(e.tiltY||0)+" alt="+(e.altitudeAngle==null?"-":e.altitudeAngle.toFixed(2))+" "+where+" ann="+(S.annId?"on":"off")+" tool="+(ANN.stroke?ANN.stroke.tool:"-")+" hov="+(ANN.btnHover?1:0)); },true));
 document.addEventListener("contextmenu",e=>penLog("contextmenu alvo="+(e.target.className||e.target.tagName)+" traço="+(ANN.stroke?ANN.stroke.tool:"-")),true);
 function penTest(){
   openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Testar S Pen","Test S Pen")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>

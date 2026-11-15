@@ -1007,11 +1007,13 @@ function penTest(){
    <p style="font-size:13px;color:var(--muted)">${T2("Risque no quadro com a caneta, depois aperte o botão lateral: (1) com a caneta no ar, perto da tela; (2) encostando; (3) no meio de um risco. Depois tire um print desta tela.","Draw in the box, then press the side button: (1) hovering; (2) touching; (3) mid-stroke. Then take a screenshot.")}</p>
    <div id="ptPad" style="height:200px;border-radius:14px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);touch-action:none;display:flex;align-items:center;justify-content:center;color:var(--subtle);font-size:13px;user-select:none;-webkit-user-select:none">${T2("quadro de teste","test pad")}</div>
    <div id="ptSum" style="font-size:13px;font-weight:600;margin-top:8px"></div>
+   <div class="row" style="gap:8px;margin-top:8px"><button class="btn small primary" id="ptCopy">📋 ${T2("Copiar log","Copy log")}</button><button class="btn small" id="ptClear">${T2("Limpar","Clear")}</button></div>
    <pre id="ptLog" style="font-size:11px;line-height:1.35;white-space:pre-wrap;margin:6px 0 0;max-height:260px;overflow:auto"></pre>
    <div class="mono" style="font-size:11px;color:var(--subtle)">${esc(navigator.userAgent)}</div>`);
   const pad=document.getElementById("ptPad"), log=document.getElementById("ptLog"), sum=document.getElementById("ptSum"); if(!pad) return;
-  const lines=[], seen={btn:false,pen:false}; let last="", rep=0;
-  const put=t=>{ if(t===last){ rep++; lines[lines.length-1]=t+" ×"+(rep+1); } else { last=t; rep=0; lines.push(t); if(lines.length>18) lines.shift(); } log.textContent=lines.join("\n");
+  let lines=[], combos={}, seen={btn:false,pen:false}, last="", rep=0; const t0=performance.now();
+  const put=t=>{ const k=t.replace(/ p=[\d.]+/,""); combos[k]=(combos[k]||0)+1; const ts=((performance.now()-t0)/1000).toFixed(1)+"s ";
+    if(t===last){ rep++; lines[lines.length-1]=lines[lines.length-1].replace(/ ×\d+$/,"")+" ×"+(rep+1); } else { last=t; rep=0; lines.push(ts+t); if(lines.length>600) lines.shift(); } log.textContent=lines.slice(-18).join("\n");
     sum.textContent=(seen.pen?"✓ "+T2("caneta detectada","pen detected"):"✗ "+T2("caneta não detectada","pen not detected"))+" · "+(seen.btn?"✓ "+T2("botão lateral detectado","side button detected"):"✗ "+T2("botão lateral não detectado","side button not detected")); };
   const pe=e=>{ if(e.pointerType==="pen") seen.pen=true; if(e.button===2||e.button===5||(e.buttons&(2|32))) seen.btn=true;
     put(e.type.replace("pointer","")+" "+e.pointerType+" b="+e.button+" bs="+e.buttons+(e.pressure?" p="+e.pressure.toFixed(2):"")); if(e.type==="pointerdown"){ try{ pad.setPointerCapture(e.pointerId); }catch(_){} } e.preventDefault(); };
@@ -1019,6 +1021,9 @@ function penTest(){
   ["contextmenu","auxclick","click"].forEach(t=>pad.addEventListener(t,e=>{ if(t!=="click") seen.btn=true; put(t+" b="+e.button); e.preventDefault(); }));
   const kd=e=>{ if(!document.getElementById("ptPad")){ removeEventListener("keydown",kd,true); return; } put("tecla "+e.key+" code="+e.code); };
   addEventListener("keydown",kd,true); put(T2("pronto","ready"));
+  const txt=()=>["Gabarito · teste S Pen · "+new Date().toISOString(),navigator.userAgent,"standalone="+matchMedia("(display-mode: standalone)").matches+" maxTouchPoints="+navigator.maxTouchPoints+" tela="+innerWidth+"x"+innerHeight+" dpr="+devicePixelRatio,sum.textContent,"","COMBINAÇÕES (evento tipo button buttons → vezes):",...Object.entries(combos).map(([k,n])=>k+" → "+n),"","SEQUÊNCIA:",...lines].join("\n");
+  document.getElementById("ptCopy").onclick=async ev=>{ const b=ev.currentTarget, t=txt(); let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(_){ try{ const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); ok=document.execCommand("copy"); ta.remove(); }catch(__){} } b.textContent=ok?"✓ "+T2("Copiado: cole na conversa","Copied: paste it in the chat"):T2("Não copiou","Copy failed"); };
+  document.getElementById("ptClear").onclick=()=>{ lines=[]; combos={}; seen={btn:false,pen:false}; last=""; put(T2("pronto","ready")); };
 }
 function annTouchEnd(e){ const T=ANN.touch; if(!T||e.pointerId!==T.id||T.done) return; T.done=true;
   if(!T.moved&&performance.now()-T.t0<450&&e.type==="pointerup"){ // toque curto: repassa o clique (ex.: escolher alternativa)

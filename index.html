@@ -1001,6 +1001,25 @@ function annBtnErase(e){ return e.button===2||e.button===5||!!(e.buttons&(2|32))
 function annToEraser(A,pt){ if(A.raw.length>2) annFinish(null,{...A});
   const g=A.geo; A.tool="eraser"; A.width=annSize("eraser"); A.raw=[pt]; A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)]));
   const live=A.surface.querySelectorAll(".ann-svg .live"); live.forEach(l=>l.innerHTML=""); ANN.stroke=A; }
+// diagnóstico: mostra o que o navegador recebe da caneta (botão lateral etc.)
+function penTest(){
+  openSheet(`<div class="row" style="justify-content:space-between"><h2>${T2("Testar S Pen","Test S Pen")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <p style="font-size:13px;color:var(--muted)">${T2("Risque no quadro com a caneta, depois aperte o botão lateral: (1) com a caneta no ar, perto da tela; (2) encostando; (3) no meio de um risco. Depois tire um print desta tela.","Draw in the box, then press the side button: (1) hovering; (2) touching; (3) mid-stroke. Then take a screenshot.")}</p>
+   <div id="ptPad" style="height:200px;border-radius:14px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);touch-action:none;display:flex;align-items:center;justify-content:center;color:var(--subtle);font-size:13px;user-select:none;-webkit-user-select:none">${T2("quadro de teste","test pad")}</div>
+   <div id="ptSum" style="font-size:13px;font-weight:600;margin-top:8px"></div>
+   <pre id="ptLog" style="font-size:11px;line-height:1.35;white-space:pre-wrap;margin:6px 0 0;max-height:260px;overflow:auto"></pre>
+   <div class="mono" style="font-size:11px;color:var(--subtle)">${esc(navigator.userAgent)}</div>`);
+  const pad=document.getElementById("ptPad"), log=document.getElementById("ptLog"), sum=document.getElementById("ptSum"); if(!pad) return;
+  const lines=[], seen={btn:false,pen:false}; let last="", rep=0;
+  const put=t=>{ if(t===last){ rep++; lines[lines.length-1]=t+" ×"+(rep+1); } else { last=t; rep=0; lines.push(t); if(lines.length>18) lines.shift(); } log.textContent=lines.join("\n");
+    sum.textContent=(seen.pen?"✓ "+T2("caneta detectada","pen detected"):"✗ "+T2("caneta não detectada","pen not detected"))+" · "+(seen.btn?"✓ "+T2("botão lateral detectado","side button detected"):"✗ "+T2("botão lateral não detectado","side button not detected")); };
+  const pe=e=>{ if(e.pointerType==="pen") seen.pen=true; if(e.button===2||e.button===5||(e.buttons&(2|32))) seen.btn=true;
+    put(e.type.replace("pointer","")+" "+e.pointerType+" b="+e.button+" bs="+e.buttons+(e.pressure?" p="+e.pressure.toFixed(2):"")); if(e.type==="pointerdown"){ try{ pad.setPointerCapture(e.pointerId); }catch(_){} } e.preventDefault(); };
+  ["pointerdown","pointermove","pointerup","pointercancel","pointerover","pointerleave"].forEach(t=>pad.addEventListener(t,pe));
+  ["contextmenu","auxclick","click"].forEach(t=>pad.addEventListener(t,e=>{ if(t!=="click") seen.btn=true; put(t+" b="+e.button); e.preventDefault(); }));
+  const kd=e=>{ if(!document.getElementById("ptPad")){ removeEventListener("keydown",kd,true); return; } put("tecla "+e.key+" code="+e.code); };
+  addEventListener("keydown",kd,true); put(T2("pronto","ready"));
+}
 function annTouchEnd(e){ const T=ANN.touch; if(!T||e.pointerId!==T.id||T.done) return; T.done=true;
   if(!T.moved&&performance.now()-T.t0<450&&e.type==="pointerup"){ // toque curto: repassa o clique (ex.: escolher alternativa)
     const els=document.elementsFromPoint(e.clientX,e.clientY).filter(x=>!x.classList?.contains("ann-input")&&!x.closest?.("svg.ann-svg")); const t=els[0]; if(t&&t.click) t.click(); return; }
@@ -1986,6 +2005,7 @@ function openSettings(){
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
    <div class="toggle"><span>${tr("alwaysDetail")}</span><button type="button" class="switch" role="switch" data-act="toggleDetail" aria-checked="${!!st.detail}" aria-label="${tr("alwaysDetail")}"></button></div>
+   <div class="row"><button class="btn small" data-act="penTest">🖊 ${T2("Testar S Pen","Test S Pen")}</button></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>
    ${SB&&S.uid?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:12.5px;color:var(--muted)">${esc((window.__email)||"")}</span><button class="btn small" data-act="signOut">${set().lang==="en"?"Sign out":"Sair"}</button></div>`:""}
    <button class="btn danger" data-act="resetProg">${tr("resetProg")}</button>`);
@@ -2434,6 +2454,7 @@ document.addEventListener("click", async e=>{
   if(act==="startMarkedReview"){ const pool=markedQuestions(); if(!pool.length)return; S.session=buildSession("review",pool,Object.assign(defaultSetup(),{count:10})); return go("review"); }
   if(act==="markToggle"){ const id=a.dataset.q; markToggle(id); if($("#layer").innerHTML) bankPreview(id); else render(); return; }
   if(act==="annToggle"){ const id=a.dataset.q; S.annId=S.annId===id?null:id; S.annTool=S.annTool||"pen"; annRefresh(id); return; }
+  if(act==="penTest"){ return penTest(); }
   if(act==="annMin"){ try{ localStorage.setItem("gab.ann.min",a.dataset.v==="1"?"1":"0"); }catch(_){} annRefresh(S.annId); return; }
   if(act==="annTool"){ S.annTool=a.dataset.v; annRefresh(S.annId); return; }
   if(act==="annColor"){ const tool=a.dataset.tool,color=a.dataset.v; if(!(ANN_COLORS[tool]||[]).includes(color))return; try{localStorage.setItem("gab.ann.color."+tool,color);}catch(_){} annRefresh(S.annId); return; }

@@ -248,6 +248,15 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .box.src{background:transparent;box-shadow:0 0 0 1px var(--line) inset;color:var(--muted);font-size:13px} .box.src h3{color:var(--subtle)}
 .box.ai{background:var(--surface);box-shadow:var(--shadow),0 0 0 1px var(--hair)} .box.ai h3{color:var(--accent)}
 .box.note{background:var(--pill);font-size:13.5px}
+.box.tutor{background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent) inset} .box.tutor h3{color:var(--accent)} .box.tutor .md p{margin:.3em 0}
+.tuhome .tuh-l{font-size:13.5px;margin:6px 0 2px;color:var(--ink-2)}
+.tmsg{font-size:calc(14.5px * var(--fs));line-height:1.6} .tmsg p{margin:.4em 0}
+.tblks{display:flex;flex-direction:column;gap:10px}
+.tblk{background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow),0 0 0 1px var(--hair)} .tblk.ok{opacity:.72}
+.tbh{display:flex;gap:10px;align-items:flex-start} .tbn{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:13px} .tblk.ok .tbn{background:var(--ok-soft,var(--accent-soft))}
+.tbt{display:flex;flex-direction:column;min-width:0} .tbt b{font-size:14.5px} .tbt small{font-size:12px;color:var(--muted)}
+.tbw{font-size:13px;color:var(--ink-2);margin:6px 0 0 36px;line-height:1.5} .tbw p{margin:.2em 0}
+.tweak{padding:8px 0;border-top:1px solid var(--hair);font-size:13.5px} .tweak:first-of-type{border-top:0} .tweak .md p{margin:.2em 0;color:var(--ink-2)}
 .md p{margin:0 0 8px} .md ul,.md ol{margin:0 0 8px;padding-left:20px} .md h4{margin:10px 0 4px;font-size:14px} .md table{border-collapse:collapse;font-size:13px} .md td,.md th{border:1px solid var(--line);padding:4px 6px}
 .mdwrap{overflow-x:auto}
 .qnav{position:sticky;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);display:flex;gap:10px;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 0;z-index:5}
@@ -376,7 +385,7 @@ details.adv summary::before{content:"+ ";} details.adv[open] summary::before{con
 .tag.old{background:var(--bad-soft);color:var(--bad);box-shadow:0 0 0 1px var(--bad-bar) inset}
 .banner.info{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset}
 /* nav */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:500;letter-spacing:.01em;color:var(--subtle);cursor:pointer;position:relative;transition:color .15s ease}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current="page"]{color:var(--ink)}
@@ -405,7 +414,7 @@ nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:
 }
 @media (max-width:380px){ .kpi{padding:14px 10px 12px} .kpi .v{font-size:22px} .big{font-size:40px} .due{padding:18px 16px} }
 /* menu lateral recolhível (>=960px) */
-.navtog{display:none}
+nav.tabs button.navtog{display:none}
 @media (min-width:960px){
   nav.tabs button.navtog{display:flex;margin-top:8px;color:var(--subtle);border-top:1px solid var(--hair);border-radius:0 0 999px 999px}
   nav.tabs button.navtog svg{transition:transform .2s ease}
@@ -648,7 +657,7 @@ body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 <script>
 /* ---------- i18n ---------- */
 const T = {
-pt:{stats:"Números",home:"Início",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
+pt:{stats:"Números",home:"Início",tutor:"Tutor",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",std_banco:"Banco",std_tudo:"Tudo",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
@@ -681,7 +690,7 @@ pt:{stats:"Números",home:"Início",plan:"Plano",study:"Estudar",review:"Revisã
  noDb:"Banco indisponível nesta visualização. Mostrando a última cópia salva neste aparelho.",noData:"O banco ainda está vazio.",
  aiUnavailable:"Claude não está disponível nesta visualização.",aiDenied:"Uso do Claude não autorizado nesta visualização.",aiRate:"Muitas solicitações. Tente de novo em instantes.",aiErr:"Não deu certo. Tente de novo.",
  min:"min",qs:"questões",step:"Etapa",days:"d",today:"hoje",tomorrow:"amanhã",fMarked:"Marcadas para revisão",markedReview:"Marcadas para revisão",markedCount:"questões marcadas",markQuestion:"Marcar para revisão",unmarkQuestion:"Remover da revisão",annotate:"Anotar",annotationOn:"Concluir anotações",pen:"Caneta",highlighter:"Marca-texto",eraser:"Borracha",undo:"Desfazer",clearNotes:"Apagar anotações",annotations:"Anotações",startMarked:"Revisar marcadas",noMarked:"Nenhuma questão marcada neste tema."},
-en:{stats:"Stats",home:"Home",plan:"Plan",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
+en:{stats:"Stats",home:"Home",tutor:"Tutor",plan:"Plan",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",std_banco:"Bank",std_tudo:"Everything",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
@@ -724,6 +733,7 @@ const ICONS = {
  cards:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v10"/></svg>',
  bank:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
  plan:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M8 14h3M13 14h3M8 17.5h3"/></svg>',
+ tutor:'<svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg>',
  timer:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>'
 };
 const CHEV='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -754,7 +764,7 @@ function previewDays(r, g){ return FSRS.next(Object.assign({},r||{}), g, now()).
 const LS_KEY = "gabarito-cache-v1";
 const S = {
   qLang:{}, db:null, user:null, sample:null, downloads:null, uid:null, owner:false,
-  dbState:"loading", catalog:null, qs:new Map(), lessons:new Map(), lessonId:null, qUnsub:null, catUnsub:null,
+  dbState:"loading", catalog:null, qs:new Map(), lessons:new Map(), tutor:{}, lessonId:null, qUnsub:null, catUnsub:null,
   prog:{settings:{lang:"pt",std:"ufpr",disc:null,topic:null,theme:"sys",fs:1},q:{},fc:{},log:{},sims:[],marked:{},annotations:{}},
   progLoaded:false, view:"home", session:null, setup:null, bankFilter:{text:"",sub:"",origin:""}, detail:new Set(), fcDeck:null, ai:{}, gen:null
 };
@@ -763,17 +773,17 @@ const IDB={ db:null,
   open(){ if(this.db) return Promise.resolve(this.db); return new Promise((res,rej)=>{ try{ const r=indexedDB.open("gabarito",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{ this.db=r.result; res(this.db); }; r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); },
   async get(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction("kv").objectStore("kv").get(k); t.onsuccess=()=>res(t.result); t.onerror=()=>rej(t.error); }); },
   async set(k,v){ const db=await this.open(); return new Promise((res,rej)=>{ const tx=db.transaction("kv","readwrite"); tx.objectStore("kv").put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); } };
-function applyContent(c){ if(!c) return; if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); }
+function applyContent(c){ if(!c) return; if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); if(c.tutor) S.tutor=c.tutor; }
 async function cacheLoad(){
   try{ applyContent(await IDB.get("content")); const pr=await IDB.get("prog"); if(pr) S.prog=mergeProg(S.prog,pr); }catch(e){}
   // migração do cache antigo (localStorage) — uma vez
   try{ const old=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(old){ if(!S.qs.size) applyContent(old); if(old.prog&&!Object.keys(S.prog.q).length) S.prog=mergeProg(S.prog,old.prog); localStorage.removeItem(LS_KEY); cacheSave(); } }catch(e){}
 }
 let cacheTimer=null, progTimer=null;
-function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ IDB.set("content",{catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()]}).catch(()=>{}); cacheSaveProg(); },400); }
+function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ IDB.set("content",{catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()], tutor:S.tutor||{}}).catch(()=>{}); cacheSaveProg(); },400); }
 function cacheSaveProg(){ clearTimeout(progTimer); progTimer=setTimeout(()=>{ IDB.set("prog",JSON.parse(JSON.stringify(S.prog))).catch(()=>{}); },300); }
 function mergeStampedMap(a,b){ const out=Object.assign({},a||{}); for(const [k,v] of Object.entries(b||{})){ const old=out[k]; if(!old||(+v?.ts||0)>=(+old?.ts||0)) out[k]=v; } return out; }
-function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], reports:p.reports||base.reports||[], read:Object.assign({},base.read||{},p.read||{}), marked:mergeStampedMap(base.marked,p.marked), annotations:mergeStampedMap(base.annotations,p.annotations)}; }
+function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], reports:p.reports||base.reports||[], read:Object.assign({},base.read||{},p.read||{}), marked:mergeStampedMap(base.marked,p.marked), annotations:mergeStampedMap(base.annotations,p.annotations), tutor:Object.assign({},base.tutor||{},p.tutor||{})}; }
 function progClock(p){ return Math.max(0,...Object.values(p?.q||{}).map(x=>+x?.ts||0),...Object.values(p?.marked||{}).map(x=>+x?.ts||0),...Object.values(p?.annotations||{}).map(x=>+x?.ts||0)); }
 const set = () => S.prog.settings;
 const tr = k => (T[set().lang]||T.pt)[k] ?? T.pt[k] ?? k;
@@ -1002,8 +1012,8 @@ function record(q, picked, ctx={}){
   const ok = picked===q.correct; const r = S.prog.q[q.id] || {n:0,nOk:0};
   if(r.first==null) r.first = r.n===0 ? ok : (r.n===1 ? !!r.ok : null);
   r.n++; if(ok) r.nOk++; r.ok=ok; r.a=picked; r.ts=now();
-  // registro de cada resposta: [ts(s), id, acerto, revisão, segundos(-1 = n/d)]
-  S.prog.ev=(S.prog.ev||[]); S.prog.ev.push([Math.round(now()/1000), q.id, ok?1:0, ctx.rev?1:0, ctx.ms!=null?Math.min(3600,Math.round(ctx.ms/1000)):-1]); if(S.prog.ev.length>20000) S.prog.ev.splice(0,S.prog.ev.length-20000);
+  // registro de cada resposta: [ts(s), id, acerto, revisão, segundos(-1 = n/d), alternativa marcada (índice original)]
+  S.prog.ev=(S.prog.ev||[]); S.prog.ev.push([Math.round(now()/1000), q.id, ok?1:0, ctx.rev?1:0, ctx.ms!=null?Math.min(3600,Math.round(ctx.ms/1000)):-1, picked]); if(S.prog.ev.length>20000) S.prog.ev.splice(0,S.prog.ev.length-20000);
   schedule(r, ok?3:1); delete r.box;
   S.prog.q[q.id]=r;
   const k=dayKey(); const lg=S.prog.log[k]||{n:0,ok:0}; lg.n++; if(ok) lg.ok++; S.prog.log[k]=lg;
@@ -1039,7 +1049,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length; renderSide();
-  $("#tabs").innerHTML = ["home","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
+  $("#tabs").innerHTML = ["home","tutor","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
 }
 function renderCtx(){
   const cp=curPer(), root=curDisc(), isUSMLE=cp==="usmle"&&root?.id==="usmle";
@@ -1110,14 +1120,14 @@ function go(v){ const changed=S.view!==v; S.view=v; try{ if(changed) history.pus
 window.addEventListener("popstate", e=>{
   if($("#layer") && $("#layer").innerHTML){ S.sheetPushed=false; closeSheetRaw(); return; }
   const v=(e.state&&e.state.v)||(location.hash||"#home").slice(1)||"home";
-  if(!["home","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
+  if(!["home","tutor","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
   if(v==="lesson" && !S.lessons.get(S.lessonId)) return;
   S.view=v; render(); window.scrollTo({top:0});
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v);
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v);
 }
 
 /* ---------- HOME ---------- */
@@ -1135,7 +1145,7 @@ function vHome(v){
      ${due?`<button class="btn pill" data-act="startReview">${tr("reviewNow")}</button>`:""}</div>
    ${(()=>{ const t=curTopic(); return t&&!t.pseudo?`<div class="row">${lessonOf(curDisc()?.id,t.id)?lessonBtn(curDisc().id,t.id):lessonReqBtn(curDisc()?.id,t.id)}</div>`:""; })()}
    ${(()=>{ const t=curTopic(); return t&&!t.pseudo?topicLinksHTML(t):""; })()}
-   ${planHomeHTML()}
+   ${tutorHomeHTML()}${planHomeHTML()}
    ${nextExamHTML()}
    <div class="kpis">
      <div class="kpi"><div class="v">${done.length}<small>/${qs.length}</small></div><div class="l">${tr("answered")}</div></div>
@@ -1269,6 +1279,7 @@ function questionHTML(q, it, reveal, simMode){
   </section>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
+    ${tutorNoteHTML(q.id)}
     ${feedback}
     ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
@@ -2332,6 +2343,50 @@ function openPlanCfg(){ const P=PL(), en=set().lang==="en", W=WDN(), today=start
    <div class="eyebrow" style="margin:16px 0 8px">${T2("Provas (marque as que entram no plano)","Exams (tick those in the plan)")}</div>
    <div class="plrows">${exr||`<p class="lede">—</p>`}</div>`); }
 
+/* ---------- TUTOR (plano do dia gerado pelo Claude fora do app, sem API; chega pelo Supabase como linhas kind:"tutor") ---------- */
+function tutorPlan(){ return S.tutor?.["tutor:plano"]||null; }
+function tutorNotes(){ return S.tutor?.["tutor:notas"]?.notes||{}; }
+function TU(){ const t=S.prog.tutor=S.prog.tutor||{}; t.done=t.done||{}; return t; }
+function tbKey(P,i){ return (P.date||"")+":"+i; }
+function tbIds(b){ return (b.qids||[]).filter(id=>S.qs.has(id)); }
+function tbProg(P,b,i){ const man=!!TU().done[tbKey(P,i)];
+  if(b.type==="lesson"||b.type==="task") return {n:man?1:0,total:1,done:man};
+  const ids=tbIds(b), g=Date.parse(P.generated||P.date)||0, n=ids.filter(id=>{ const r=rec(id); return r&&r.ts>=g; }).length;
+  return {n,total:ids.length,done:man||(ids.length>0&&n>=ids.length)}; }
+function tutorSum(P){ const bs=P.blocks||[]; const pr=bs.map((b,i)=>tbProg(P,b,i)); return {n:pr.filter(x=>x.done).length, total:bs.length, min:bs.reduce((s,b)=>s+(b.min||0),0), pr}; }
+function tutorFresh(P){ return P&&P.date===dayKey(new Date()); }
+function tutorHomeHTML(){ const P=tutorPlan(); if(!P) return ""; const s=tutorSum(P), first=plain(md(String(P.msg||"").split("\n").find(l=>l.trim())||"")).slice(0,160);
+  return `<button type="button" class="panel plhome tuhome" data-nav="tutor"><div class="eyebrow">🎓 ${T2("Tutor","Tutor")} · ${tutorFresh(P)?T2("plano de hoje","today's plan"):T2("plano de","plan from")+" "+fmtDM(Date.parse(P.date+"T12:00:00"))}</div>
+    ${first?`<div class="tuh-l">${esc(first)}</div>`:""}
+    <div class="plh-f">${s.n}/${s.total} ${T2("blocos","blocks")} · ~${s.min} min<span class="go">${CHEV}</span></div></button>`; }
+function tutorNoteHTML(id){ const n=tutorNotes()[id]; if(!n||!n.t) return "";
+  return `<div class="box tutor"><h3>🎓 ${T2("Nota do tutor","Tutor's note")}${n.d?` · ${fmtDM(Date.parse(n.d+"T12:00:00"))}`:""}</h3><div class="md">${md(n.t)}</div></div>`; }
+function tbIcon(t){ return {review:"↻",study:"✎",lesson:"📖",task:"▸"}[t]||"✎"; }
+function vTutor(v){ const P=tutorPlan(), T=TU(), msg=T.msg||{};
+  const recado=`<div class="panel"><div class="eyebrow">${T2("Recado para o tutor","Note to the tutor")}</div>
+     <p class="lede" style="font-size:12.5px;margin:4px 0 8px">${T2("Ex.: “amanhã plantão, só 40 min”, “quero focar em hérnias”, “não entendi X”. Ele lê na próxima madrugada.","E.g. “on call tomorrow, only 40 min”. Read on the next nightly run.")}</p>
+     <textarea id="tuMsg" rows="3" style="width:100%;box-sizing:border-box">${esc(msg.t||"")}</textarea>
+     <div class="row" style="justify-content:space-between;margin-top:8px"><span style="font-size:12px;color:var(--muted)">${msg.ts?T2("Salvo em ","Saved ")+new Date(msg.ts).toLocaleString(set().lang==="en"?"en-US":"pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):""}</span><button class="btn small" data-act="tutorMsg">${T2("Salvar recado","Save note")}</button></div></div>`;
+  if(!P){ v.innerHTML=`<div><div class="eyebrow">${T2("Seu tutor","Your tutor")}</div><h1>Tutor</h1></div>
+     <div class="panel"><h2>${T2("Ainda sem plano","No plan yet")}</h2><p class="lede">${T2("Toda madrugada o Claude lê suas respostas, o Plano (plantões, provas) e as ★, e deixa aqui o plano do dia: o que estudar, em que ordem, quanto tempo e por que você errou o que errou.","Every night Claude reads your answers, plan and priorities and leaves today's plan here.")}</p></div>${recado}`; return; }
+  const s=tutorSum(P), notes=tutorNotes(), nN=Object.values(notes).filter(n=>n.d===P.date).length;
+  const blocks=(P.blocks||[]).map((b,i)=>{ const pr=s.pr[i], ids=tbIds(b);
+    const act= b.type==="lesson" ? (S.lessons.get(b.lesson)?`<button class="btn small ${pr.done?"":"primary"}" data-act="tutorLesson" data-i="${i}">${pr.done?T2("Abrir de novo","Open again"):T2("Abrir lição","Open lesson")}</button>`:"")
+      : b.type==="task" ? (b.drive?`<a class="btn small" href="https://drive.google.com/file/d/${encodeURIComponent(b.drive)}/view" target="_blank" rel="noopener">${T2("Abrir","Open")}</a>`:"")
+      : ids.length ? `<button class="btn small ${pr.done?"":"primary"}" data-act="tutorBlock" data-i="${i}">${pr.done?T2("Refazer","Redo"):pr.n?T2("Continuar","Continue"):T2("Começar","Start")}</button>` : "";
+    const done=`<button type="button" class="chip" data-act="tutorDone" data-i="${i}" aria-pressed="${!!T.done[tbKey(P,i)]}" title="${T2("Marcar como feito","Mark as done")}">✓</button>`;
+    return `<div class="tblk ${pr.done?"ok":""}"><div class="tbh"><span class="tbn">${pr.done?"✓":i+1}</span><div class="tbt"><b>${tbIcon(b.type)} ${esc(b.title||"")}</b><small>${b.min?`~${b.min} min`:""}${ids.length?` · ${pr.n}/${pr.total} ${T2("questões","questions")}`:""}</small></div></div>
+      ${b.why?`<div class="tbw md">${md(b.why)}</div>`:""}
+      ${ids.length&&b.type!=="lesson"?`<div class="track" style="margin:8px 0 2px"><i class="ok" style="width:${100*pr.n/pr.total}%"></i></div>`:""}
+      <div class="row" style="justify-content:flex-end;gap:6px;margin-top:8px">${act}${done}</div></div>`; }).join("");
+  const weak=(P.weak||[]).length?`<div class="panel"><div class="eyebrow">${T2("Pontos fracos","Weak spots")}</div>${P.weak.map(w=>`<div class="tweak"><b>${esc(w.c||"")}</b>${w.acc!=null?` <span class="tag">${Math.round(w.acc*100)}%</span>`:""}${w.n?`<div class="md">${md(w.n)}</div>`:""}</div>`).join("")}</div>`:"";
+  v.innerHTML=`<div class="row" style="justify-content:space-between"><div><div class="eyebrow">🎓 ${T2("Seu tutor","Your tutor")} · ${fmtDM(Date.parse(P.date+"T12:00:00"))}</div><h1>${tutorFresh(P)?T2("Plano de hoje","Today's plan"):T2("Último plano","Latest plan")}</h1></div><span class="tag">${s.n}/${s.total} · ~${s.min} min</span></div>
+   ${tutorFresh(P)?"":`<div class="banner">${T2("O plano de hoje ainda não saiu (ele é gerado de madrugada). Este é o último.","Today's plan isn't out yet. This is the latest one.")}</div>`}
+   ${P.msg?`<div class="panel tmsg md">${md(P.msg)}</div>`:""}
+   <div class="tblks">${blocks}</div>
+   ${nN?`<div class="panel"><div class="eyebrow">${T2("Seus erros comentados","Your misses explained")}</div><p class="lede" style="font-size:13px;margin:4px 0 8px">${nN} ${T2(nN===1?"questão com nota do tutor sobre por que a alternativa que você marcou parecia certa.":"questões com nota do tutor sobre por que a alternativa que você marcou parecia certa.","questions with a tutor note on your choice.")}</p><button class="btn small" data-act="tutorNotesRev">${T2("Rever com as notas","Review with notes")}</button></div>`:""}
+   ${weak}${recado}`; }
+
 /* ---------- events ---------- */
 document.addEventListener("click", async e=>{
   const dl=e.target.closest('a[href^="https://drive.google.com/file/d/"]'); if(dl&&!dl.dataset.ext){ const m=dl.href.match(DRIVE_RE); if(m){ e.preventDefault(); return openDrive(m[1], dl.textContent.trim()); } }
@@ -2407,6 +2462,12 @@ document.addEventListener("click", async e=>{
   if(act==="planOff"){ const P=PL(), k=a.dataset.day; P.offDates=P.offDates.includes(k)?P.offDates.filter(x=>x!==k):P.offDates.concat(k); saveProg(); return render(); }
   if(act==="planWeek"){ const v=Number(a.dataset.v); S.planWeek=v===0?0:(S.planWeek||0)+v; return render(); }
   if(act==="planStudy"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
+  if(act==="tutorBlock"){ const P=tutorPlan(); const b=P?.blocks?.[+a.dataset.i]; if(!b) return; const g=Date.parse(P.generated||P.date)||0; const ids=tbIds(b); const pend=ids.filter(id=>{ const r=rec(id); return !(r&&r.ts>=g); }); const L=(pend.length?pend:ids).map(id=>S.qs.get(id)); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; const rv=b.type==="review";
+    S.session=buildSession(rv?"review":"study",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); S.session.from="tutor"; return go(rv?"review":"study"); }
+  if(act==="tutorLesson"){ const P=tutorPlan(); const b=P?.blocks?.[+a.dataset.i]; if(!b||!S.lessons.get(b.lesson)) return; TU().done[tbKey(P,+a.dataset.i)]=now(); S.prog.read=S.prog.read||{}; if(!S.prog.read[b.lesson]) S.prog.read[b.lesson]=now(); saveProg(); S.lessonBack="tutor"; S.lessonId=b.lesson; return go("lesson"); }
+  if(act==="tutorDone"){ const P=tutorPlan(); if(!P) return; const k=tbKey(P,+a.dataset.i); if(TU().done[k]) delete TU().done[k]; else TU().done[k]=now(); saveProg(); return render(); }
+  if(act==="tutorMsg"){ const ta=$("#tuMsg"); TU().msg={t:(ta?.value||"").trim(), ts:now()}; saveProg(); flushProg&&flushProg(); toast(T2("Recado salvo: o tutor lê na próxima madrugada","Saved: read on the next nightly run")); return render(); }
+  if(act==="tutorNotesRev"){ const P=tutorPlan(); const N=tutorNotes(); const L=Object.keys(N).filter(id=>N[id].d===P?.date&&S.qs.has(id)).map(id=>S.qs.get(id)); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; S.session=buildSession("review",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); S.session.from="tutor"; return go("review"); }
   if(act==="planRev"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.fcDeck=null; S.setup=null; const L=[...S.qs.values()].filter(q=>q.discipline===a.dataset.d&&q.topic===a.dataset.t&&q.standard!=="usmle"&&q.standard!=="banco"&&rec(q.id)&&!rec(q.id).ok); if(!L.length) return toast(tr("none")); saveProg(); S.session=buildSession("review",prioSort(shuffle(L)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
   if(act==="planFinal"){ set().disc=a.dataset.d; a.dataset.act="examEssentials"; return a.click(); }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
@@ -2523,9 +2584,9 @@ async function fetchAll(){
     const c=await SB.from("catalog").select("id,data").eq("id","main").maybeSingle();
     if(c.error) throw c.error;
     if(c.data) S.catalog=c.data.data;
-    const qs=new Map(), ls=new Map(); let from=0;
-    for(;;){ const r=await SB.from("questions").select("id,data").order("id").range(from, from+999); if(r.error) throw r.error; r.data.forEach(x=>{ const o=rowToQ(x); if(o.kind==="lesson") ls.set(o.id,o); else qs.set(o.id,o); }); if(r.data.length<1000) break; from+=1000; }
-    S.qs=qs; S.lessons=ls;
+    const qs=new Map(), ls=new Map(), tu={}; let from=0;
+    for(;;){ const r=await SB.from("questions").select("id,data").order("id").range(from, from+999); if(r.error) throw r.error; r.data.forEach(x=>{ const o=rowToQ(x); if(o.kind==="lesson") ls.set(o.id,o); else if(o.kind==="tutor") tu[o.id]=o; else qs.set(o.id,o); }); if(r.data.length<1000) break; from+=1000; }
+    S.qs=qs; S.lessons=ls; S.tutor=tu;
     const p=await SB.from("progress").select("state,updated_at").eq("user_id",S.uid).maybeSingle();
     if(p.error) throw p.error;
     if(p.data?.state){ const remote=p.data.state; const lt=progClock(S.prog); const rt=progClock(remote);
@@ -2593,7 +2654,7 @@ function subscribeQs(){ /* questions are fetched on open and when the app return
 
 async function boot(){
   await cacheLoad(); applyTheme();
-  const h=(location.hash||"").slice(1); if(["home","study","review","cards","stats","bank"].includes(h)) S.view=h;
+  const h=(location.hash||"").slice(1); if(["home","tutor","plan","study","review","cards","stats","bank"].includes(h)) S.view=h;
   try{ history.replaceState({v:S.view},"","#"+S.view); }catch(e){}
   S.downloads=true; // enables the export button (plain browser download)
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }

@@ -33,8 +33,8 @@ function fixture(){
     const F=fixture();
     await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; set().disc="da"; set().topic="t1";
       const t=Date.now(); F.qs.forEach((q,i)=>{ if(i%3) return; S.prog.q[q.id]={n:2,nOk:i%2,ok:!!(i%2),first:true,box:1,due:t-86400000,ts:t}; }); render(); },F);
-    const step=async(name,fn)=>{ try{ await fn(); steps++; }catch(e){ errs.push(`[${vp.width}] ${name}: ${e.message.split("\n").slice(0,4).join(" | ")}`); } };
-    for(const v of ["home","plan","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
+    const step=async(name,fn)=>{ try{ await fn(); steps++; }catch(e){ errs.push(`[${vp.width}] ${name}: ${e.message.split("\n").slice(0,12).join(" | ")}`); } };
+    for(const v of ["home","tutor","plan","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
     for(const t of ["geral","provas","cobrados"]) await step("stats "+t, ()=>p.evaluate(t=>{ S.statsTab=t; go("stats"); render(); },t));
     await step("stats nome longo", async()=>{ const w=await p.evaluate(()=>{ const t=S.catalog.disciplines[0].topics[0], old=t.name; t.name={pt:"Fundamentos: fenomenologia, entrevista psiquiátrica e exame do estado mental completo",en:"x"}; S.statsTab="geral"; go("stats"); render(); const w=document.documentElement.scrollWidth-document.documentElement.clientWidth; t.name=old; return w; }); if(w>0) throw new Error("transborda "+w+"px"); });
     await step("pedir lição", async()=>{ const r=await p.evaluate(async()=>{ let url=null,txt=null; const wo=window.open; window.open=u=>{ url=u; return null; }; const cw=navigator.clipboard.writeText; navigator.clipboard.writeText=t=>{ txt=t; return Promise.resolve(); };
@@ -76,6 +76,20 @@ function fixture(){
       await p.evaluate(()=>go("plan")); await p.evaluate(()=>{ document.querySelectorAll(".ptps").forEach(d=>d.open=true); }); await p.click('[data-act="planStudy"]'); const v=await p.evaluate(()=>S.view); if(v!=="study") throw new Error("planStudy: "+v);
       await p.evaluate(()=>{ go("plan"); }); const rv=await p.$('[data-act="planRev"]'); if(rv){ await rv.click(); const v2=await p.evaluate(()=>S.view+":"+(S.session?.items.length||0)); if(!v2.startsWith("review:")||v2.endsWith(":0")) throw new Error("planRev: "+v2); }
       await p.evaluate(()=>{ S.session=null; PL().offWd=[]; PL().offDates=[]; PL().cap=30; go("home"); }); });
+    await step("tutor", async()=>{ await p.evaluate(()=>{ S.session=null; S.fcDeck=null; const d=dayKey(new Date()), ids=[...S.qs.keys()].filter(k=>k.startsWith("da-t2-ufpr")); ids.forEach(k=>delete S.prog.q[k]);
+        S.tutor={"tutor:plano":{id:"tutor:plano",kind:"tutor",date:d,generated:new Date(Date.now()-3600000).toISOString(),msg:"**Diagnóstico:** você erra o *tempo* do quadro.\n- revise t2",blocks:[{type:"review",title:"Rever erros do tema 2",why:"Errou 3 de 4.",min:15,qids:ids.slice(0,2)},{type:"study",title:"Novas ★★★",min:20,qids:ids.slice(2,4)},{type:"lesson",title:"Ler a lição",min:10,lesson:"lesson:da:t1"},{type:"task",title:"Vídeo",min:5,drive:"x1"}],weak:[{c:"Conceito X",acc:.4,n:"confunde A com B"}]},
+          "tutor:notas":{id:"tutor:notas",kind:"tutor",notes:{[ids[0]]:{d,t:"Você marcou **B** porque..."}}}}; go("home"); });
+      if(!(await p.$(".tuhome"))) throw new Error("sem cartão do tutor na Início");
+      await p.evaluate(()=>go("tutor")); const n=await p.evaluate(()=>document.querySelectorAll(".tblk").length); if(n!==4) throw new Error("blocos "+n);
+      await p.click('[data-act="tutorBlock"][data-i="0"]'); const v=await p.evaluate(()=>S.view+":"+S.session.items.length); if(v!=="review:2") throw new Error("bloco 1: "+v);
+      await p.click('[data-pick="0"]'); if(!(await p.$(".box.tutor"))) throw new Error("sem nota do tutor na correção");
+      const ev=await p.evaluate(()=>S.prog.ev[S.prog.ev.length-1].length); if(ev!==6) throw new Error("ev sem alternativa: "+ev);
+      await p.evaluate(()=>{ S.session=null; go("tutor"); }); const pr=await p.evaluate(()=>tbProg(tutorPlan(),tutorPlan().blocks[0],0).n); if(pr!==1) throw new Error("progresso "+pr);
+      await p.click('[data-act="tutorLesson"]'); if(await p.evaluate(()=>S.view)!=="lesson") throw new Error("lição");
+      await p.evaluate(()=>go("tutor")); await p.click('[data-act="tutorDone"][data-i="3"]'); await p.fill("#tuMsg","plantão amanhã"); await p.click('[data-act="tutorMsg"]');
+      const t=await p.evaluate(()=>[TU().msg.t, tutorSum(tutorPlan()).n, mergeProg({settings:{}},S.prog).tutor.msg.t]); if(t[0]!=="plantão amanhã"||t[1]!==2||t[2]!==t[0]) throw new Error("tutor: "+JSON.stringify(t));
+      const ov=await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth); if(ov>0) throw new Error("transborda "+ov+"px");
+      await p.click('[data-act="tutorNotesRev"]'); await p.evaluate(()=>{ S.tutor={}; S.session=null; go("tutor"); }); });
     await step("pdf da lição", async()=>{ const r=await p.evaluate(async()=>{ const f=await lessonPdf(S.lessons.get("lesson:da:t1")); const h=new Uint8Array(await f.slice(0,5).arrayBuffer()); return {n:f.name,s:f.size,h:String.fromCharCode(...h),pages:(new TextDecoder("latin1").decode(await f.arrayBuffer()).match(/\/Type \/Page /g)||[]).length}; });
       if(!r.n.endsWith(".pdf")||r.s<10240||r.h!=="%PDF-"||r.pages<2) throw new Error("PDF inválido: "+JSON.stringify(r)); });
     await step("pdf da disciplina", async()=>{ const r=await p.evaluate(async()=>{ const fs=await discPdfFiles("da"); const f=fs[fs.length-1]; const h=new Uint8Array(await f.slice(0,5).arrayBuffer()); const nq=fs.slice(0,-1).filter(x=>x.name.endsWith("99 Questões.pdf")).length; return {n:fs.length,last:f.name,h:String.fromCharCode(...h),nq}; });

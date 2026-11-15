@@ -1214,7 +1214,8 @@ function todayStats(){ const t0=Math.round(startOfDay(now())/1000), m=curMode();
   for(let i=(S.prog.ev||[]).length-1;i>=0;i--){ const e=S.prog.ev[i]; if(e[0]<t0) break; const q=S.qs.get(e[1]); if(q&&modeOfDisc(q.discipline)!==m) continue; n++; if(e[2]) ok++; if(e[4]>0) sec+=Math.min(300,e[4]); }
   const today=startOfDay(now()); let streak=0; for(let i=0;i<400;i++){ const k=dayKey(new Date(today-i*DAY)); if(S.prog.log[k]?.n) streak++; else if(i>0) break; }
   return {n,ok,min:Math.round(sec/60),streak}; }
-function stepDates(){ const o=set().stepDate||{}; const today=startOfDay(now());
+const STEP_DEF={s1:"2027-06-14"}; // provisória (Léo ainda sem data marcada)
+function stepDates(){ const o=set().stepDate||STEP_DEF; const today=startOfDay(now());
   return [["s1","Step 1"],["s2","Step 2 CK"]].filter(([k])=>o[k]).map(([k,n])=>{ const dt=startOfDay(new Date(o[k]+"T12:00:00").getTime()); return {k,n,dt,days:Math.round((dt-today)/DAY)}; }).filter(x=>x.days>=0).sort((a,b)=>a.dt-b.dt); }
 function heroHTML(qs){
   if(curMode()==="steps"){ const sd=stepDates()[0]; const seen=qs.filter(q=>rec(q.id)), ok=seen.filter(q=>rec(q.id).ok);
@@ -1330,7 +1331,7 @@ function vHome(v){
   </div>`;
   v.querySelectorAll("details.dmore").forEach(dt=>dt.addEventListener("toggle",()=>{ try{ const o=JSON.parse(localStorage.getItem("gab.homeMore")||"{}"); o[dt.dataset.k]=dt.open; localStorage.setItem("gab.homeMore",JSON.stringify(o)); }catch(_){} }));
 }
-function openStepDate(){ const o=set().stepDate||{};
+function openStepDate(){ const o=set().stepDate||STEP_DEF;
   openSheet(`<h2 style="margin:0 0 6px">${T2("Datas dos Steps","Step dates")}</h2><p class="lede" style="font-size:13px;margin:0 0 12px">${T2("Usadas na contagem regressiva do modo Steps. Deixe em branco se ainda não marcou.","Used for the Steps countdown. Leave blank if not scheduled.")}</p>
     <label class="sel" style="display:block;margin-bottom:10px"><span class="lab">Step 1</span><input type="date" id="sdS1" value="${esc(o.s1||"")}"></label>
     <label class="sel" style="display:block;margin-bottom:14px"><span class="lab">Step 2 CK</span><input type="date" id="sdS2" value="${esc(o.s2||"")}"></label>

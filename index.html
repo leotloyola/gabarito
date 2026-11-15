@@ -1041,12 +1041,18 @@ document.addEventListener("pointerdown",e=>{
 });
 document.addEventListener("pointermove",e=>{
   const T=ANN.touch; if(T&&e.pointerId===T.id&&!T.done){ const t=performance.now(),dy=e.clientY-T.y,dx=e.clientX-T.x; T.sc.scrollTop-=dy; if(dx&&T.sc!==document.scrollingElement) T.sc.scrollLeft-=dx; T.v=.8*(dy/Math.max(1,t-T.t))+.2*T.v; T.y=e.clientY; T.x=e.clientX; T.t=t; if(Math.hypot(e.clientX-T.x0,e.clientY-T.y0)>8) T.moved=true; e.preventDefault(); return; }
-  if(!ANN.stroke&&e.pointerType==="pen") ANN.btnHover=annBtnErase(e)||!!(e.buttons&1); // botão lateral com a caneta no ar (no Galaxy Tab/Chrome chega como buttons=1 sem pointerdown)
+  if(!ANN.stroke&&e.pointerType==="pen") ANN.btnHover=annBtnErase(e);
+  // Galaxy Tab/Chrome: com o botão lateral apertado, encostar a caneta NÃO gera pointerdown; chegam só pointermove com buttons=1 (e um contextmenu depois). Isso vira borracha.
+  if(!ANN.stroke&&!ANN.penDown&&e.pointerType==="pen"&&(e.buttons&1)){ const surface=e.target.closest?.(".ann-input")?.closest("[data-ann-surface]");
+    if(surface&&surface.dataset.owner===S.annId){ const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool:"eraser",color:"",width:annSize("eraser"),pointerId:e.pointerId,raw:[annPt(e,g)],ghost:true};
+      A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)])); annErase(A,A.raw[0]); ANN.stroke=A; e.preventDefault(); return; } }
+  if(ANN.stroke?.ghost&&e.pointerId===ANN.stroke.pointerId&&!(e.buttons&1)){ annFinish(null,ANN.stroke); ANN.stroke=null; return; }
   const A=ANN.stroke; if(!A||e.pointerId!==A.pointerId) return;
   if(A.tool!=="eraser"&&annBtnErase(e)) annToEraser(A,annPt(e,A.geo)); // apertou o botão no meio do traço
   const evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; for(const ev of (evs.length?evs:[e])){ const p=annPt(ev,A.geo), l=A.raw[A.raw.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])<.7) continue; A.raw.push(p); if(A.tool==="eraser") annErase(A,p,l); }
   annLive(); e.preventDefault();
 });
+["pointerdown","pointerup","pointercancel"].forEach(t=>document.addEventListener(t,e=>{ if(e.pointerType==="pen") ANN.penDown=t==="pointerdown"; },true));
 function annBtnErase(e){ return e.button===2||e.button===5||!!(e.buttons&(2|32)); }
 function annToEraser(A,pt){ if(A.raw.length>2) annFinish(null,{...A});
   const g=A.geo; A.tool="eraser"; A.width=annSize("eraser"); A.raw=[pt]; A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)]));

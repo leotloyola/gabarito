@@ -134,6 +134,17 @@ function fixture(){
       await p.evaluate(()=>{ S.session=null; go("home"); }); await p.keyboard.press("/"); await p.waitForSelector("#srQ");
       await p.evaluate(()=>{ S.srch.text=""; go("home"); }); });
     await step("settings sheet", async()=>{ await p.evaluate(()=>{ S.session=null; go("home"); }); await p.click("#btnSettings"); await p.goBack(); });
+    await step("reabrir onde parou", async()=>{
+      await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; posDone=true; set().disc="da"; set().topic="t1"; S.session=null; S.fcDeck=null; S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"all"}); S.session=buildSession("study",setupPool(S.setup),S.setup); go("study"); S.session.i=3; S.session.items[1].pick=2; render(); posSave(); },F);
+      await p.reload(); await p.waitForTimeout(400);
+      await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; const r=posRestore(); if(!r) throw new Error("posRestore false"); render(); },F);
+      const r=await p.evaluate(()=>({v:S.view,i:S.session&&S.session.i,pk:S.session&&S.session.items[1].pick,n:S.session&&S.session.items.length}));
+      if(r.v!=="study"||r.i!==3||r.pk!==2||!r.n) throw new Error("sessão não restaurada: "+JSON.stringify(r));
+      await p.evaluate(F=>{ posDone=true; S.session=null; S.lessonId="lesson:da:t1"; S.lessonBack="study"; go("lesson"); posSave(); },F);
+      await p.reload(); await p.waitForTimeout(400);
+      await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; posRestore(); render(); },F);
+      const r2=await p.evaluate(()=>({v:S.view,l:S.lessonId})); if(r2.v!=="lesson"||r2.l!=="lesson:da:t1") throw new Error("lição não restaurada: "+JSON.stringify(r2));
+      await p.evaluate(()=>{ localStorage.removeItem("gab.pos"); localStorage.removeItem("gab.pos.y"); }); });
     await ctx.close();
   }
   await b.close(); srv.close();

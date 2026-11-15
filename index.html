@@ -2594,7 +2594,8 @@ async function fetchAll(){
     else if(Object.keys(S.prog.q).length) saveProg();
     applyTheme(); setSync("on"); cacheSave();
   }catch(e){ console.error(e); setSync("off"); }
-  if(!(S.session && (S.view==="study"||S.view==="review"))) render(); else renderTabs();
+  const rest=posRestore();
+  if(rest||!(S.session && (S.view==="study"||S.view==="review"))) render(); else renderTabs();
 }
 
 /* login */
@@ -2652,8 +2653,53 @@ function exportJSON(){
 }
 function subscribeQs(){ /* questions are fetched on open and when the app returns to foreground */ }
 
+/* ---------- REABRIR ONDE PAROU ----------
+   Guarda tela/aba, lição, sessão (questão atual e respostas), flashcards e rolagem em localStorage ("gab.pos"; rolagem em "gab.pos.y").
+   Período/disciplina/tema já vão em progress.settings. Restaura uma vez, quando o catálogo está disponível. */
+const POS_K="gab.pos", POS_Y="gab.pos.y", POS_VIEWS=["home","tutor","plan","study","review","cards","stats","bank","lesson"];
+let posDone=false;
+function posSave(){
+  if(!posDone||!S.catalog) return;
+  try{
+    const s=S.session; const keep=s&&!s.done&&(S.view==="study"||S.view==="review");
+    const fc=S.fcDeck&&S.fcDeck.i<S.fcDeck.ids.length&&S.view==="cards"?S.fcDeck:null;
+    const v=POS_VIEWS.includes(S.view)?S.view:(S.view==="search"?(S.srBack&&POS_VIEWS.includes(S.srBack)?S.srBack:"home"):"home");
+    localStorage.setItem(POS_K,JSON.stringify({v,tab:S.studyTab||null,lesson:v==="lesson"?S.lessonId:null,lb:S.lessonBack||null,sess:keep?s:null,fc,t:Date.now()}));
+  }catch(_){}
+}
+function posSaveY(){ try{ localStorage.setItem(POS_Y,JSON.stringify({v:S.view,y:Math.round(window.scrollY||0)})); }catch(_){} }
+function posRestore(){
+  if(posDone||!S.catalog) return false; posDone=true;
+  let o=null,y=0,yv=null;
+  try{ o=JSON.parse(localStorage.getItem(POS_K)||"null"); const j=JSON.parse(localStorage.getItem(POS_Y)||"null"); if(j){ y=j.y||0; yv=j.v; } }catch(_){}
+  const h=(location.hash||"").replace("#","");
+  if(!o||(h&&h!=="home"&&h!==o.v)||!POS_VIEWS.includes(o.v)) return false;
+  const fresh=Date.now()-(o.t||0)<24*3600e3;
+  let v=o.v;
+  if(v==="lesson"){ if(!S.lessons.get(o.lesson)) v="study"; else { S.lessonId=o.lesson; S.lessonBack=o.lb||"study"; } }
+  if(o.tab) S.studyTab=o.tab;
+  if(o.sess&&fresh&&(v==="study"||v==="review")){
+    const s=o.sess; s.items=(s.items||[]).filter(it=>S.qs.has(it.id));
+    if(s.items.length&&Array.isArray(s.items)){ s.i=Math.min(s.i||0,s.items.length-1); S.session=s; }
+  }
+  if(o.fc&&fresh&&v==="cards"){ const f=o.fc; f.ids=(f.ids||[]).filter(id=>S.qs.has(id)); if(f.ids.length){ f.i=Math.min(f.i||0,f.ids.length-1); S.fcDeck=f; } }
+  if((v==="study"||v==="review")&&!S.session&&o.sess) v=v; // sessão expirada: cai na tela de montagem
+  S.view=v; try{ history.replaceState({v},"","#"+v); }catch(_){}
+  S.posY=(yv===v)?y:0;
+  return true;
+}
+const _renderOrig=render;
+render=function(){ _renderOrig.apply(this,arguments); posSave(); if(S.posY){ const y=S.posY; S.posY=0; requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo({top:y}))); } };
+(()=>{ let t=null; window.addEventListener("scroll",()=>{ if(!posDone||t) return; t=setTimeout(()=>{ t=null; posSaveY(); },400); },{passive:true});
+  const flush=()=>{ posSave(); posSaveY(); };
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flush(); });
+  window.addEventListener("pagehide",flush);
+  /* respostas/avanço mudam S.session sem render completo em alguns caminhos: grava também ao tocar/teclar */
+  document.addEventListener("click",()=>setTimeout(posSave,60),true);
+})();
+
 async function boot(){
-  await cacheLoad(); applyTheme();
+  await cacheLoad(); applyTheme(); posRestore();
   const h=(location.hash||"").slice(1); if(["home","tutor","plan","study","review","cards","stats","bank"].includes(h)) S.view=h;
   try{ history.replaceState({v:S.view},"","#"+S.view); }catch(e){}
   S.downloads=true; // enables the export button (plain browser download)

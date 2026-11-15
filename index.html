@@ -1041,7 +1041,7 @@ document.addEventListener("pointerdown",e=>{
 });
 document.addEventListener("pointermove",e=>{
   const T=ANN.touch; if(T&&e.pointerId===T.id&&!T.done){ const t=performance.now(),dy=e.clientY-T.y,dx=e.clientX-T.x; T.sc.scrollTop-=dy; if(dx&&T.sc!==document.scrollingElement) T.sc.scrollLeft-=dx; T.v=.8*(dy/Math.max(1,t-T.t))+.2*T.v; T.y=e.clientY; T.x=e.clientX; T.t=t; if(Math.hypot(e.clientX-T.x0,e.clientY-T.y0)>8) T.moved=true; e.preventDefault(); return; }
-  if(!ANN.stroke&&e.pointerType==="pen") ANN.btnHover=annBtnErase(e); // botão lateral apertado com a caneta no ar
+  if(!ANN.stroke&&e.pointerType==="pen") ANN.btnHover=annBtnErase(e)||!!(e.buttons&1); // botão lateral com a caneta no ar (no Galaxy Tab/Chrome chega como buttons=1 sem pointerdown)
   const A=ANN.stroke; if(!A||e.pointerId!==A.pointerId) return;
   if(A.tool!=="eraser"&&annBtnErase(e)) annToEraser(A,annPt(e,A.geo)); // apertou o botão no meio do traço
   const evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; for(const ev of (evs.length?evs:[e])){ const p=annPt(ev,A.geo), l=A.raw[A.raw.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])<.7) continue; A.raw.push(p); if(A.tool==="eraser") annErase(A,p,l); }
@@ -1080,7 +1080,10 @@ function annTouchEnd(e){ const T=ANN.touch; if(!T||e.pointerId!==T.id||T.done) r
     const els=document.elementsFromPoint(e.clientX,e.clientY).filter(x=>!x.classList?.contains("ann-input")&&!x.closest?.("svg.ann-svg")); const t=els[0]; if(t&&t.click) t.click(); return; }
   let v=T.v; if(performance.now()-T.t>80) v=0; const sc=T.sc; const step=()=>{ if(Math.abs(v)<.02){ T.raf=0; return; } sc.scrollTop-=v*16; v*=.95; T.raf=requestAnimationFrame(step); }; T.raf=requestAnimationFrame(step); }
 document.addEventListener("pointerup",e=>{ annTouchEnd(e); annFinish(e); }); document.addEventListener("pointercancel",e=>{ annTouchEnd(e); annFinish(e); });
-document.addEventListener("contextmenu",e=>{ if(e.target.closest?.(".ann-enabled .ann-input")||ANN.stroke){ e.preventDefault(); } });
+document.addEventListener("contextmenu",e=>{ const A=ANN.stroke; if(e.target.closest?.(".ann-enabled .ann-input")||A){ e.preventDefault(); }
+  if(A&&A.tool!=="eraser"){ // no Galaxy Tab o botão lateral apertado ao encostar chega como contextmenu no meio do traço
+    const path=A.raw.slice(), g=A.geo; A.tool="eraser"; A.width=annSize("eraser"); A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)]));
+    A.surface.querySelectorAll(".ann-svg .live").forEach(l=>l.innerHTML=""); A.raw=[path[0]]; for(let i=0;i<path.length;i++){ annErase(A,path[i],i?path[i-1]:null); } A.raw=path; annDraw(A.surface,A.keep); } });
 window.addEventListener("resize",()=>annInit());
 /* ---------- LIÇÃO EM FUNDO CLARO NO TABLET ---------- */
 const TABLET_Q=matchMedia("(pointer:coarse) and (min-width:600px)");

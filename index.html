@@ -676,6 +676,15 @@ body.qnav-on .ann-float{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0p
 :root.lsn-light .qlesson{background:#FFFFFF;border-radius:20px;padding:10px 10px 0;color:var(--ink)}
 :root.lsn-light .qlesson .btn:not(.primary){background:var(--surface-2);color:var(--ink)}
 :root.lsn-light .lesson .call.usmle{background:var(--usmle-soft);box-shadow:0 0 0 1px var(--usmle-line) inset}:root.lsn-light .lesson .call.usmle .ct{color:var(--usmle)}
+/* lição em sépia (papel creme, texto cinza-escuro): padrão, cansa menos a vista */
+:root.lsn-sepia .lwrap>.ann-surface,:root.lsn-sepia .lesson,:root.lsn-sepia .qlesson{--bg:#EDE3CC;--surface:#F4ECD8;--surface-2:#EADFC6;--pill:rgba(214,198,164,.45);--ink:#2F2A24;--ink-2:#3D362E;--muted:#6B6153;--subtle:#8A7F6E;--line:#DCCDAE;--hair:rgba(70,50,20,.08);--accent-soft:color-mix(in srgb,#0F766E 9%,#F4ECD8);--usmle-soft:color-mix(in srgb,#4338CA 8%,#F4ECD8);--usmle-line:color-mix(in srgb,#4338CA 25%,#F4ECD8);--ok-soft:color-mix(in srgb,#059669 10%,#F4ECD8);--bad-soft:color-mix(in srgb,#E11D48 8%,#F4ECD8);--warn-soft:color-mix(in srgb,#B45309 9%,#F4ECD8);--warn-line:color-mix(in srgb,#B45309 30%,#F4ECD8)}
+:root.lsn-sepia .lesson{background:#F4ECD8;color:var(--ink-2)}
+:root.lsn-sepia .qlesson,:root.lsn-sepia .qlesson .qlbody{background:#F4ECD8}
+/* lição escura mesmo com o app no claro */
+:root.lsn-dark .lwrap>.ann-surface,:root.lsn-dark .lesson,:root.lsn-dark .qlesson{--bg:#101316;--surface:#191e23;--surface-2:#22292f;--pill:rgba(63,63,70,.5);--ink:#e6ebef;--ink-2:#cbd4dc;--muted:#a7b3be;--subtle:#96a3af;--line:#35404a;--hair:rgba(207,222,234,.12);--accent:#83d8c8;--accent-ink:#102b27;--accent-soft:#193b35;--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;--ok:#83d8b3;--ok-soft:#182f29;--ok-bar:#4e9e7d;--bad:#f1a0aa;--bad-soft:#362329;--bad-bar:#b66b78;--warn:#e6c580;--warn-soft:#302b20;--warn-line:#695a35;color-scheme:dark}
+:root.lsn-dark .lesson{background:#191e23;color:var(--ink-2)}
+:root.lsn-dark .qlesson{background:#191e23;border-radius:20px;padding:10px 10px 0;color:var(--ink)}:root.lsn-dark .qlesson .qlbody{background:#191e23}
+:root.lsn-dark .lesson .ann-svg.mk,:root.lsn-dark .qlesson .ann-svg.mk,:root.lsn-dark .lwrap .ann-svg.mk{mix-blend-mode:normal;opacity:.4}
 
 body.qnav-on main{padding-bottom:calc(var(--nav-h) + 106px + env(safe-area-inset-bottom,0px))}
 body.qnav-on .qnav-space{height:calc(var(--nav-h) + 124px + env(safe-area-inset-bottom,0px));flex:0 0 auto}
@@ -1104,7 +1113,8 @@ window.addEventListener("resize",()=>annInit());
 /* ---------- LIÇÃO EM FUNDO CLARO NO TABLET ---------- */
 const TABLET_Q=matchMedia("(pointer:coarse) and (min-width:600px)");
 function isTablet(){ return TABLET_Q.matches||ANN.pen; }
-function applyLessonLight(){ const m=set().lessonLight||"auto"; document.documentElement.classList.toggle("lsn-light", m==="on"||(m==="auto"&&isTablet())); }
+function lessonBg(){ const m=set().lessonLight; return (m==="light"||m==="dark"||m==="off")?m:"sepia"; } /* antigos "auto"/"on" viram sépia */
+function applyLessonLight(){ const m=lessonBg(), c=document.documentElement.classList; c.toggle("lsn-light", m==="sepia"||m==="light"); c.toggle("lsn-sepia", m==="sepia"); c.toggle("lsn-dark", m==="dark"); }
 try{ TABLET_Q.addEventListener("change",applyLessonLight); }catch(_){}
 
 /* ---------- progress ---------- */
@@ -2205,7 +2215,7 @@ function openSettings(){
   openSheet(`<div class="row" style="justify-content:space-between"><h2>${tr("settings")}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
    <div class="field"><span class="flabel">${tr("lang")}</span><div class="chips">${["pt","en"].map(x=>`<button type="button" class="chip" data-setl="${x}" aria-pressed="${st.lang===x}">${x==="pt"?"Português":"English"}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("theme")}</span><div class="chips">${[["sys",tr("tSys")],["light",tr("tLight")],["dark",tr("tDark")]].map(([k,l])=>`<button type="button" class="chip" data-sett="${k}" aria-pressed="${st.theme===k}">${l}</button>`).join("")}</div></div>
-   <div class="field"><span class="flabel">${T2("Fundo da lição","Lesson background")}</span><div class="chips">${[["auto",T2("Claro no tablet","Light on tablet")],["on",T2("Sempre claro","Always light")],["off",T2("Seguir o tema","Follow theme")]].map(([k,l])=>`<button type="button" class="chip" data-setll="${k}" aria-pressed="${(st.lessonLight||"auto")===k}">${l}</button>`).join("")}</div></div>
+   <div class="field"><span class="flabel">${T2("Fundo da lição","Lesson background")}</span><div class="chips">${[["sepia",T2("Sépia","Sepia")],["light",T2("Claro","Light")],["dark",T2("Escuro","Dark")],["off",T2("Seguir o tema","Follow theme")]].map(([k,l])=>`<button type="button" class="chip" data-setll="${k}" aria-pressed="${lessonBg()===k}">${l}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
    <div class="toggle"><span>${tr("alwaysDetail")}</span><button type="button" class="switch" role="switch" data-act="toggleDetail" aria-checked="${!!st.detail}" aria-label="${tr("alwaysDetail")}"></button></div>

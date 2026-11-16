@@ -1485,7 +1485,7 @@ function questionHTML(q, it, reveal, simMode){
   const fb = (fallback && q.standard!=="usmle") ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const explanation = orig=>{
     const o=c.opts[orig], letter=L[perm.indexOf(orig)];
-    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${det&&o.more&&q.standard!=="usmle"?safe((o.why?o.why+" ":"")+o.more):safe(o.why||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div></div>`; // detalhada: um texto só, sem bloco enxuto separado
+    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${det&&o.more&&q.standard!=="usmle"?safe(deepText(o.why,o.more)):safe(o.why||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div></div>`; // detalhada: um texto só, sem bloco enxuto separado
   };
   const otherOptions=perm.filter(orig=>orig!==q.correct&&orig!==pick);
   const feedback = reveal ? `<section class="answer-feedback" aria-label="${T2("Correção comentada","Answer explanation")}">
@@ -2299,6 +2299,15 @@ async function genSave(){
 /* ---------- BUSCA (offline: questões + lições; tolera erro de digitação, acentos, siglas e sinônimos) ---------- */
 const nz = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ");
 function nzAlign(s){ let o=""; for(let i=0;i<s.length;i++){ const b=s[i].normalize("NFD")[0]||" "; o+=/[a-zA-Z0-9]/.test(b)?b.toLowerCase():" "; } return o; } // mantém o comprimento (para destacar)
+// Versão detalhada: se o "more" já repete o comentário curto, mostra só o "more" (mantendo o rótulo "Correta:"/"Errada:"); senão junta os dois.
+function deepText(why,more){
+  if(!why) return more;
+  const lab=(String(why).match(/^\s*(<b>[^<]*<\/b>\s*[:.\u2013\u2014-]?\s*)/)||[])[1]||"";
+  const core=s=>plain(s).toLowerCase().replace(/^(correta|errada|incorreta|exceção|excecao|falsa|verdadeira|correct|incorrect|wrong)\s*[:.\u2013\u2014-]\s*/i,"");
+  const w=core(why), m=core(more);
+  if(w && m.includes(w)) return (lab && !/^\s*<b>/.test(more) ? lab : "")+more;
+  return why+" "+more;
+}
 function plain(h){ return String(h||"").replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,"&").replace(/\s+/g," ").trim().normalize("NFC"); }
 const SR_STOP=new Set("de da do das dos e a o as os em na no nas nos para por com um uma the of and in to".split(" "));
 const plur=(n,a,b)=>`${n} ${n===1?a:b}`;

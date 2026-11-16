@@ -55,6 +55,9 @@ function fixture(){
       await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); await p.waitForTimeout(50);
       if(await p.evaluate(()=>document.body.classList.contains("focus"))){ await drag('#view .qright>.gdrag',-60); if(!await v("--qlw")) throw new Error("colunas não arrastaram"); }
       await p.click('[data-pick="0"]'); });
+    await step("simulado sem verde antes de responder", async()=>{ const r=await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); return 1; }); await p.click('[data-su="mode"][data-val="sim"]'); await p.click('[data-act="startSession"]');
+      const n=await p.evaluate(()=>document.querySelectorAll("#view .opt.correct,#view .opt.wrong,#view .result").length); if(n) throw new Error("revelou antes de responder: "+n);
+      await p.click('[data-pick="1"]'); const m=await p.evaluate(()=>document.querySelectorAll("#view .opt.correct,#view .opt.wrong,#view .result").length); if(m) throw new Error("revelou ao marcar no simulado: "+m); });
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
     await step("report sheet", async()=>{ await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });

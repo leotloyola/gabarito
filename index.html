@@ -510,6 +510,13 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 .ltoc button:hover{background:var(--pill);color:var(--ink)}
 .ltoc button.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
 .lesson h2,.lesson h3{scroll-margin-top:84px}
+/* índice recolhido (gab.tocoff): some a caixa/coluna e o texto ocupa a largura toda */
+html.toc-off .ltoc{display:none}
+html.toc-off .lwrap>.gdrag{display:none!important}
+.ltoc .tochide{display:none}
+@media (min-width:1150px){ .ltoc .tochide{all:unset;cursor:pointer;float:right;font-size:12px;color:var(--muted);padding:2px 8px;border-radius:8px}
+.ltoc .tochide:hover{background:var(--pill);color:var(--ink)} }
+@media (min-width:1150px){ html.toc-off .lwrap{grid-template-columns:minmax(0,1fr)} .ltoc .tochide{margin-right:6px} }
 .btbl-w{overflow-x:auto}
 .btbl{width:100%;border-collapse:collapse;font-size:13px}
 .btbl th{text-align:left;position:sticky;top:0;background:var(--surface);z-index:1}
@@ -1811,6 +1818,7 @@ function mpOpen(src,name,pg,href){ const gm=String(src).match(/\/file\/d\/([\w-]
   document.addEventListener("click",e=>{ const t=e.target.closest&&e.target.closest("[data-navtog]"); if(!t) return; e.stopPropagation();
     const on=b.classList.toggle("navc"); try{ localStorage.setItem(K,on?"1":"0"); }catch(_){} },true);
 })();
+try{ if(localStorage.getItem("gab.tocoff")==="1") document.documentElement.classList.add("toc-off"); }catch(e){}
 (()=>{ const R=document.documentElement.style, K={nav:["--navw","gab.navw"],q:["--qlw","gab.qlw"],toc:["--tocw","gab.tocw"]};
   try{ for(const g in K){ const w=localStorage.getItem(K[g][1]); if(w) R.setProperty(K[g][0],w+"px"); } }catch(e){}
   const tip=()=>T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset");
@@ -1847,7 +1855,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const nQ=[...S.qs.values()].filter(q=>q.discipline===l.discipline&&q.topic===l.topic&&stdOk(q)).length;
   const tuL=S.tuB!=null; v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button>${annBar("L:"+l.id,false)}</div>
+   <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
    <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${l.html}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
@@ -1868,11 +1876,12 @@ function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } cons
   let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return;
   hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
   const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${i}" class="${h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h.textContent)}</button></li>`).join("");
-  nav.innerHTML=`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`; nav.hidden=false;
-  const btns=nav.querySelectorAll("button"); let cur=-1;
+  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button><details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`; nav.hidden=false; tocTogLbl();
+  const btns=nav.querySelectorAll("ol button"); let cur=-1;
   const mark=i=>{ if(i===cur) return; cur=i; btns.forEach((b,k)=>b.classList.toggle("on",k===i)); };
   S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ if(h.getBoundingClientRect().top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
   hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
+function tocTogLbl(){ const b=$("#tocTog"); if(!b) return; const off=document.documentElement.classList.contains("toc-off"); b.hidden=false; b.setAttribute("aria-pressed",String(!off)); b.textContent="☰ "+T2("Índice","Contents"); b.title=off?T2("Mostrar índice","Show contents"):T2("Recolher índice","Hide contents"); }
 /* ---------- PDF PARA O TABLET ---------- */
 // Página A4 (px CSS) com coluna larga à direita para anotar; sem biblioteca: HTML → SVG/foreignObject → JPEG → PDF escrito à mão
 const PW=794, PH=1123, PCW=508, PCAP=PH-70-70-24;
@@ -2741,6 +2750,7 @@ document.addEventListener("click", async e=>{
   if(act==="signOut") return signOut();
   if(act==="closeSheet") return closeSheet();
   if(act==="keys") return openKeys();
+  if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); return; }
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }

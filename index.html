@@ -305,6 +305,14 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .tblk{background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow),0 0 0 1px var(--hair)} .tblk.ok{opacity:.72}
 .tbh{display:flex;gap:10px;align-items:flex-start} .tbn{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:13px} .tblk.ok .tbn{background:var(--ok-soft,var(--accent-soft))}
 .tbt{display:flex;flex-direction:column;min-width:0} .tbt b{font-size:14.5px} .tbt small{font-size:12px;color:var(--muted)}
+button.tbh{all:unset;box-sizing:border-box;width:100%;display:flex;gap:10px;align-items:flex-start;cursor:pointer;-webkit-tap-highlight-color:transparent} button.tbh:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:10px} .tbh .tbt{flex:1} .tbh .go{align-self:center;color:var(--muted);display:inline-flex}
+.tucrumb{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;min-width:0;font-size:12.5px;color:var(--muted);overflow:hidden}
+.tucrumb .tcb{all:unset;cursor:pointer;padding:5px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto} .tucrumb .tch{flex:0 0 auto}
+.tucrumb .tcb:focus-visible{outline:2px solid var(--accent)} .tucrumb .tcs{flex:0 0 auto;opacity:.6} .tucrumb .tcc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto;color:var(--ink-2)}
+@media (max-width:520px){ .tucrumb .tct{display:none} }
+.tbmain{gap:8px;flex-wrap:wrap} .tbnav{justify-content:space-between;gap:8px}
+ol.tbq{list-style:none;margin:6px 0 0;padding:0;counter-reset:tq} ol.tbq li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--hair);font-size:13px;line-height:1.4} ol.tbq li:first-child{border-top:0}
+.tbqs{flex:0 0 18px;text-align:center;font-weight:700;color:var(--muted)} li.ok .tbqs{color:var(--ok,#2e7d32)} li.bad .tbqs{color:var(--bad,#c62828)} .tbqt{flex:1;min-width:0;color:var(--ink-2)} ol.tbq .stars{flex:0 0 auto;font-size:11px}
 .tbw{font-size:13px;color:var(--ink-2);margin:6px 0 0 36px;line-height:1.5} .tbw p{margin:.2em 0}
 .tweak{padding:8px 0;border-top:1px solid var(--hair);font-size:13.5px} .tweak:first-of-type{border-top:0} .tweak .md p{margin:.2em 0;color:var(--ink-2)}
 .md p{margin:0 0 8px} .md ul,.md ol{margin:0 0 8px;padding-left:20px} .md h4{margin:10px 0 4px;font-size:14px} .md table{border-collapse:collapse;font-size:13px} .md td,.md th{border:1px solid var(--line);padding:4px 6px}
@@ -1161,7 +1169,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length; renderSide();
-  $("#tabs").innerHTML = ["home","tutor","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson"))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
+  $("#tabs").innerHTML = ["home","tutor","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
 }
 function renderCtx(){
   const cp=curPer(), root=curDisc(), isUSMLE=cp==="usmle"&&root?.id==="usmle";
@@ -1169,7 +1177,7 @@ function renderCtx(){
   const d=curDisc(), t=curTopic(), st=set().std, lg=set().lang, en=lg==="en";
   const dOpts=(isUSMLE?(d?.topics||[]):discs()).map(x=>'<option value="'+esc(x.id)+'" '+((isUSMLE?x.id===set().topic:d&&x.id===d.id)?"selected":"")+'>'+esc(nm(x))+'</option>').join("");
   const themeOpts=(t?.subs||[]).map(x=>'<option value="'+esc(x.id)+'" '+(set().sub===x.id?"selected":"")+'>'+esc(nm(x))+'</option>').join("");
-  if(S.view==="lesson"||S.view==="search"){ $("#ctx").innerHTML=""; return; }
+  if(S.view==="lesson"||S.view==="search"||(tuOn()&&S.tuB!=null)){ $("#ctx").innerHTML=""; return; }
   const ps=periods();
   const perSel=ps.length?'<label class="sel per"><span class="lab">'+(en?"Year/term":"Período")+'</span><select id="selPer" aria-label="'+(en?"Term":"Período")+'">'+ps.map(x=>'<option value="'+x+'" '+(cp===x?"selected":"")+'>'+(en?"Term "+x:x+"º período")+'</option>').join("")+(hasFree()?'<option value="usmle" '+(cp==="usmle"?"selected":"")+'>USMLE · UWorld</option>':"")+'<option value="all" '+(cp==="all"?"selected":"")+'>'+(en?"All terms":"Todos os períodos")+'</option></select></label>':"";
   const standard=cp==="usmle"?"":'<div class="seg" role="group" aria-label="Padrão">'+["ufpr","usmle","all","banco","tudo"].map(x=>'<button type="button" data-std="'+x+'" aria-pressed="'+(st===x)+'">'+tr("std_"+x)+'</button>').join("")+'</div>';
@@ -1227,10 +1235,43 @@ function openSubPicker(){ const d=curDisc(), t=curTopic(); if(!d||!t) return; co
     body=pickRow("pickSub","",tr("allSubs"),sum(t.topics),{cur:!su.sub})+(t.subs||[]).map(s=>pickRow("pickSub",s.id,nm(s),agg[s.id],{cur:su.sub===s.id})).join(""); }
   else body=pickRow("pickSub","",tr("allSubs"),agg[t.id],{cur:!su.sub})+(t.subs||[]).map(s=>pickRow("pickSub",s.id,nm(s),agg[t.id+"|"+s.id],{cur:su.sub===s.id})).join("");
   pickSheet(esc(nm(t)), body, (t.subs||[]).length); }
-function go(v){ const changed=S.view!==v; S.view=v; try{ if(changed) history.pushState({v},"","#"+v); else history.replaceState({v},"","#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+function go(v){ if(v==="tutor") return tuGo({v:"tutor"}); S.tuB=null; const changed=S.view!==v; S.view=v; try{ if(changed) history.pushState({v},"","#"+v); else history.replaceState({v},"","#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+/* ---------- MÓDULO TUTOR: navegação própria ----------
+   Pilha no histórico: plano {v:"tutor"} › bloco {v:"tutor",tb:i} › questões/lição do bloco {v:"study"|"review"|"lesson",tb:i}.
+   "Rever com as notas" fica logo abaixo do plano ({v:"review",tb:-1}). O voltar do Android/tablet recua um nível
+   e só sai do módulo a partir do plano. Entrar direto num nível fundo (Início → Continuar) empilha os pais que faltam. */
+const TU_VIEWS=["study","review","lesson"];
+function tuChain(st){ st=st||{}; const P={v:"tutor"};
+  if(st.v==="tutor") return st.tb!=null&&st.tb>=0?[P,{v:"tutor",tb:st.tb}]:[P];
+  if(TU_VIEWS.includes(st.v)&&st.tb!=null) return st.tb<0?[P,{v:st.v,tb:-1}]:[P,{v:"tutor",tb:st.tb},{v:st.v,tb:st.tb}];
+  return []; }
+const tuEq=(a,b)=>a.v===b.v&&(a.tb??null)===(b.tb??null);
+function tuOn(){ return S.view==="tutor"||(S.tuB!=null&&TU_VIEWS.includes(S.view)); }
+function tuGo(target){ const C=tuChain(history.state), T=tuChain(target), to=T[T.length-1]; let k=0;
+  while(k<C.length&&k<T.length&&tuEq(C[k],T[k])) k++;
+  const back=C.length-k, push=T.slice(k);
+  if($("#layer")&&$("#layer").innerHTML){ closeSheetRaw(); S.sheetPushed=false; }
+  try{
+    if(back>0){ const tok=S.tuPend={push}; history.go(-back);
+      setTimeout(()=>{ if(S.tuPend===tok){ S.tuPend=null; try{ history.replaceState(to,"","#"+to.v); }catch(_){} } },400); }
+    else if(push.length) push.forEach(s=>history.pushState(s,"","#"+s.v));
+    else history.replaceState(to,"","#"+to.v);
+  }catch(_){}
+  tuShow(to); }
+function tuShow(st){ const v=st.v;
+  if(v==="tutor"){ const P=tutorPlan(); S.tuB=(st.tb!=null&&st.tb>=0&&P?.blocks?.[st.tb])?st.tb:null; }
+  else { S.tuB=st.tb;
+    const s=S.session, ok=v==="lesson"?!!S.lessons.get(S.lessonId):!!(s&&s.from==="tutor"&&!s.done&&(v==="review")===(s.kind==="review"));
+    if(!ok){ const up=st.tb>=0?{v:"tutor",tb:st.tb}:{v:"tutor"}; try{ history.replaceState(up,"","#tutor"); }catch(_){} return tuShow(up); } }
+  S.view=v; render(); window.scrollTo({top:0}); }
+function tuUp(){ const C=tuChain({v:S.view,tb:S.tuB??undefined}); if(C.length>1) return tuGo(C[C.length-2]); return go("home"); }
 // botão "voltar" do celular: fecha a folha aberta ou volta para a tela anterior do app
 window.addEventListener("popstate", e=>{
   if($("#layer") && $("#layer").innerHTML){ S.sheetPushed=false; closeSheetRaw(); return; }
+  if(S.tuPend){ const p=S.tuPend; S.tuPend=null; try{ p.push.forEach(s=>history.pushState(s,"","#"+s.v)); }catch(_){} return; }
+  const st=e.state||{};
+  if(tuChain(st).length){ if(tuEq({v:S.view,tb:S.tuB},st)) return; return tuShow(st); }
+  S.tuB=null;
   const v=(e.state&&e.state.v)||(location.hash||"#home").slice(1)||"home";
   if(!["home","tutor","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
   if(v==="lesson" && !S.lessons.get(S.lessonId)) return;
@@ -1453,7 +1494,7 @@ function vPlayer(v){
   const reveal = s.mode==="study" && it.pick!==null;
   if(it.t0==null && it.pick===null) it.t0=now();
   const pb0=$("#view .qlbody"), keep=pb0?{id:pb0.dataset.l,top:pb0.scrollTop}:null;
-  v.innerHTML = `
+  v.innerHTML = `${s.from==="tutor"&&S.tuB!=null?tuCrumb(`${tr("q")} ${s.i+1}/${s.items.length}`):""}
    <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
      <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
      ${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}
@@ -1804,7 +1845,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const isRead=!!(S.prog.read||{})[l.id];
   const nQ=[...S.qs.values()].filter(q=>q.discipline===l.discipline&&q.topic===l.topic&&stdOk(q)).length;
-  v.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
+  const tuL=S.tuB!=null; v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
    <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
@@ -2194,7 +2235,7 @@ function bankTable(list){ const en=set().lang==="en"; const so=S.bankSort||(S.ba
    ${rows.map(x=>{ const st=status(x.q.id); return `<tr data-act="bankOpen" data-q="${esc(x.q.id)}" tabindex="0"><td class="num mono">${x.n+1}</td><td class="bt"><span>${safe(x.t)}</span>${isMarked(x.q.id)?' <span title="'+tr("markedReview")+'">🔖</span>':""}${x.q.i18n?.[set().lang]?.outdated||x.q.i18n?.pt?.outdated?` <span class="tag old">${en?"Outdated":"Defasada"}</span>`:""}</td><td class="bs">${esc(x.sub)}</td><td>${x.q.exam?`<span class="tag real">${esc(x.orig)}</span>`:`<span class="muted">${esc(x.orig)}</span>`}</td>${x.std==="usmle"?"":`<td><span class="stars p${x.pri}" title="${T2("Prioridade","Priority")} ${x.pri}">${STARS(x.pri)}</span></td>`}<td><span class="tag std ${x.std==="usmle"?"usmle":""}">${x.std.toUpperCase()}</span></td><td class="num"><span class="st ${st}">${x.r?`${x.r.nOk||0}/${x.r.n}`:"·"}</span></td><td class="num muted">${ago(x.last)}</td></tr>`; }).join("") || `<tr><td colspan="8"><p class="empty">${tr("none")}</p></td></tr>`}</tbody></table></div></div>`; }
 WIDE_B.addEventListener?.("change",()=>{ if(S.view==="bank") render(); });
 function openSheet(html, onMount){
-  if(!$("#layer").innerHTML){ try{ history.pushState({v:S.view,sheet:1},"",location.hash||"#"+S.view); S.sheetPushed=true; }catch(e){} }
+  if(!$("#layer").innerHTML){ try{ history.pushState(Object.assign({v:S.view},S.tuB!=null&&tuOn()?{tb:S.tuB}:{},{sheet:1}),"",location.hash||"#"+S.view); S.sheetPushed=true; }catch(e){} }
   $("#layer").innerHTML = `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="sheet-in">${html}</div></div>`;
   document.body.style.overflow="hidden"; onMount && onMount($("#layer .sheet"));
 }
@@ -2613,8 +2654,35 @@ function tutorHomeHTML(){ const P=tutorPlan(); if(!P) return ""; const s=tutorSu
     <div class="plh-f">${s.n}/${s.total} ${T2("blocos","blocks")} · ~${s.min} min<span class="go">${CHEV}</span></div></button>`; }
 function tutorNoteHTML(id){ const n=tutorNotes()[id]; if(!n||!n.t) return "";
   return `<div class="box tutor"><h3>🎓 ${T2("Nota do tutor","Tutor's note")}${n.d?` · ${fmtDM(Date.parse(n.d+"T12:00:00"))}`:""}</h3><div class="md">${md(n.t)}</div></div>`; }
+/* cabeçalho do módulo Tutor: Tutor › Bloco n › (questão/lição). Cada nível é tocável e sobe até ele. */
+function tuCrumb(last){ const P=tutorPlan(), i=S.tuB, b=i>=0?P?.blocks?.[i]:null;
+  const mid=i===-1?`<span class="tcs">›</span><span class="tcc">${T2("Erros comentados","Misses explained")}</span>`
+    : b?`<span class="tcs">›</span>${last?`<button type="button" class="tcb" data-act="tuUp">${T2("Bloco","Block")} ${i+1}<span class="tct">: ${esc(b.title||"")}</span></button>`:`<span class="tcc">${T2("Bloco","Block")} ${i+1}<span class="tct">: ${esc(b.title||"")}</span></span>`}`:"";
+  return `<nav class="tucrumb" aria-label="${T2("Navegação do Tutor","Tutor navigation")}"><button type="button" class="tcb tch" data-act="tuPlan">🎓 ${T2("Plano","Plan")}</button>${mid}${last&&i!==-1?`<span class="tcs">›</span><span class="tcc">${esc(last)}</span>`:""}</nav>`; }
+function tbVisIdx(P){ return (P.blocks||[]).map((b,i)=>i).filter(i=>S.tuAll||tbVis(P.blocks[i])||i===S.tuB); }
+function vTutorBlock(v,P,i){ const b=P.blocks[i], pr=tbProg(P,b,i), ids=tbIds(b), T=TU(), g=Date.parse(P.generated||P.date)||0;
+  const vis=tbVisIdx(P), k=vis.indexOf(i), pv=vis[k-1], nx=vis[k+1];
+  const st=id=>{ const r=rec(id); return r&&r.ts>=g?(r.ok?"ok":"bad"):"no"; };
+  const nBad=ids.filter(id=>st(id)==="bad").length, s0=S.session, open=s0&&s0.from==="tutor"&&s0.tb===i&&s0.pd===P.date&&!s0.done;
+  let main="";
+  if(b.type==="lesson"){ const l=S.lessons.get(b.lesson);
+    main=l?`<button class="btn primary" data-act="tutorLesson" data-i="${i}">📖 ${pr.done?T2("Abrir a lição de novo","Open lesson again"):T2("Abrir a lição","Open lesson")}</button>`:`<p class="lede" style="font-size:13px">${T2("Lição ainda não publicada.","Lesson not published yet.")}</p>`; }
+  else if(b.type==="task") main=b.drive?`<a class="btn primary" href="https://drive.google.com/file/d/${encodeURIComponent(b.drive)}/view" target="_blank" rel="noopener">${T2("Abrir material","Open material")}</a>`:"";
+  else if(ids.length) main=`<button class="btn primary" data-act="tutorBlock" data-i="${i}">${open?`${T2("Continuar","Continue")} · ${T2("questão","question")} ${Math.min(s0.i+1,s0.items.length)}/${s0.items.length}`:pr.done?T2("Refazer o bloco","Redo block"):pr.n?T2("Continuar","Continue"):T2("Começar","Start")}</button>${open||pr.n?`<button class="btn" data-act="tutorBlock" data-i="${i}" data-redo="1">${T2("Recomeçar do zero","Start over")}</button>`:""}${nBad?`<button class="btn" data-act="tutorBlock" data-i="${i}" data-wrong="1">${T2("Refazer só as erradas","Redo misses only")} · ${nBad}</button>`:""}`;
+  const list=ids.length&&b.type!=="lesson"?`<div class="panel"><div class="eyebrow">${T2("Questões do bloco","Block questions")}</div><ol class="tbq">${ids.map(id=>{ const q=S.qs.get(id), c=q&&(q.i18n[set().lang]||q.i18n.pt||q.i18n.en), x=st(id);
+      return `<li class="${x}"><span class="tbqs" aria-label="${x==="ok"?T2("acertou","correct"):x==="bad"?T2("errou","missed"):T2("pendente","pending")}">${x==="ok"?"✓":x==="bad"?"✗":"·"}</span><span class="tbqt">${esc((t=>t.length>110?t.slice(0,108).trimEnd()+"…":t)(plain(c?.stem||"")))}</span>${q?.pri?`<span class="stars p${q.pri}">${STARS(q.pri)}</span>`:""}</li>`; }).join("")}</ol></div>`:"";
+  const nav=`<div class="row tbnav">${pv!=null?`<button class="btn" data-act="tuOpen" data-i="${pv}" data-pv="1">← ${T2("Bloco","Block")} ${pv+1}</button>`:`<span></span>`}${nx!=null?`<button class="btn ${pr.done?"primary":""}" data-act="tuOpen" data-i="${nx}" data-nx="1">${T2("Próximo bloco","Next block")} →</button>`:`<button class="btn ${pr.done?"primary":""}" data-act="tuPlan">${T2("Voltar ao plano","Back to plan")}</button>`}</div>`;
+  v.innerHTML=`${tuCrumb("")}
+   <div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">🎓 ${T2("Bloco","Block")} ${k+1} ${T2("de","of")} ${vis.length} · ${fmtDM(Date.parse(P.date+"T12:00:00"))}</div><h1>${tbIcon(b.type)} ${esc(b.title||"")}</h1></div>
+     <button type="button" class="chip" data-act="tutorDone" data-i="${i}" aria-pressed="${!!T.done[tbKey(P,i)]}">✓ ${T.done[tbKey(P,i)]?T2("Feito","Done"):T2("Marcar feito","Mark done")}</button></div>
+   <div class="row" style="gap:8px;font-size:12.5px;color:var(--muted)">${b.min?`<span>~${b.min} min</span>`:""}${ids.length&&b.type!=="lesson"?`<span>· ${pr.n}/${pr.total} ${T2("feitas","done")}${pr.n?` · ${T2("acerto","accuracy")} ${pct(ids.filter(id=>st(id)==="ok").length,pr.n)}`:""}</span>`:""}</div>
+   ${ids.length&&b.type!=="lesson"?`<div class="track"><i class="ok" style="width:${100*ids.filter(id=>st(id)==="ok").length/ids.length}%"></i><i class="bad" style="width:${100*nBad/ids.length}%"></i></div>`:""}
+   ${b.why?`<div class="panel tmsg md">${md(b.why)}</div>`:""}
+   <div class="row tbmain">${main}</div>
+   ${list}${nav}`; }
 function tbIcon(t){ return {review:"↻",study:"✎",lesson:"📖",task:"▸"}[t]||"✎"; }
 function vTutor(v){ const P=tutorPlan(), T=TU(), msg=T.msg||{};
+  if(P&&S.tuB!=null&&P.blocks?.[S.tuB]) return vTutorBlock(v,P,S.tuB);
   const recado=`<div class="panel"><div class="eyebrow">${T2("Recado para o tutor","Note to the tutor")}</div>
      <p class="lede" style="font-size:12.5px;margin:4px 0 8px">${T2("Ex.: “amanhã plantão, só 40 min”, “quero focar em hérnias”, “não entendi X”. Ele lê na próxima madrugada.","E.g. “on call tomorrow, only 40 min”. Read on the next nightly run.")}</p>
      <textarea id="tuMsg" rows="3" style="width:100%;box-sizing:border-box">${esc(msg.t||"")}</textarea>
@@ -2628,7 +2696,7 @@ function vTutor(v){ const P=tutorPlan(), T=TU(), msg=T.msg||{};
       : b.type==="task" ? (b.drive?`<a class="btn small" href="https://drive.google.com/file/d/${encodeURIComponent(b.drive)}/view" target="_blank" rel="noopener">${T2("Abrir","Open")}</a>`:"")
       : ids.length ? `<button class="btn small ${pr.done?"":"primary"}" data-act="tutorBlock" data-i="${i}">${pr.done?T2("Refazer","Redo"):pr.n?T2("Continuar","Continue"):T2("Começar","Start")}</button>` : "";
     const done=`<button type="button" class="chip" data-act="tutorDone" data-i="${i}" aria-pressed="${!!T.done[tbKey(P,i)]}" title="${T2("Marcar como feito","Mark as done")}">✓</button>`;
-    return `<div class="tblk ${pr.done?"ok":""}"><div class="tbh"><span class="tbn">${pr.done?"✓":i+1}</span><div class="tbt"><b>${tbIcon(b.type)} ${esc(b.title||"")}</b><small>${b.min?`~${b.min} min`:""}${ids.length?` · ${pr.n}/${pr.total} ${T2("questões","questions")}`:""}</small></div></div>
+    return `<div class="tblk ${pr.done?"ok":""}"><button type="button" class="tbh" data-act="tuOpen" data-i="${i}" aria-label="${T2("Abrir bloco","Open block")} ${i+1}"><span class="tbn">${pr.done?"✓":i+1}</span><span class="tbt"><b>${tbIcon(b.type)} ${esc(b.title||"")}</b><small>${b.min?`~${b.min} min`:""}${ids.length?` · ${pr.n}/${pr.total} ${T2("questões","questions")}`:""}</small></span><span class="go">${CHEV}</span></button>
       ${b.why?`<div class="tbw md">${md(b.why)}</div>`:""}
       ${ids.length&&b.type!=="lesson"?`<div class="track" style="margin:8px 0 2px"><i class="ok" style="width:${100*pr.n/pr.total}%"></i></div>`:""}
       <div class="row" style="justify-content:flex-end;gap:6px;margin-top:8px">${act}${done}</div></div>`; }).join("");
@@ -2707,7 +2775,7 @@ document.addEventListener("click", async e=>{
   if(act==="pdfDl"){ return pdfSave(S.pdfFiles[a.dataset.i]); }
   if(act==="pdfDlAll"){ return (S.pdfFiles||[]).forEach((f,i)=>setTimeout(()=>pdfSave(f),i*400)); }
   if(act==="lessonRead"){ S.prog.read=S.prog.read||{}; if(S.prog.read[S.lessonId]) delete S.prog.read[S.lessonId]; else S.prog.read[S.lessonId]=now(); saveProg(); return render(); }
-  if(act==="lessonBack"){ if(history.state&&history.state.v==="lesson"&&history.length>1){ history.back(); return; } return go(S.lessonBack&&S.lessonBack!=="lesson"?S.lessonBack:"study"); }
+  if(act==="lessonBack"){ if(S.tuB!=null&&S.view==="lesson") return tuUp(); if(history.state&&history.state.v==="lesson"&&history.length>1){ history.back(); return; } return go(S.lessonBack&&S.lessonBack!=="lesson"?S.lessonBack:"study"); }
   if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="statsTab"){ S.statsTab=a.dataset.val; render(); window.scrollTo({top:0}); return; }
   if(act==="examEssentials"){ if(a.dataset.d&&a.dataset.d!==set().disc){ set().disc=a.dataset.d; } set().topic="exam:"+a.dataset.ex; S.fcDeck=null; saveProg(); S.studyTab="build"; S.setup=Object.assign(defaultSetup(),{prio:"3",order:"pri",count:20,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="wrong"; pool=setupPool(S.setup); } if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup); } if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
@@ -2719,13 +2787,21 @@ document.addEventListener("click", async e=>{
   if(act==="planOff"){ const P=PL(), k=a.dataset.day; P.offDates=P.offDates.includes(k)?P.offDates.filter(x=>x!==k):P.offDates.concat(k); saveProg(); return render(); }
   if(act==="planWeek"){ const v=Number(a.dataset.v); S.planWeek=v===0?0:(S.planWeek||0)+v; return render(); }
   if(act==="planStudy"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
-  if(act==="tutorBlock"){ const P=tutorPlan(); const b=P?.blocks?.[+a.dataset.i]; if(!b) return; const g=Date.parse(P.generated||P.date)||0; const ids=tbIds(b); const pend=ids.filter(id=>{ const r=rec(id); return !(r&&r.ts>=g); }); const L=(pend.length?pend:ids).map(id=>S.qs.get(id)); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; const rv=b.type==="review";
-    S.session=buildSession(rv?"review":"study",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); S.session.from="tutor"; return go(rv?"review":"study"); }
-  if(act==="tutorLesson"){ const P=tutorPlan(); const b=P?.blocks?.[+a.dataset.i]; if(!b||!S.lessons.get(b.lesson)) return; TU().done[tbKey(P,+a.dataset.i)]=now(); S.prog.read=S.prog.read||{}; if(!S.prog.read[b.lesson]) S.prog.read[b.lesson]=now(); saveProg(); S.lessonBack="tutor"; S.lessonId=b.lesson; return go("lesson"); }
+  if(act==="tutorBlock"){ const i=+a.dataset.i, P=tutorPlan(); const b=P?.blocks?.[i]; if(!b) return; const s0=S.session;
+    if(!(s0&&s0.from==="tutor"&&s0.tb===i&&s0.pd===P.date&&!s0.done&&!a.dataset.redo&&!a.dataset.wrong)){
+      const g=Date.parse(P.generated||P.date)||0; const ids=tbIds(b); const seen=id=>{ const r=rec(id); return r&&r.ts>=g; };
+      const pick=a.dataset.wrong?ids.filter(id=>seen(id)&&!rec(id).ok):a.dataset.redo?ids:ids.filter(id=>!seen(id));
+      const L=(pick.length?pick:ids).map(id=>S.qs.get(id)); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; const rv=b.type==="review";
+      S.session=buildSession(rv?"review":"study",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); Object.assign(S.session,{from:"tutor",tb:i,pd:P.date}); }
+    return tuGo({v:S.session.kind==="review"?"review":"study",tb:i}); }
+  if(act==="tutorLesson"){ const i=+a.dataset.i, P=tutorPlan(); const b=P?.blocks?.[i]; if(!b||!S.lessons.get(b.lesson)) return; TU().done[tbKey(P,i)]=now(); S.prog.read=S.prog.read||{}; if(!S.prog.read[b.lesson]) S.prog.read[b.lesson]=now(); saveProg(); S.lessonBack="tutor"; S.lessonId=b.lesson; return tuGo({v:"lesson",tb:i}); }
+  if(act==="tuOpen"){ return tuGo({v:"tutor",tb:+a.dataset.i}); }
+  if(act==="tuPlan"){ return tuGo({v:"tutor"}); }
+  if(act==="tuUp"){ return tuUp(); }
   if(act==="tuAll"){ S.tuAll=!S.tuAll; return render(); }
   if(act==="tutorDone"){ const P=tutorPlan(); if(!P) return; const k=tbKey(P,+a.dataset.i); if(TU().done[k]) delete TU().done[k]; else TU().done[k]=now(); saveProg(); return render(); }
   if(act==="tutorMsg"){ const ta=$("#tuMsg"); TU().msg={t:(ta?.value||"").trim(), ts:now()}; saveProg(); flushProg&&flushProg(); toast(T2("Recado salvo: o tutor lê na próxima madrugada","Saved: read on the next nightly run")); return render(); }
-  if(act==="tutorNotesRev"){ const P=tutorPlan(); const N=tutorNotes(); const L=Object.keys(N).filter(id=>N[id].d===P?.date&&S.qs.has(id)).map(id=>S.qs.get(id)); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; S.session=buildSession("review",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); S.session.from="tutor"; return go("review"); }
+  if(act==="tutorNotesRev"){ const P=tutorPlan(); const N=tutorNotes(); const L=Object.keys(N).filter(id=>N[id].d===P?.date&&S.qs.has(id)).map(id=>S.qs.get(id)); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; S.session=buildSession("review",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); Object.assign(S.session,{from:"tutor",tb:-1,pd:P.date}); return tuGo({v:"review",tb:-1}); }
   if(act==="planRev"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.fcDeck=null; S.setup=null; const L=[...S.qs.values()].filter(q=>q.discipline===a.dataset.d&&q.topic===a.dataset.t&&q.standard!=="usmle"&&q.standard!=="banco"&&rec(q.id)&&!rec(q.id).ok); if(!L.length) return toast(tr("none")); saveProg(); S.session=buildSession("review",prioSort(shuffle(L)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
   if(act==="planFinal"){ set().disc=a.dataset.d; a.dataset.act="examEssentials"; return a.click(); }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
@@ -2741,7 +2817,7 @@ document.addEventListener("click", async e=>{
   if(act==="pickSub"){ const su=S.setup||(S.setup=defaultSetup()); su.sub=a.dataset.val; closeSheet(); return render(); }
   if(act==="revScope"){ set().revScope=a.dataset.val; saveProg(); return render(); }
   if(act==="mode") return setMode(a.dataset.v);
-  if(act==="contSession"){ const s=S.session; if(!s) return; return go(s.kind==="review"?"review":"study"); }
+  if(act==="contSession"){ const s=S.session; if(!s) return; const v=s.kind==="review"?"review":"study"; if(s.from==="tutor"&&s.tb!=null) return tuGo({v,tb:s.tb}); return go(v); }
   if(act==="dashErrors"){ const L=prioSort(modeQs().filter(q=>status(q.id)==="bad")); if(!L.length) return toast(tr("none")); S.fcDeck=null; S.setup=null; S.session=buildSession("review",L,{mode:"study",count:20,order:"seq",shuffleO:true}); return go("review"); }
   if(act==="dashTile"){ set().disc=a.dataset.d; if(a.dataset.t){ set().topic=a.dataset.t; } else set().topic=null; set().sub=""; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="stepDate"){ e.preventDefault(); return openStepDate(); }
@@ -2751,8 +2827,12 @@ document.addEventListener("click", async e=>{
   if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); S.annId=annKeepNext(s); render(); window.scrollTo({top:0}); return; }
   if(act==="finish"){ const s=S.session;
     if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick,{rev:false})) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std,exam:s.exam||null}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
-    const v=S.view, fs=s.from; S.session=null; toast("✓"); return go(fs==="search"?"search":v==="review"?"review":"home"); }
-  if(act==="exit"){ clearInterval(timerInt); const fs=S.session?.from; S.session=null; return fs==="search"?go("search"):render(); }
+    const v=S.view, fs=s.from; S.session=null; toast("✓");
+    if(fs==="tutor") return tuGo(s.tb>=0?{v:"tutor",tb:s.tb}:{v:"tutor"}); // fim do bloco: volta ao bloco (resultado + próximo)
+    return go(fs==="search"?"search":v==="review"?"review":"home"); }
+  if(act==="exit"){ clearInterval(timerInt); const s=S.session, fs=s?.from;
+    if(fs==="tutor"){ if(!(s.tb>=0)) S.session=null; return tuGo(s.tb>=0?{v:"tutor",tb:s.tb}:{v:"tutor"}); } // ✕ no Tutor: sobe para o bloco e guarda a sessão para "Continuar"
+    S.session=null; return fs==="search"?go("search"):render(); }
   if(act==="newSession"){ S.session=null; return go("study"); }
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
   if(act==="qlang"){ const id=a.dataset.q, q=S.qs.get(id); if(!q) return; const v=a.dataset.v||(content(q).lang==="pt"?"en":"pt"); if(v===set().lang) delete S.qLang[id]; else S.qLang[id]=v; const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
@@ -2797,6 +2877,8 @@ document.addEventListener("keydown", e=>{
     if(k==="escape") click('[data-act="fcReset"]'); return; }
   // lição
   if(S.view==="lesson"){ if(k==="escape"||k==="backspace") click('[data-act="lessonBack"]'); return; }
+  if(k==="escape"&&S.tuB!=null&&(S.view==="study"||S.view==="review")){ e.preventDefault(); return tuUp(); }
+  if(S.view==="tutor"&&S.tuB!=null){ if(k==="escape"||k==="backspace"){ e.preventDefault(); tuUp(); } else if(k==="arrowright") click('[data-act="tuOpen"][data-nx]'); else if(k==="arrowleft") click('[data-act="tuOpen"][data-pv]'); else if(k==="enter") click('.tbmain [data-act="tutorBlock"],.tbmain [data-act="tutorLesson"]'); return; }
   const s=S.session; if(!s||s.done||!(S.view==="study"||S.view==="review")) return;
   const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"12345".indexOf(k);
   if(idx>=0){ const b=document.querySelectorAll("#view .opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
@@ -2928,7 +3010,7 @@ function posSave(){
     const s=S.session; const keep=s&&!s.done&&!s.reviewing&&(S.view==="study"||S.view==="review");
     const fc=S.fcDeck&&S.fcDeck.i<S.fcDeck.ids.length&&S.view==="cards"?S.fcDeck:null;
     const v=POS_VIEWS.includes(S.view)?S.view:(S.view==="search"?(S.srBack&&POS_VIEWS.includes(S.srBack)?S.srBack:"home"):"home");
-    localStorage.setItem(POS_K,JSON.stringify({v,tab:S.studyTab||null,lesson:v==="lesson"?S.lessonId:null,lb:S.lessonBack||null,sess:keep?s:null,fc,t:Date.now()}));
+    localStorage.setItem(POS_K,JSON.stringify({v,tab:S.studyTab||null,lesson:v==="lesson"?S.lessonId:null,lb:S.lessonBack||null,sess:keep?s:null,fc,tb:(S.tuB!=null&&tuOn())?S.tuB:null,tpd:tutorPlan()?.date||null,t:Date.now()}));
   }catch(_){}
 }
 function posSaveY(){ try{ localStorage.setItem(POS_Y,JSON.stringify({v:S.view,y:Math.round(window.scrollY||0)})); }catch(_){} }
@@ -2948,7 +3030,15 @@ function posRestore(){
   }
   if(o.fc&&fresh&&v==="cards"){ const f=o.fc; f.ids=(f.ids||[]).filter(id=>S.qs.has(id)); if(f.ids.length){ f.i=Math.min(f.i||0,f.ids.length-1); S.fcDeck=f; } }
   if((v==="study"||v==="review")&&!S.session&&o.sess) v=v; // sessão expirada: cai na tela de montagem
-  S.view=v; try{ history.replaceState({v},"","#"+v); }catch(_){}
+  // módulo Tutor: só volta para o bloco se o plano ainda é o mesmo; sessão/lição do bloco que não voltou cai no bloco
+  const P=tutorPlan(); let tb=(o.tb!=null&&(o.tb<0||(P&&P.date===o.tpd&&P.blocks?.[o.tb])))?o.tb:null;
+  if(tb!=null&&(v==="study"||v==="review")&&!(S.session&&S.session.from==="tutor")){ v="tutor"; if(tb<0) tb=null; }
+  if(tb!=null&&v==="lesson"&&S.lessonBack!=="tutor") tb=null;
+  if(tb!=null&&v!=="tutor"&&!TU_VIEWS.includes(v)) tb=null;
+  S.view=v; S.tuB=(v==="tutor"&&tb<0)?null:tb;
+  // pilha do voltar: Início embaixo (o voltar não fecha o app) e, no Tutor, plano › bloco › tela
+  const top=tb!=null?{v,tb}:{v}, chain=tuChain(top);
+  try{ history.replaceState({v:"home"},"","#home"); if(v!=="home") (chain.length?chain:[top]).forEach(st=>history.pushState(st,"","#"+st.v)); }catch(_){}
   S.posY=(yv===v)?y:0;
   return true;
 }
@@ -2964,8 +3054,8 @@ render=function(){ _renderOrig.apply(this,arguments); posSave(); if(S.posY){ con
 
 async function boot(){
   await cacheLoad(); applyTheme(); posRestore();
-  const h=(location.hash||"").slice(1); if(["home","tutor","plan","study","review","cards","stats","bank"].includes(h)) S.view=h;
-  try{ history.replaceState({v:S.view},"","#"+S.view); }catch(e){}
+  const h=(location.hash||"").slice(1); if(["home","tutor","plan","study","review","cards","stats","bank"].includes(h)&&h!==S.view){ S.view=h; S.tuB=null; }
+  try{ if(!history.state||history.state.v!==S.view) history.replaceState({v:S.view},"","#"+S.view); }catch(e){}
   S.downloads=true; // enables the export button (plain browser download)
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
   if(!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase){ setSync("off"); render(); if(!CFG.SUPABASE_URL) toast("config.js sem Supabase"); return; }

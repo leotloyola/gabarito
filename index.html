@@ -444,7 +444,7 @@ details.adv summary::before{content:"+ ";} details.adv[open] summary::before{con
 .tag.old{background:var(--bad-soft);color:var(--bad);box-shadow:0 0 0 1px var(--bad-bar) inset}
 .banner.info{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset}
 /* nav */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(8,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:500;letter-spacing:.01em;color:var(--subtle);cursor:pointer;position:relative;transition:color .15s ease}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current="page"]{color:var(--ink)}
@@ -707,6 +707,30 @@ body.qnav-on .qnav{position:fixed;left:50%;transform:translateX(-50%);bottom:cal
 body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 @media(min-width:960px){body:not(.focus).qnav-on .qnav{left:calc(50% + var(--navw,232px)/2)}}
 .ann-palette{display:flex;gap:5px;align-items:center}.ann-color{width:30px;height:30px;min-width:30px;padding:0;background:var(--swatch)!important;cursor:pointer;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}.ann-color[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+/* mapa de conceitos */
+.cxchips{display:flex;flex-wrap:wrap;gap:6px}
+.cxchip{border:0;cursor:pointer;font:inherit;font-size:12.5px;line-height:1.25;text-align:left;border-radius:10px;padding:7px 10px;display:inline-flex;gap:8px;align-items:center;max-width:100%;background:hsl(var(--h) 70% 90%);color:hsl(var(--h) 60% 20%)}
+.cxchip b{font-weight:600;font-variant-numeric:tabular-nums;font-size:12px;opacity:.85}
+.cxchip.base span::before{content:"◆ ";opacity:.6}
+.cxchip.st-novo{background:var(--surface-2);color:var(--muted)}
+:root[data-theme="dark"] .cxchip{background:hsl(var(--h) 45% 20%);color:hsl(var(--h) 70% 85%)}
+:root[data-theme="dark"] .cxchip.st-novo{background:var(--surface-2);color:var(--muted)}
+.cxg{margin-top:14px}.cxg h3{font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 6px}
+.cxf{margin-top:10px}
+.cxrow{padding:12px 0;border-top:1px solid var(--line)}.cxrow:first-of-type{border-top:0}
+.cxr-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.cxr-n{border:0;background:none;padding:0;font:inherit;font-weight:600;font-size:14.5px;text-align:left;color:var(--ink);cursor:pointer}
+.cxr-p,.cxh-l b,.cxbig b{font-variant-numeric:tabular-nums;color:hsl(var(--h) 65% 34%)}
+:root[data-theme="dark"] .cxr-p,:root[data-theme="dark"] .cxh-l b,:root[data-theme="dark"] .cxbig b{color:hsl(var(--h) 65% 68%)}
+.cxbar{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:6px}.cxbar i{display:block;height:100%;border-radius:999px;background:hsl(var(--h) 60% 45%)}
+.cxr-m{font-size:12.5px;color:var(--muted);margin-top:6px}.cxr-m .warn{color:var(--warn)}
+.cxroot{font-size:12.5px;color:var(--ink-2);margin-top:4px}.cxroot .lk{border:0;background:none;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer}
+.cxr-b{margin-top:8px;align-items:center;gap:10px}.cxsrc{font-size:11.5px;color:var(--muted)}
+.cxbig{display:flex;align-items:baseline;gap:10px}.cxbig b{font-size:34px;font-weight:600}.cxbig span{font-size:13px;color:var(--muted)}
+.cxsrcs{margin-top:6px;font-size:13px}.cxsrcs div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line)}.cxsrcs div span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.cxerr{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2)}.cxerr li{margin:4px 0}.cxerr small{color:var(--muted)}
+.cxq{margin:10px 0}.cxq .cxchips{margin-top:6px}
+.cxhome .cxh-l{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-top:6px}.cxhome .cxh-l span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -728,11 +752,12 @@ body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 <div id="layer"></div>
 <script src="config.js"></script>
 <script src="sinonimos.js"></script>
+<script src="cx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 /* ---------- i18n ---------- */
 const T = {
-pt:{stats:"Números",home:"Início",tutor:"Tutor",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
+pt:{stats:"Números",home:"Início",tutor:"Tutor",mapa:"Mapa",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",std_banco:"Banco",std_tudo:"Tudo",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
@@ -765,7 +790,7 @@ pt:{stats:"Números",home:"Início",tutor:"Tutor",plan:"Plano",study:"Estudar",r
  noDb:"Banco indisponível nesta visualização. Mostrando a última cópia salva neste aparelho.",noData:"O banco ainda está vazio.",
  aiUnavailable:"Claude não está disponível nesta visualização.",aiDenied:"Uso do Claude não autorizado nesta visualização.",aiRate:"Muitas solicitações. Tente de novo em instantes.",aiErr:"Não deu certo. Tente de novo.",
  min:"min",qs:"questões",step:"Etapa",days:"d",today:"hoje",tomorrow:"amanhã",fMarked:"Marcadas para revisão",markedReview:"Marcadas para revisão",markedCount:"questões marcadas",markQuestion:"Marcar para revisão",unmarkQuestion:"Remover da revisão",annotate:"Anotar",annotationOn:"Concluir anotações",pen:"Caneta",highlighter:"Marca-texto",eraser:"Borracha",undo:"Desfazer",clearNotes:"Apagar anotações",annotations:"Anotações",startMarked:"Revisar marcadas",noMarked:"Nenhuma questão marcada neste tema."},
-en:{stats:"Stats",home:"Home",tutor:"Tutor",plan:"Plan",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
+en:{stats:"Stats",home:"Home",tutor:"Tutor",mapa:"Map",plan:"Plan",study:"Study",review:"Review",cards:"Flashcards",bank:"Bank",
  discipline:"Discipline",topic:"Topic",all:"All",allSubs:"All sub-blocks",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Both",std_banco:"Bank",std_tudo:"Everything",
  dueToday:"Reviews due today",dueNone:"Nothing due today. Start a new session or flashcards.",reviewNow:"Review now",
@@ -809,6 +834,7 @@ const ICONS = {
  bank:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
  plan:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M8 14h3M13 14h3M8 17.5h3"/></svg>',
  tutor:'<svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg>',
+ mapa:'<svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7l7.3.2M7.2 8.2l3.6 7.6M16.8 9.2l-3.6 6.6"/></svg>',
  timer:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>'
 };
 const CHEV='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -1176,7 +1202,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length; renderSide();
-  $("#tabs").innerHTML = ["home","tutor","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
+  $("#tabs").innerHTML = ["home","tutor","mapa","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
 }
 function renderCtx(){
   const cp=curPer(), root=curDisc(), isUSMLE=cp==="usmle"&&root?.id==="usmle";
@@ -1280,14 +1306,14 @@ window.addEventListener("popstate", e=>{
   if(tuChain(st).length){ if(tuEq({v:S.view,tb:S.tuB},st)) return; return tuShow(st); }
   S.tuB=null;
   const v=(e.state&&e.state.v)||(location.hash||"#home").slice(1)||"home";
-  if(!["home","tutor","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
+  if(!["home","tutor","mapa","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
   if(v==="lesson" && !S.lessons.get(S.lessonId)) return;
   S.view=v; render(); window.scrollTo({top:0});
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v);
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v);
 }
 
 /* ---------- MODO: Provas UFPR × Steps USMLE ----------
@@ -1406,7 +1432,7 @@ function vHome(v){
      ${contHTML()}
      ${todayHTML()}
      ${errorsHTML(mqs)}
-     ${tutorHomeHTML()}${planHomeHTML()}
+     ${tutorHomeHTML()}${cxHomeHTML()}${planHomeHTML()}
    </div>
    <div class="dcol">
      ${heatHTML(mqs)}
@@ -1501,7 +1527,7 @@ function vPlayer(v){
   const reveal = s.mode==="study" && it.pick!==null;
   if(it.t0==null && it.pick===null) it.t0=now();
   const pb0=$("#view .qlbody"), keep=pb0?{id:pb0.dataset.l,top:pb0.scrollTop}:null;
-  v.innerHTML = `${s.from==="tutor"&&S.tuB!=null?tuCrumb(`${tr("q")} ${s.i+1}/${s.items.length}`):""}
+  v.innerHTML = `${s.from==="tutor"&&S.tuB!=null?tuCrumb(`${tr("q")} ${s.i+1}/${s.items.length}`):s.from==="cx"?cxCrumb(s):""}
    <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
      <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
      ${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}
@@ -1554,6 +1580,7 @@ function questionHTML(q, it, reveal, simMode){
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
     ${tutorNoteHTML(q.id)}
+    ${cxQHTML(q.id)}
     ${feedback}
     ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
@@ -1592,7 +1619,7 @@ function vResult(v){
   const secs=s.secs ?? (now()-s.t0)/1000;
   v.innerHTML = `
    <div><div class="eyebrow">${tr("simDone")}</div><h1>${ok}/${n} · ${Math.round(100*ok/n)}%</h1><p class="lede">${tr("time")}: ${fmtTime(secs)} · ${fmtTime(secs/n)}/${set().lang==="en"?"question":"questão"}</p></div>
-   <div class="row"><button class="btn primary" data-act="newSession">${tr("newSession")}</button><button class="btn" data-nav="home">${tr("backHome")}</button></div>
+   <div class="row">${s.from==="cx"?`<button class="btn primary" data-nav="mapa">🧠 ${T2("Voltar aos conceitos","Back to concepts")}</button>`:`<button class="btn primary" data-act="newSession">${tr("newSession")}</button>`}<button class="btn" data-nav="home">${tr("backHome")}</button></div>
    <div class="panel"><h2>${tr("reviewList")}</h2><div class="list">${s.items.map((it,i)=>{ const q=S.qs.get(it.id); if(!q) return ""; const c=content(q).c; const good=it.pick===q.correct; return `
      <button type="button" class="li" data-act="reviewItem" data-i="${i}"><span class="t">${i+1}. ${safe(c.stem)}</span><span class="st ${it.pick===null?"no":good?"ok":"bad"}">${it.pick===null?"—":good?"✓":"✗"}</span>
      <span class="m">${tagsOf(q).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</span></button>`; }).join("")}</div></div>`;
@@ -2687,6 +2714,7 @@ function vTutorBlock(v,P,i){ const b=P.blocks[i], pr=tbProg(P,b,i), ids=tbIds(b)
    <div class="row" style="gap:8px;font-size:12.5px;color:var(--muted)">${b.min?`<span>~${b.min} min</span>`:""}${ids.length&&b.type!=="lesson"?`<span>· ${pr.n}/${pr.total} ${T2("feitas","done")}${pr.n?` · ${T2("acerto","accuracy")} ${pct(ids.filter(id=>st(id)==="ok").length,pr.n)}`:""}</span>`:""}</div>
    ${ids.length&&b.type!=="lesson"?`<div class="track"><i class="ok" style="width:${100*ids.filter(id=>st(id)==="ok").length/ids.length}%"></i><i class="bad" style="width:${100*nBad/ids.length}%"></i></div>`:""}
    ${b.why?`<div class="panel tmsg md">${md(b.why)}</div>`:""}
+   ${(X=>b.cx&&X&&X.G.N.get(b.cx)?`<div class="cxq"><span class="eyebrow">🧠 ${T2("Conceito treinado","Concept trained")}</span><div class="cxchips">${cxChip(X.G,X.M,b.cx)}</div></div>`:"")(cxState())}
    <div class="row tbmain">${main}</div>
    ${list}${nav}`; }
 function tbIcon(t){ return {review:"↻",study:"✎",lesson:"📖",task:"▸"}[t]||"✎"; }
@@ -2805,6 +2833,10 @@ document.addEventListener("click", async e=>{
       S.session=buildSession(rv?"review":"study",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); Object.assign(S.session,{from:"tutor",tb:i,pd:P.date}); }
     return tuGo({v:S.session.kind==="review"?"review":"study",tb:i}); }
   if(act==="tutorLesson"){ const i=+a.dataset.i, P=tutorPlan(); const b=P?.blocks?.[i]; if(!b||!S.lessons.get(b.lesson)) return; TU().done[tbKey(P,i)]=now(); S.prog.read=S.prog.read||{}; if(!S.prog.read[b.lesson]) S.prog.read[b.lesson]=now(); saveProg(); S.lessonBack="tutor"; S.lessonId=b.lesson; return tuGo({v:"lesson",tb:i}); }
+  if(act==="cxOpen"){ return cxSheet(a.dataset.c); }
+  if(act==="cxTrain"){ return cxTrain(a.dataset.c); }
+  if(act==="cxF"){ S.cxF=a.dataset.f; const y=window.scrollY; render(); window.scrollTo({top:y}); return; }
+  if(act==="cxMore"){ S.cxMore=true; const y=window.scrollY; render(); window.scrollTo({top:y}); return; }
   if(act==="tuOpen"){ return tuGo({v:"tutor",tb:+a.dataset.i}); }
   if(act==="tuPlan"){ return tuGo({v:"tutor"}); }
   if(act==="tuUp"){ return tuUp(); }
@@ -2899,6 +2931,96 @@ document.addEventListener("keydown", e=>{
   if(k==="i"){ click('#view .qlang [aria-pressed="false"]'); return; }
   if(k==="f"){ click('#view [data-act="fs"]'); return; }
 });
+/* ---------- MAPA DE CONCEITOS ----------
+   Motor em cx.js (CX.build/mastery/rank/train). Dados: linhas kind:"tutor" do Supabase — "tutor:cx" (conceitos e grupos)
+   e "tutor:cx:<lote>" (questão → conceitos). O domínio é recalculado de progress.ev; nada novo é gravado no progresso. */
+let _cxG=null,_cxGk=null,_cxM=null,_cxMk=null,_cxO=null,_cxOk=null;
+function cxGraph(){ const T=S.tutor||{}, base=T["tutor:cx"]; if(!base||!window.CX) return null;
+  const k=(base.updated||"")+"|"+Object.keys(T).length; if(_cxGk===k&&_cxG) return _cxG;
+  const marks={}; for(const [id,o] of Object.entries(T)) if(id.startsWith("tutor:cx:")&&o.q) Object.assign(marks,o.q);
+  _cxG=CX.build(base.nodes||{},marks); _cxG.groups=base.groups||{}; _cxGk=k; _cxMk=null; _cxOk=null; return _cxG; }
+function cxState(){ const G=cxGraph(); if(!G) return null; const ev=S.prog.ev||[];
+  const k=_cxGk+"|"+ev.length+"|"+(ev.length?ev[ev.length-1][0]:0)+"|"+dayKey();
+  if(_cxMk!==k){ _cxM=CX.mastery(G,ev,now()); _cxMk=k; } return {G,M:_cxM}; }
+function cxSrc(q){ return q.standard==="banco"?"banco":q.discipline==="usmle"?"uworld":q.discipline; }
+function cxSrcName(s){ return s==="banco"?"Banco MED":s==="uworld"?"UWorld":(nm(discById(s))||s); }
+function cxOpt(G){ const k=_cxGk+"|"+S.qs.size+"|"+curMode()+"|"+dayKey(); if(_cxOk===k) return _cxO;
+  const today=startOfDay(now()), ex=new Map(), steps=curMode()==="steps";
+  if(!steps) for(const d of allDiscs()){ let best=null; for(const e of d.exams||[]){ if(PL().hide[exKey(d,e)]) continue; const t=planExDate(d,e); if(t!=null&&t>=today){ const dd=Math.round((t-today)/DAY); if(best==null||dd<best) best=dd; } } if(best!=null) ex.set(d.id,best); }
+  const imp=new Map(), exd=new Map(), av=new Map();
+  for(const [c,qs] of G.cq){ let s=0,n=0,b=null; for(const id of qs){ const q=S.qs.get(id); if(!q) continue; s+=priOf(q); n++; if(q.standard!=="banco"){ const d=ex.get(q.discipline); if(d!=null&&(b==null||d<b)) b=d; } } imp.set(c,n?(s/n-1)/2:0.5); exd.set(c,b); av.set(c,n); }
+  _cxOk=k; return _cxO={imp:id=>imp.get(id)??0.5, exam:id=>exd.get(id)??null, av:id=>av.get(id)||0}; }
+function cxRank(){ const X=cxState(); if(!X) return []; const O=cxOpt(X.G); return CX.rank(X.G,X.M,O).filter(r=>O.av(r.id)>0); }
+function cxTrainIds(id,n){ const X=cxState(); if(!X) return [];
+  return CX.train(X.G,X.M,id,qid=>{ const q=S.qs.get(qid); return q?{src:cxSrc(q),pri:priOf(q)}:null; },qid=>{ const r=rec(qid); return r?{ok:r.ok,ts:r.ts}:undefined; },now(),n||CX.P.TRAIN); }
+function cxTrain(id){ const L=cxTrainIds(id).map(i=>S.qs.get(i)).filter(Boolean); if(!L.length) return toast(tr("none"));
+  S.fcDeck=null; S.setup=null; S.tuB=null;
+  S.session=buildSession("study",L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); Object.assign(S.session,{from:"cx",cx:id});
+  if($("#layer").innerHTML){ closeSheetRaw(); S.sheetPushed=false; S.view="study"; try{ history.replaceState({v:"study"},"","#study"); }catch(_){} render(); window.scrollTo({top:0}); }
+  else go("study"); }
+function cxHue(m){ return Math.round(Math.max(0,Math.min(1,(m-.3)/.55))*130); }
+function cxPct(s){ return !s||s.status==="novo"?"—":Math.round(100*s.m)+"%"; }
+function cxStName(st){ return ({fraco:T2("Fraco","Weak"),instavel:T2("Em construção","Building"),dominado:T2("Dominado","Mastered"),novo:T2("Não testado","Untested")})[st]||st; }
+function cxKind(k){ return ({base:T2("Base","Foundation"),clin:T2("Clínica","Clinical"),cond:T2("Conduta","Management"),farm:T2("Fármaco","Drug")})[k]||k; }
+function cxAgo(ts){ if(!ts) return "—"; const d=Math.round((startOfDay(now())-startOfDay(ts))/DAY); return d<=0?T2("hoje","today"):d===1?T2("ontem","yesterday"):T2(`há ${d} dias`,`${d} days ago`); }
+function cxChip(G,M,id,extra){ const c=G.N.get(id), s=M.get(id); if(!c) return "";
+  return `<button type="button" class="cxchip st-${s.status}${c.k==="base"?" base":""}" style="--h:${cxHue(s.m)}" data-act="cxOpen" data-c="${esc(id)}" title="${esc(cxStName(s.status))}"><span>${esc(c.n)}</span><b>${cxPct(s)}</b>${extra||""}</button>`; }
+function cxBar(s){ return `<div class="cxbar" role="img" aria-label="${cxPct(s)}"><i style="width:${s.status==="novo"?0:Math.max(3,Math.round(100*s.m))}%;--h:${cxHue(s.m)}"></i></div>`; }
+function cxRootLine(G,M,id){ const r=CX.roots(G,M,id).filter(x=>x.h===1)[0]; if(!r) return "";
+  return `<div class="cxroot">${T2("Raiz provável","Likely root")}: <button type="button" class="lk" data-act="cxOpen" data-c="${esc(r.id)}">${esc(G.N.get(r.id).n)}</button> · ${cxPct(M.get(r.id))}</div>`; }
+function cxSrcStats(G,id){ const by=new Map(); for(const qid of G.cq.get(id)||[]){ const q=S.qs.get(qid); if(!q) continue; const k=cxSrc(q); let o=by.get(k); if(!o) by.set(k,o={n:0,seen:0,ok:0}); o.n++; const r=rec(qid); if(r){ o.seen++; if(r.ok) o.ok++; } } return [...by.entries()].sort((a,b)=>b[1].n-a[1].n); }
+function cxRowHTML(G,M,id){ const c=G.N.get(id), s=M.get(id), src=cxSrcStats(G,id);
+  return `<div class="cxrow"><div class="cxr-h"><button type="button" class="cxr-n" data-act="cxOpen" data-c="${esc(id)}">${esc(c.n)}</button><b class="cxr-p" style="--h:${cxHue(s.m)}">${cxPct(s)}</b></div>
+    ${cxBar(s)}
+    <div class="cxr-m">${esc(cxKind(c.k))} · ${s.n} ${T2("respostas","answers")} · ${s.err} ${T2("erros","misses")}${s.last?` · ${cxAgo(s.last)}`:""}${s.overdue&&s.status!=="fraco"?` · <span class="warn">${T2("revisão vencida","review due")}</span>`:""}</div>
+    ${cxRootLine(G,M,id)}
+    <div class="row cxr-b"><button class="btn small primary" data-act="cxTrain" data-c="${esc(id)}">▶ ${T2("Treinar este conceito","Train this concept")}</button><span class="cxsrc">${src.map(([k,o])=>`${esc(cxSrcName(k))} ${o.seen}/${o.n}`).join(" · ")}</span></div></div>`; }
+function cxSheet(id){ const X=cxState(); if(!X||!X.G.N.get(id)) return; const {G,M}=X, c=G.N.get(id), s=M.get(id), src=cxSrcStats(G,id), kids=G.kids.get(id)||[], g=G.groups[c.g]||{};
+  const errs=(s.errQ||[]).slice(-5).reverse().map(q=>S.qs.get(q)).filter(Boolean);
+  const nTrain=cxTrainIds(id).length;
+  openSheet(`<div class="eyebrow">🧠 ${esc(g.n||c.g)} · ${esc(cxKind(c.k))}</div><h2 style="margin:4px 0 10px">${esc(c.n)}</h2>
+    <div class="cxbig"><b style="--h:${cxHue(s.m)}">${cxPct(s)}</b><span>${esc(cxStName(s.status))}${s.status!=="novo"?` · ±${Math.round(100*s.sd)}`:""}</span></div>
+    ${cxBar(s)}
+    <p class="cxr-m" style="margin:10px 0 0">${s.n} ${T2("respostas diretas","direct answers")} · ${s.err} ${T2("erros","misses")} · ${T2("evidência","evidence")} ${s.w.toFixed(1)}${s.n?` · ${T2("última","last")} ${cxAgo(s.last)} · ${T2("próxima revisão","next review")} ${s.overdue?T2("agora","now"):fmtDM(s.due)}`:""}</p>
+    ${s.status==="novo"&&s.w>0?`<p class="cxr-m">${T2("Ainda pouca evidência: o número vem quase todo dos conceitos vizinhos.","Little evidence yet.")}</p>`:""}
+    <div class="row" style="margin:14px 0">${nTrain?`<button class="btn primary" data-act="cxTrain" data-c="${esc(id)}">▶ ${T2("Treinar este conceito","Train this concept")} · ${nTrain} ${tr("qs")}</button>`:`<span class="cxr-m">${T2("Sem questões disponíveis deste conceito.","No questions available.")}</span>`}</div>
+    ${src.length?`<div class="eyebrow">${T2("Onde ele é cobrado","Where it is tested")}</div><div class="cxsrcs">${src.map(([k,o])=>`<div><span>${esc(cxSrcName(k))}</span><span>${o.seen}/${o.n} ${T2("vistas","seen")}${o.seen?` · ${pct(o.ok,o.seen)}`:""}</span></div>`).join("")}</div>`:""}
+    ${c.pre.length?`<div class="eyebrow" style="margin-top:14px">${T2("Depende de","Depends on")}</div><div class="cxchips">${c.pre.map(p=>cxChip(G,M,p)).join("")}</div>`:""}
+    ${kids.length?`<div class="eyebrow" style="margin-top:14px">${T2("Sustenta","Supports")}</div><div class="cxchips">${kids.map(p=>cxChip(G,M,p)).join("")}</div>`:""}
+    ${errs.length?`<div class="eyebrow" style="margin-top:14px">${T2("Erros que contaram aqui","Misses counted here")}</div><ul class="cxerr">${errs.map(q=>`<li>${esc((t=>t.length>120?t.slice(0,118).trimEnd()+"…":t)(plain(content(q).c.stem)))} <small>${esc(cxSrcName(cxSrc(q)))}</small></li>`).join("")}</ul>`:""}`); }
+function cxQHTML(qid){ const X=cxState(); const cs=X&&X.G.qc.get(qid); if(!cs) return "";
+  return `<div class="cxq"><span class="eyebrow">🧠 ${T2("Conceitos","Concepts")}</span><div class="cxchips">${cs.map(c=>cxChip(X.G,X.M,c)).join("")}</div></div>`; }
+function cxCrumb(s){ const X=cxState(), c=X&&X.G.N.get(s.cx); if(!c) return "";
+  return `<nav class="tucrumb" aria-label="${T2("Mapa de conceitos","Concept map")}"><button type="button" class="tcb tch" data-nav="mapa">🧠 ${T2("Conceitos","Concepts")}</button><span class="tcs">›</span><span class="tcc">${esc(c.n)}</span></nav>`; }
+function cxHomeHTML(){ const X=cxState(); if(!X) return ""; const R=cxRank().slice(0,3); if(!R.length) return "";
+  const nW=[...X.M.values()].filter(s=>s.status==="fraco").length;
+  return `<button type="button" class="panel plhome cxhome" data-nav="mapa"><div class="eyebrow">🧠 ${T2("Conceitos","Concepts")}${nW?` · ${nW} ${T2(nW>1?"fracos":"fraco","weak")}`:""}</div>
+    ${R.map(r=>{ const s=X.M.get(r.id); return `<div class="cxh-l"><span>${esc(X.G.N.get(r.id).n)}</span><b style="--h:${cxHue(s.m)}">${cxPct(s)}</b></div>`; }).join("")}
+    <div class="plh-f">${T2("Treinar pelo conceito, em todas as fontes","Train by concept across sources")}<span class="go">${CHEV}</span></div></button>`; }
+function vMapa(v){ const X=cxState();
+  if(!X){ v.innerHTML=`<div><div class="eyebrow">${T2("Mapa de conceitos","Concept map")}</div><h1>${T2("Conceitos","Concepts")}</h1></div><div class="panel"><h2>${T2("Ainda sem mapa","No map yet")}</h2><p class="lede">${T2("O mapa liga cada questão aos conceitos que ela cobra. Ele aparece aqui depois da próxima sincronização do conteúdo.","The map appears after the next content sync.")}</p></div>`; return; }
+  const {G,M}=X, O=cxOpt(G), all=[...M.values()].filter(s=>O.av(s.id)>0), cnt=k=>all.filter(s=>s.status===k).length;
+  const R=cxRank(), top=R.slice(0,S.cxMore?12:5), RR=CX.rootRank(G,M).filter(r=>O.av(r.id)>0).slice(0,4);
+  const due=all.filter(s=>s.overdue&&s.status!=="fraco"&&s.status!=="novo").sort((a,b)=>a.due-b.due).slice(0,12);
+  const f=S.cxF||"all", show=s=>f==="all"||(f==="weak"&&s.status==="fraco")||(f==="tested"&&s.status!=="novo")||(f==="due"&&s.overdue&&s.status!=="novo");
+  const groups=Object.keys(G.groups).map(g=>({g,ids:[...G.N.values()].filter(c=>c.g===g&&O.av(c.id)>0&&show(M.get(c.id))).sort((a,b)=>(a.k==="base"?0:1)-(b.k==="base"?0:1)).map(c=>c.id)})).filter(x=>x.ids.length);
+  let marked=0; for(const q of G.qc.keys()) if(S.qs.has(q)) marked++;
+  const fb=(k,l)=>`<button type="button" class="chip" data-act="cxF" data-f="${k}" aria-pressed="${f===k}">${l}</button>`;
+  v.innerHTML=`<div><div class="eyebrow">${T2("Mapa de conceitos","Concept map")}</div><h1>${T2("Conceitos","Concepts")}</h1>
+     <p class="lede">${T2("Cada resposta conta para os conceitos da questão e, com peso menor, para os pré-requisitos deles. Um erro em uma disciplina passa a ser cobrado nas outras fontes.","Each answer feeds the question's concepts and their prerequisites.")}</p></div>
+   <div class="kpis cxk"><div class="kpi"><div class="v" style="color:var(--bad)">${cnt("fraco")}</div><div class="l">${T2("fracos","weak")}</div></div><div class="kpi"><div class="v">${cnt("instavel")}</div><div class="l">${T2("em construção","building")}</div></div><div class="kpi"><div class="v" style="color:var(--ok)">${cnt("dominado")}</div><div class="l">${T2("dominados","mastered")}</div></div></div>
+   <div class="panel"><div class="eyebrow">${T2("Treinar agora","Train now")}</div>
+     ${top.length?top.map(r=>cxRowHTML(G,M,r.id)).join("")+(R.length>top.length?`<button class="btn small" data-act="cxMore">${T2("Ver mais","Show more")} (${Math.min(12,R.length)-top.length})</button>`:""):`<p class="lede" style="font-size:13.5px;margin:8px 0 0">${T2("Nada fraco por enquanto. Responda questões e o mapa se ajusta sozinho.","Nothing weak so far.")}</p>`}</div>
+   ${RR.length?`<div class="panel"><div class="eyebrow">${T2("Raízes suspeitas","Suspect roots")}</div><p class="cxr-m" style="margin:4px 0 8px">${T2("Bases que sustentam conceitos em que você está errando. Treinar a raiz costuma consertar vários de uma vez.","Foundations under concepts you are missing.")}</p>
+     ${RR.map(r=>`<div class="cxrow"><div class="cxr-h"><button type="button" class="cxr-n" data-act="cxOpen" data-c="${esc(r.id)}">${esc(G.N.get(r.id).n)}</button><b class="cxr-p" style="--h:${cxHue(M.get(r.id).m)}">${cxPct(M.get(r.id))}</b></div>
+        <div class="cxr-m">${T2("Sustenta","Supports")}: ${r.weak.map(k=>esc(G.N.get(k).n)).join("; ")}</div>
+        <div class="row cxr-b"><button class="btn small" data-act="cxTrain" data-c="${esc(r.id)}">▶ ${T2("Treinar a raiz","Train the root")}</button></div></div>`).join("")}</div>`:""}
+   ${due.length?`<div class="panel"><div class="eyebrow">${T2("Revisão vencida","Review due")} · ${due.length}</div><div class="cxchips" style="margin-top:8px">${due.map(s=>cxChip(G,M,s.id)).join("")}</div></div>`:""}
+   <div class="panel"><div class="row" style="justify-content:space-between"><div class="eyebrow">${T2("Mapa","Map")}</div><div class="hleg"><i style="--h:0"></i>${T2("fraco","weak")}<i style="--h:130"></i>${T2("forte","strong")}</div></div>
+     <div class="chips cxf">${fb("all",T2("Todos","All"))}${fb("weak",T2("Fracos","Weak"))}${fb("due",T2("Vencidos","Due"))}${fb("tested",T2("Testados","Tested"))}</div>
+     ${groups.map(x=>`<div class="cxg"><h3>${esc(G.groups[x.g].n||x.g)}</h3><div class="cxchips">${x.ids.map(id=>cxChip(G,M,id)).join("")}</div></div>`).join("")||`<p class="empty">${tr("none")}</p>`}
+     <p class="hsm" style="margin:12px 2px 0">${T2("◆ = conceito de base (fisiologia, anatomia, mecanismo). Toque para ver do que ele depende e o que ele sustenta.","◆ = foundation concept.")} ${marked} ${T2("questões já ligadas ao mapa","questions linked")}.</p></div>`; }
+
 function openKeys(){ const en=set().lang==="en"; const r=(k,t)=>`<div class="krow"><span>${k.split(" ").map(x=>`<kbd>${x}</kbd>`).join(" ")}</span><span>${t}</span></div>`;
   openSheet(`<div class="row" style="justify-content:space-between"><h2>⌨ ${en?"Keyboard shortcuts":"Atalhos de teclado"}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
    <div class="kgrp"><div class="eyebrow">${en?"Questions":"Questões"}</div>${r("A–E 1–5",en?"Pick option":"Marcar alternativa")}${r("Enter →",en?"Next (finish on the last)":"Próxima (no fim, finalizar)")}${r("←",en?"Previous":"Anterior")}${r("M",en?"More / less detail":"Mais / menos detalhe")}${r("L",en?"Open topic lesson":"Abrir a lição do tema")}${r("I",en?"Switch question language (PT/EN)":"Trocar idioma da questão (PT/EN)")}${r("F",en?"Full screen":"Tela cheia")}</div>
@@ -3012,7 +3134,7 @@ function subscribeQs(){ /* questions are fetched on open and when the app return
 /* ---------- REABRIR ONDE PAROU ----------
    Guarda tela/aba, lição, sessão (questão atual e respostas), flashcards e rolagem em localStorage ("gab.pos"; rolagem em "gab.pos.y").
    Período/disciplina/tema já vão em progress.settings. Restaura uma vez, quando o catálogo está disponível. */
-const POS_K="gab.pos", POS_Y="gab.pos.y", POS_VIEWS=["home","tutor","plan","study","review","cards","stats","bank","lesson"];
+const POS_K="gab.pos", POS_Y="gab.pos.y", POS_VIEWS=["home","tutor","mapa","plan","study","review","cards","stats","bank","lesson"];
 let posDone=false;
 function posSave(){
   if(!posDone||!S.catalog) return;
@@ -3064,7 +3186,7 @@ render=function(){ _renderOrig.apply(this,arguments); posSave(); if(S.posY){ con
 
 async function boot(){
   await cacheLoad(); applyTheme(); posRestore();
-  const h=(location.hash||"").slice(1); if(["home","tutor","plan","study","review","cards","stats","bank"].includes(h)&&h!==S.view){ S.view=h; S.tuB=null; }
+  const h=(location.hash||"").slice(1); if(["home","tutor","mapa","plan","study","review","cards","stats","bank"].includes(h)&&h!==S.view){ S.view=h; S.tuB=null; }
   try{ if(!history.state||history.state.v!==S.view) history.replaceState({v:S.view},"","#"+S.view); }catch(e){}
   S.downloads=true; // enables the export button (plain browser download)
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }

@@ -34,7 +34,7 @@ function fixture(){
     await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; set().disc="da"; set().topic="t1";
       const t=Date.now(); F.qs.forEach((q,i)=>{ if(i%3) return; S.prog.q[q.id]={n:2,nOk:i%2,ok:!!(i%2),first:true,box:1,due:t-86400000,ts:t}; }); render(); },F);
     const step=async(name,fn)=>{ try{ await fn(); steps++; }catch(e){ errs.push(`[${vp.width}] ${name}: ${e.message.split("\n").slice(0,12).join(" | ")}`); } };
-    for(const v of ["home","tutor","plan","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
+    for(const v of ["home","tutor","mapa","plan","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
     for(const t of ["geral","provas","cobrados"]) await step("stats "+t, ()=>p.evaluate(t=>{ S.statsTab=t; go("stats"); render(); },t));
     await step("stats nome longo", async()=>{ const w=await p.evaluate(()=>{ const t=S.catalog.disciplines[0].topics[0], old=t.name; t.name={pt:"Fundamentos: fenomenologia, entrevista psiquiátrica e exame do estado mental completo",en:"x"}; S.statsTab="geral"; go("stats"); render(); const w=document.documentElement.scrollWidth-document.documentElement.clientWidth; t.name=old; return w; }); if(w>0) throw new Error("transborda "+w+"px"); });
     await step("errou abre aprofundar", async()=>{ const r=await p.evaluate(()=>{ set().detail=false; S.detail.clear(); const out={}; for(const id of ["da-t1-ufpr-0","da-t1-usmle-5"]){ const q=S.qs.get(id), wrong=(q.correct+1)%5; const h=(pick)=>questionHTML(q,{pick},true,false); const d=x=>(x.match(/data-act="detail"[^>]*aria-pressed="(\w+)"/)||[])[1]; const hw=h(wrong); out[id]={ok:d(h(q.correct))==="false",bad:d(hw)==="true",dup:hw.includes("answer-depth")}; } return out; }); for(const [id,v] of Object.entries(r)){ if(!v.ok) throw new Error(id+": acerto abriu aprofundar"); if(!v.bad) throw new Error(id+": erro não abriu aprofundar"); if(v.dup) throw new Error(id+": detalhada repete bloco enxuto"); } });
@@ -198,6 +198,29 @@ function fixture(){
       await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; posRestore(); render(); },F);
       const r2=await p.evaluate(()=>({v:S.view,l:S.lessonId})); if(r2.v!=="lesson"||r2.l!=="lesson:da:t1") throw new Error("lição não restaurada: "+JSON.stringify(r2));
       await p.evaluate(()=>{ localStorage.removeItem("gab.pos"); localStorage.removeItem("gab.pos.y"); }); });
+    await step("mapa de conceitos", async()=>{
+      const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;
+        const now=Math.round(Date.now()/1000);
+        S.tutor=Object.assign({},S.tutor,{"tutor:cx":{id:"tutor:cx",kind:"tutor",v:1,updated:"x"+Date.now(),groups:{g1:{n:"Grupo fictício",a:"Área"}},nodes:{raiz:{n:"Conceito raiz",g:"g1",k:"base"},filho:{n:"Conceito filho",g:"g1",k:"clin",pre:["raiz"]},outro:{n:"Outro conceito",g:"g1",k:"farm",pre:["raiz"]}}},
+          "tutor:cx:lote":{id:"tutor:cx:lote",kind:"tutor",q:{"da-t1-ufpr-0":["filho"],"da-t1-ufpr-1":["filho","raiz"],"da-t2-ufpr-0":["filho"],"db-t1-ufpr-0":["raiz"],"db-t1-ufpr-1":["raiz"],"db-t2-ufpr-0":["outro"],"bk-0":["filho"],"da-t1-usmle-5":["outro"],"nao-existe":["filho"]}}});
+        S.prog.ev=[[now-86400*3,"da-t1-ufpr-0",0,0,20,1],[now-86400*2,"da-t1-ufpr-1",0,0,20,1],[now-3600,"da-t1-ufpr-0",0,1,20,1],[now-1800,"db-t2-ufpr-0",1,0,20,0]];
+        const X=cxState(), f=X.M.get("filho"), rz=X.M.get("raiz"), o=X.M.get("outro"); const out={f:f.status,fm:f.m,rw:rz.w,rm:rz.m,om:o.m,rank:cxRank().map(x=>x.id)};
+        go("home"); out.home=!!document.querySelector(".cxhome");
+        go("mapa"); out.rows=document.querySelectorAll("#view .cxrow").length; out.chips=document.querySelectorAll("#view .cxg .cxchip").length; out.root=!!document.querySelector("#view .cxroot");
+        out.over=document.documentElement.scrollWidth-document.documentElement.clientWidth;
+        document.querySelector('#view .cxg [data-c="filho"]').click(); out.sheet=!!document.querySelector("#layer .cxbig");
+        const ids=cxTrainIds("filho"); out.ids=ids; out.dup=new Set(ids).size!==ids.length;
+        document.querySelector('#layer [data-act="cxTrain"]').click(); await new Promise(r=>setTimeout(r,80));
+        out.v=S.view; out.from=S.session&&S.session.from; out.n=S.session&&S.session.items.length; out.crumb=!!document.querySelector("#view .tucrumb");
+        const q=S.qs.get(S.session.items[0].id); out.qchips=questionHTML(q,{pick:q.correct,perm:S.session.items[0].perm},true,false).includes("cxq");
+        S.session=null; go("mapa"); return out; });
+      if(r.f!=="fraco"||!(r.fm<0.3)) throw new Error("filho deveria estar fraco: "+JSON.stringify(r));
+      if(!(r.rw>0)||!(r.rm<0.5)) throw new Error("erro não subiu à raiz: "+JSON.stringify(r));
+      if(!(r.om>0.5)) throw new Error("acerto não contou: "+JSON.stringify(r));
+      if(!r.rank.slice(0,2).includes("filho")||!r.home||!r.rows||r.chips!==3||!r.root||!r.sheet) throw new Error("tela: "+JSON.stringify(r));
+      if(r.over>0) throw new Error("transborda "+r.over+"px");
+      if(r.dup||!r.ids.length||r.ids.includes("nao-existe")||!r.ids.some(id=>id.startsWith("db-"))) throw new Error("treino sem a raiz ou com questão inexistente: "+JSON.stringify(r.ids));
+      if(r.v!=="study"||r.from!=="cx"||r.n!==r.ids.length||!r.crumb||!r.qchips) throw new Error("sessão: "+JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

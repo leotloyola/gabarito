@@ -474,6 +474,8 @@ nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:
 @media (max-width:380px){ .kpi{padding:14px 10px 12px} .kpi .v{font-size:22px} .big{font-size:40px} .due{padding:18px 16px} }
 /* menu lateral recolhível (>=960px) */
 nav.tabs button.navtog{display:none}
+nav.tabs button .tl{display:none}
+@media (min-width:960px){ nav.tabs button .tl{display:inline} nav.tabs button .ts{display:none} }
 @media (min-width:960px){
   nav.tabs button.navtog{display:flex;margin-top:8px;color:var(--subtle);border-top:1px solid var(--hair);border-radius:0 0 999px 999px}
   nav.tabs button.navtog svg{transition:transform .2s ease}
@@ -757,7 +759,7 @@ body.focus.qnav-on .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
 <script>
 /* ---------- i18n ---------- */
 const T = {
-pt:{stats:"Números",home:"Início",tutor:"Tutor",mapa:"Mapa",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
+pt:{stats:"Números",home:"Início",tutor:"Tutor",mapa:"Competências",plan:"Plano",study:"Estudar",review:"Revisão",cards:"Flashcards",bank:"Banco",
  discipline:"Disciplina",topic:"Tema",all:"Todos",allSubs:"Todos os sub-blocos",
  std_ufpr:"UFPR",std_usmle:"USMLE",std_all:"Ambos",std_banco:"Banco",std_tudo:"Tudo",
  dueToday:"Revisões para hoje",dueNone:"Nada pendente hoje. Faça uma sessão nova ou flashcards.",reviewNow:"Revisar agora",
@@ -1202,7 +1204,7 @@ function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.clas
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length; renderSide();
-  $("#tabs").innerHTML = ["home","tutor","mapa","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}<span>${tr(v)}</span>${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
+  $("#tabs").innerHTML = ["home","tutor","mapa","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}${v==="mapa"?`<span class="tl">${tr(v)}</span><span class="ts">${T2("Mapa","Map")}</span>`:`<span>${tr(v)}</span>`}${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
 }
 function renderCtx(){
   const cp=curPer(), root=curDisc(), isUSMLE=cp==="usmle"&&root?.id==="usmle";
@@ -1619,7 +1621,7 @@ function vResult(v){
   const secs=s.secs ?? (now()-s.t0)/1000;
   v.innerHTML = `
    <div><div class="eyebrow">${tr("simDone")}</div><h1>${ok}/${n} · ${Math.round(100*ok/n)}%</h1><p class="lede">${tr("time")}: ${fmtTime(secs)} · ${fmtTime(secs/n)}/${set().lang==="en"?"question":"questão"}</p></div>
-   <div class="row">${s.from==="cx"?`<button class="btn primary" data-nav="mapa">🧠 ${T2("Voltar aos conceitos","Back to concepts")}</button>`:`<button class="btn primary" data-act="newSession">${tr("newSession")}</button>`}<button class="btn" data-nav="home">${tr("backHome")}</button></div>
+   <div class="row">${s.from==="cx"?`<button class="btn primary" data-nav="mapa">🧠 ${T2("Voltar às competências","Back to competencies")}</button>`:`<button class="btn primary" data-act="newSession">${tr("newSession")}</button>`}<button class="btn" data-nav="home">${tr("backHome")}</button></div>
    <div class="panel"><h2>${tr("reviewList")}</h2><div class="list">${s.items.map((it,i)=>{ const q=S.qs.get(it.id); if(!q) return ""; const c=content(q).c; const good=it.pick===q.correct; return `
      <button type="button" class="li" data-act="reviewItem" data-i="${i}"><span class="t">${i+1}. ${safe(c.stem)}</span><span class="st ${it.pick===null?"no":good?"ok":"bad"}">${it.pick===null?"—":good?"✓":"✗"}</span>
      <span class="m">${tagsOf(q).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</span></button>`; }).join("")}</div></div>`;
@@ -2714,7 +2716,7 @@ function vTutorBlock(v,P,i){ const b=P.blocks[i], pr=tbProg(P,b,i), ids=tbIds(b)
    <div class="row" style="gap:8px;font-size:12.5px;color:var(--muted)">${b.min?`<span>~${b.min} min</span>`:""}${ids.length&&b.type!=="lesson"?`<span>· ${pr.n}/${pr.total} ${T2("feitas","done")}${pr.n?` · ${T2("acerto","accuracy")} ${pct(ids.filter(id=>st(id)==="ok").length,pr.n)}`:""}</span>`:""}</div>
    ${ids.length&&b.type!=="lesson"?`<div class="track"><i class="ok" style="width:${100*ids.filter(id=>st(id)==="ok").length/ids.length}%"></i><i class="bad" style="width:${100*nBad/ids.length}%"></i></div>`:""}
    ${b.why?`<div class="panel tmsg md">${md(b.why)}</div>`:""}
-   ${(X=>b.cx&&X&&X.G.N.get(b.cx)?`<div class="cxq"><span class="eyebrow">🧠 ${T2("Conceito treinado","Concept trained")}</span><div class="cxchips">${cxChip(X.G,X.M,b.cx)}</div></div>`:"")(cxState())}
+   ${(X=>b.cx&&X&&X.G.N.get(b.cx)?`<div class="cxq"><span class="eyebrow">🧠 ${T2("Competência treinada","Competency trained")}</span><div class="cxchips">${cxChip(X.G,X.M,b.cx)}</div></div>`:"")(cxState())}
    <div class="row tbmain">${main}</div>
    ${list}${nav}`; }
 function tbIcon(t){ return {review:"↻",study:"✎",lesson:"📖",task:"▸"}[t]||"✎"; }
@@ -2974,7 +2976,7 @@ function cxRowHTML(G,M,id){ const c=G.N.get(id), s=M.get(id), src=cxSrcStats(G,i
     ${cxBar(s)}
     <div class="cxr-m">${esc(cxKind(c.k))} · ${s.n} ${T2("respostas","answers")} · ${s.err} ${T2("erros","misses")}${s.last?` · ${cxAgo(s.last)}`:""}${s.overdue&&s.status!=="fraco"?` · <span class="warn">${T2("revisão vencida","review due")}</span>`:""}</div>
     ${cxRootLine(G,M,id)}
-    <div class="row cxr-b"><button class="btn small primary" data-act="cxTrain" data-c="${esc(id)}">▶ ${T2("Treinar este conceito","Train this concept")}</button><span class="cxsrc">${src.map(([k,o])=>`${esc(cxSrcName(k))} ${o.seen}/${o.n}`).join(" · ")}</span></div></div>`; }
+    <div class="row cxr-b"><button class="btn small primary" data-act="cxTrain" data-c="${esc(id)}">▶ ${T2("Treinar esta competência","Train this competency")}</button><span class="cxsrc">${src.map(([k,o])=>`${esc(cxSrcName(k))} ${o.seen}/${o.n}`).join(" · ")}</span></div></div>`; }
 function cxSheet(id){ const X=cxState(); if(!X||!X.G.N.get(id)) return; const {G,M}=X, c=G.N.get(id), s=M.get(id), src=cxSrcStats(G,id), kids=G.kids.get(id)||[], g=G.groups[c.g]||{};
   const errs=(s.errQ||[]).slice(-5).reverse().map(q=>S.qs.get(q)).filter(Boolean);
   const nTrain=cxTrainIds(id).length;
@@ -2982,23 +2984,23 @@ function cxSheet(id){ const X=cxState(); if(!X||!X.G.N.get(id)) return; const {G
     <div class="cxbig"><b style="--h:${cxHue(s.m)}">${cxPct(s)}</b><span>${esc(cxStName(s.status))}${s.status!=="novo"?` · ±${Math.round(100*s.sd)}`:""}</span></div>
     ${cxBar(s)}
     <p class="cxr-m" style="margin:10px 0 0">${s.n} ${T2("respostas diretas","direct answers")} · ${s.err} ${T2("erros","misses")} · ${T2("evidência","evidence")} ${s.w.toFixed(1)}${s.n?` · ${T2("última","last")} ${cxAgo(s.last)} · ${T2("próxima revisão","next review")} ${s.overdue?T2("agora","now"):fmtDM(s.due)}`:""}</p>
-    ${s.status==="novo"&&s.w>0?`<p class="cxr-m">${T2("Ainda pouca evidência: o número vem quase todo dos conceitos vizinhos.","Little evidence yet.")}</p>`:""}
-    <div class="row" style="margin:14px 0">${nTrain?`<button class="btn primary" data-act="cxTrain" data-c="${esc(id)}">▶ ${T2("Treinar este conceito","Train this concept")} · ${nTrain} ${tr("qs")}</button>`:`<span class="cxr-m">${T2("Sem questões disponíveis deste conceito.","No questions available.")}</span>`}</div>
+    ${s.status==="novo"&&s.w>0?`<p class="cxr-m">${T2("Ainda pouca evidência: o número vem quase todo das competências vizinhas.","Little evidence yet.")}</p>`:""}
+    <div class="row" style="margin:14px 0">${nTrain?`<button class="btn primary" data-act="cxTrain" data-c="${esc(id)}">▶ ${T2("Treinar esta competência","Train this competency")} · ${nTrain} ${tr("qs")}</button>`:`<span class="cxr-m">${T2("Sem questões disponíveis desta competência.","No questions available.")}</span>`}</div>
     ${src.length?`<div class="eyebrow">${T2("Onde ele é cobrado","Where it is tested")}</div><div class="cxsrcs">${src.map(([k,o])=>`<div><span>${esc(cxSrcName(k))}</span><span>${o.seen}/${o.n} ${T2("vistas","seen")}${o.seen?` · ${pct(o.ok,o.seen)}`:""}</span></div>`).join("")}</div>`:""}
     ${c.pre.length?`<div class="eyebrow" style="margin-top:14px">${T2("Depende de","Depends on")}</div><div class="cxchips">${c.pre.map(p=>cxChip(G,M,p)).join("")}</div>`:""}
     ${kids.length?`<div class="eyebrow" style="margin-top:14px">${T2("Sustenta","Supports")}</div><div class="cxchips">${kids.map(p=>cxChip(G,M,p)).join("")}</div>`:""}
     ${errs.length?`<div class="eyebrow" style="margin-top:14px">${T2("Erros que contaram aqui","Misses counted here")}</div><ul class="cxerr">${errs.map(q=>`<li>${esc((t=>t.length>120?t.slice(0,118).trimEnd()+"…":t)(plain(content(q).c.stem)))} <small>${esc(cxSrcName(cxSrc(q)))}</small></li>`).join("")}</ul>`:""}`); }
 function cxQHTML(qid){ const X=cxState(); const cs=X&&X.G.qc.get(qid); if(!cs) return "";
-  return `<div class="cxq"><span class="eyebrow">🧠 ${T2("Conceitos","Concepts")}</span><div class="cxchips">${cs.map(c=>cxChip(X.G,X.M,c)).join("")}</div></div>`; }
+  return `<div class="cxq"><span class="eyebrow">🧠 ${T2("Competências","Competencies")}</span><div class="cxchips">${cs.map(c=>cxChip(X.G,X.M,c)).join("")}</div></div>`; }
 function cxCrumb(s){ const X=cxState(), c=X&&X.G.N.get(s.cx); if(!c) return "";
-  return `<nav class="tucrumb" aria-label="${T2("Mapa de conceitos","Concept map")}"><button type="button" class="tcb tch" data-nav="mapa">🧠 ${T2("Conceitos","Concepts")}</button><span class="tcs">›</span><span class="tcc">${esc(c.n)}</span></nav>`; }
+  return `<nav class="tucrumb" aria-label="${T2("Mapa de competências","Competency map")}"><button type="button" class="tcb tch" data-nav="mapa">🧠 ${T2("Competências","Competencies")}</button><span class="tcs">›</span><span class="tcc">${esc(c.n)}</span></nav>`; }
 function cxHomeHTML(){ const X=cxState(); if(!X) return ""; const R=cxRank().slice(0,3); if(!R.length) return "";
   const nW=[...X.M.values()].filter(s=>s.status==="fraco").length;
-  return `<button type="button" class="panel plhome cxhome" data-nav="mapa"><div class="eyebrow">🧠 ${T2("Conceitos","Concepts")}${nW?` · ${nW} ${T2(nW>1?"fracos":"fraco","weak")}`:""}</div>
+  return `<button type="button" class="panel plhome cxhome" data-nav="mapa"><div class="eyebrow">🧠 ${T2("Competências","Competencies")}${nW?` · ${nW} ${T2(nW>1?"fracas":"fraca","weak")}`:""}</div>
     ${R.map(r=>{ const s=X.M.get(r.id); return `<div class="cxh-l"><span>${esc(X.G.N.get(r.id).n)}</span><b style="--h:${cxHue(s.m)}">${cxPct(s)}</b></div>`; }).join("")}
-    <div class="plh-f">${T2("Treinar pelo conceito, em todas as fontes","Train by concept across sources")}<span class="go">${CHEV}</span></div></button>`; }
+    <div class="plh-f">${T2("Treinar por competência, em todas as fontes","Train by competency across sources")}<span class="go">${CHEV}</span></div></button>`; }
 function vMapa(v){ const X=cxState();
-  if(!X){ v.innerHTML=`<div><div class="eyebrow">${T2("Mapa de conceitos","Concept map")}</div><h1>${T2("Conceitos","Concepts")}</h1></div><div class="panel"><h2>${T2("Ainda sem mapa","No map yet")}</h2><p class="lede">${T2("O mapa liga cada questão aos conceitos que ela cobra. Ele aparece aqui depois da próxima sincronização do conteúdo.","The map appears after the next content sync.")}</p></div>`; return; }
+  if(!X){ v.innerHTML=`<div><div class="eyebrow">${T2("Mapa de competências","Competency map")}</div><h1>${T2("Competências","Competencies")}</h1></div><div class="panel"><h2>${T2("Ainda sem mapa","No map yet")}</h2><p class="lede">${T2("O mapa liga cada questão às competências que ela cobra. Ele aparece aqui depois da próxima sincronização do conteúdo.","The map appears after the next content sync.")}</p></div>`; return; }
   const {G,M}=X, O=cxOpt(G), all=[...M.values()].filter(s=>O.av(s.id)>0), cnt=k=>all.filter(s=>s.status===k).length;
   const R=cxRank(), top=R.slice(0,S.cxMore?12:5), RR=CX.rootRank(G,M).filter(r=>O.av(r.id)>0).slice(0,4);
   const due=all.filter(s=>s.overdue&&s.status!=="fraco"&&s.status!=="novo").sort((a,b)=>a.due-b.due).slice(0,12);
@@ -3006,12 +3008,12 @@ function vMapa(v){ const X=cxState();
   const groups=Object.keys(G.groups).map(g=>({g,ids:[...G.N.values()].filter(c=>c.g===g&&O.av(c.id)>0&&show(M.get(c.id))).sort((a,b)=>(a.k==="base"?0:1)-(b.k==="base"?0:1)).map(c=>c.id)})).filter(x=>x.ids.length);
   let marked=0; for(const q of G.qc.keys()) if(S.qs.has(q)) marked++;
   const fb=(k,l)=>`<button type="button" class="chip" data-act="cxF" data-f="${k}" aria-pressed="${f===k}">${l}</button>`;
-  v.innerHTML=`<div><div class="eyebrow">${T2("Mapa de conceitos","Concept map")}</div><h1>${T2("Conceitos","Concepts")}</h1>
-     <p class="lede">${T2("Cada resposta conta para os conceitos da questão e, com peso menor, para os pré-requisitos deles. Um erro em uma disciplina passa a ser cobrado nas outras fontes.","Each answer feeds the question's concepts and their prerequisites.")}</p></div>
+  v.innerHTML=`<div><div class="eyebrow">${T2("Mapa de competências","Competency map")}</div><h1>${T2("Competências","Competencies")}</h1>
+     <p class="lede">${T2("Cada resposta conta para as competências da questão e, com peso menor, para os pré-requisitos delas. Um erro em uma disciplina passa a ser cobrado nas outras fontes.","Each answer feeds the question's competencies and their prerequisites.")}</p></div>
    <div class="kpis cxk"><div class="kpi"><div class="v" style="color:var(--bad)">${cnt("fraco")}</div><div class="l">${T2("fracos","weak")}</div></div><div class="kpi"><div class="v">${cnt("instavel")}</div><div class="l">${T2("em construção","building")}</div></div><div class="kpi"><div class="v" style="color:var(--ok)">${cnt("dominado")}</div><div class="l">${T2("dominados","mastered")}</div></div></div>
    <div class="panel"><div class="eyebrow">${T2("Treinar agora","Train now")}</div>
      ${top.length?top.map(r=>cxRowHTML(G,M,r.id)).join("")+(R.length>top.length?`<button class="btn small" data-act="cxMore">${T2("Ver mais","Show more")} (${Math.min(12,R.length)-top.length})</button>`:""):`<p class="lede" style="font-size:13.5px;margin:8px 0 0">${T2("Nada fraco por enquanto. Responda questões e o mapa se ajusta sozinho.","Nothing weak so far.")}</p>`}</div>
-   ${RR.length?`<div class="panel"><div class="eyebrow">${T2("Raízes suspeitas","Suspect roots")}</div><p class="cxr-m" style="margin:4px 0 8px">${T2("Bases que sustentam conceitos em que você está errando. Treinar a raiz costuma consertar vários de uma vez.","Foundations under concepts you are missing.")}</p>
+   ${RR.length?`<div class="panel"><div class="eyebrow">${T2("Raízes suspeitas","Suspect roots")}</div><p class="cxr-m" style="margin:4px 0 8px">${T2("Bases que sustentam competências em que você está errando. Treinar a raiz costuma consertar vários de uma vez.","Foundations under concepts you are missing.")}</p>
      ${RR.map(r=>`<div class="cxrow"><div class="cxr-h"><button type="button" class="cxr-n" data-act="cxOpen" data-c="${esc(r.id)}">${esc(G.N.get(r.id).n)}</button><b class="cxr-p" style="--h:${cxHue(M.get(r.id).m)}">${cxPct(M.get(r.id))}</b></div>
         <div class="cxr-m">${T2("Sustenta","Supports")}: ${r.weak.map(k=>esc(G.N.get(k).n)).join("; ")}</div>
         <div class="row cxr-b"><button class="btn small" data-act="cxTrain" data-c="${esc(r.id)}">▶ ${T2("Treinar a raiz","Train the root")}</button></div></div>`).join("")}</div>`:""}
@@ -3019,7 +3021,7 @@ function vMapa(v){ const X=cxState();
    <div class="panel"><div class="row" style="justify-content:space-between"><div class="eyebrow">${T2("Mapa","Map")}</div><div class="hleg"><i style="--h:0"></i>${T2("fraco","weak")}<i style="--h:130"></i>${T2("forte","strong")}</div></div>
      <div class="chips cxf">${fb("all",T2("Todos","All"))}${fb("weak",T2("Fracos","Weak"))}${fb("due",T2("Vencidos","Due"))}${fb("tested",T2("Testados","Tested"))}</div>
      ${groups.map(x=>`<div class="cxg"><h3>${esc(G.groups[x.g].n||x.g)}</h3><div class="cxchips">${x.ids.map(id=>cxChip(G,M,id)).join("")}</div></div>`).join("")||`<p class="empty">${tr("none")}</p>`}
-     <p class="hsm" style="margin:12px 2px 0">${T2("◆ = conceito de base (fisiologia, anatomia, mecanismo). Toque para ver do que ele depende e o que ele sustenta.","◆ = foundation concept.")} ${marked} ${T2("questões já ligadas ao mapa","questions linked")}.</p></div>`; }
+     <p class="hsm" style="margin:12px 2px 0">${T2("◆ = competência de base (fisiologia, anatomia, mecanismo). Toque para ver do que ele depende e o que ele sustenta.","◆ = foundation competency.")} ${marked} ${T2("questões já ligadas ao mapa","questions linked")}.</p></div>`; }
 
 function openKeys(){ const en=set().lang==="en"; const r=(k,t)=>`<div class="krow"><span>${k.split(" ").map(x=>`<kbd>${x}</kbd>`).join(" ")}</span><span>${t}</span></div>`;
   openSheet(`<div class="row" style="justify-content:space-between"><h2>⌨ ${en?"Keyboard shortcuts":"Atalhos de teclado"}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>

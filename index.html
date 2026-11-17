@@ -421,6 +421,22 @@ body.g-drag iframe{pointer-events:none}
 .lesson ol.flow li::before{content:counter(f);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
 .lesson ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
 .lesson ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .lesson ol.flow li.stop::before{background:var(--bad)}
+/* "Na véspera" + fluxos de decisão + prosa recolhida (17/11/2026) */
+.lesson .call.vespera{background:var(--surface);box-shadow:0 0 0 2px var(--accent) inset;font-size:calc(15px * var(--fs));padding:14px 16px} .lesson .call.vespera .ct{color:var(--accent);font-size:12px}
+.lesson .call.vespera ul{padding-left:18px} .lesson .call.vespera li{margin:5px 0}
+.lesson .tree{margin:16px 0;font-size:calc(14px * var(--fs));line-height:1.4}
+.lesson .tree .tq{background:var(--ink);color:var(--surface);border-radius:12px;padding:9px 12px;font-weight:600;text-align:center}
+.lesson .tree .tb{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
+.lesson .tree .tb::before{content:"";position:absolute;left:50%;top:-14px;width:2px;height:14px;margin-left:-1px;background:var(--line)}
+.lesson .tree .tn{background:var(--surface-2,var(--pill));box-shadow:0 0 0 1px var(--line) inset;border-radius:12px;padding:9px 11px}
+.lesson .tree .tl{display:block;font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.lesson .tree .tn.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .lesson .tree .tn.stop .tl{color:var(--bad)}
+.lesson .tree .tf{margin-top:8px;font-size:13px;color:var(--muted)}
+.lesson .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0;font-size:calc(13.5px * var(--fs));line-height:1.3}
+.lesson .chain>span{background:var(--surface-2,var(--pill));box-shadow:0 0 0 1px var(--line) inset;border-radius:10px;padding:6px 9px} .lesson .chain>i{font-style:normal;color:var(--muted)}
+.lesson .lfull-sw{all:unset;box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:8px;width:100%;margin:20px 0 8px;padding:12px 14px;border-radius:14px;cursor:pointer;font-family:var(--f-ui);font-size:14px;font-weight:600;color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--line) inset}
+.lesson .lfull-sw::after{content:"▾"} .lesson .lfull-sw.open::after{content:"▴"} .lesson .lfull-sw:focus-visible{outline:2px solid var(--accent)}
+.lesson .lfull-sw:not(.open)~*{display:none}
 @media (max-width:600px){ .lesson table.stack thead{display:none} .lesson table.stack,.lesson table.stack tbody{display:block}
   .lesson table.stack tr{display:block;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset}
   .lesson table.stack td{display:block;border:0;padding:3px 0;min-width:0} .lesson table.stack td::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
@@ -1001,7 +1017,7 @@ function annBlocks(surface){ let el=surface.querySelector(".ann-content"); while
 function annGeo(surface){ const sr=surface.getBoundingClientRect(); return {W:sr.width,H:sr.height,sr,bl:annBlocks(surface).map(b=>{ const r=b.getBoundingClientRect(); return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height}; })}; }
 function annMap(st,g){
   if(st.v!==2) return (st.points||[]).map(p=>[p[0]*g.W,p[1]*g.H,.5]);
-  const B=st.b>=0&&g.bl.length?g.bl[Math.min(st.b,g.bl.length-1)]:{x:0,y:0,w:g.W,h:g.H};
+  const B=st.b>=0&&g.bl.length?g.bl[Math.min(st.b,g.bl.length-1)]:{x:0,y:0,w:g.W,h:g.H}; if(!B.w&&!B.h) return [];
   const sx=st.bw&&B.w?B.w/st.bw:1; let sy=st.bh&&B.h?B.h/st.bh:sx; if(!(sy>.6&&sy<1.7)) sy=sx;
   return (st.pts||[]).map(p=>[B.x+p[0]*sx,B.y+p[1]*sy,p[2]]);
 }
@@ -1592,7 +1608,7 @@ function questionHTML(q, it, reveal, simMode){
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&WIDE_Q.matches&&LP;
-  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div>${annBar("L:"+lsn.id,false)}<div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsn.html}</article>`)}</div></aside>`:"";
+  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div>${annBar("L:"+lsn.id,false)}<div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div></aside>`:"";
   const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${pane}</div>`;
 }
@@ -1878,6 +1894,13 @@ function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessons
   const missH=miss.length?`<div class="eyebrow" style="margin:16px 4px 8px">${T2("Temas sem lição","Topics without a lesson")} · ${miss.length}</div><div class="panel"><div class="list">${miss.map(t=>`<button type="button" class="li" data-act="askLesson" data-d="${esc(d.id)}" data-t="${esc(t.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(nm(t))}</b><br><small style="color:var(--subtle)">${esc(t.exam||"")}${t.exam?" · ":""}${T2("toque para pedir a lição ao Claude","tap to request the lesson from Claude")}</small></span><span class="st no">✉</span></button>`).join("")}</div></div>`:"";
   if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>${missH}`;
   return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina inteira","Download whole discipline")} (${L.length} PDFs)</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>${missH}`; }
+// "Ler a lição completa": a prosa abaixo do botão .lfull-sw fica recolhida; estado aberto lembrado por lição
+const LFULL_ON="Recolher a lição completa", LFULL_OFF="Ler a lição completa";
+function lfullSet(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.lfull")||"[]")); }catch(_){ return new Set(); } }
+function lsnHtml(l){ const h=l.html||""; if(!h.includes("lfull-sw")||!lfullSet().has(l.id)) return h; return h.replace(/class="lfull-sw"([^>]*)aria-expanded="false"([^>]*)>[^<]*</,`class="lfull-sw open"$1aria-expanded="true"$2>${LFULL_ON}<`); }
+function lfullOpen(b,on,save){ if(!b) return; b.classList.toggle("open",on); b.setAttribute("aria-expanded",String(on)); b.textContent=on?LFULL_ON:LFULL_OFF;
+  const id=b.closest("[data-owner]")?.dataset.owner?.replace(/^L:/,""); if(save&&id){ const st=lfullSet(); on?st.add(id):st.delete(id); try{ localStorage.setItem("gab.lfull",JSON.stringify([...st])); }catch(_){} } }
+function lfullReveal(el){ if(el&&!el.getClientRects().length){ const b=el.closest(".lesson")?.querySelector(".lfull-sw"); if(b) lfullOpen(b,true,false); } }
 function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; return vStudy(v); }
   const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const isRead=!!(S.prog.read||{})[l.id];
@@ -1886,7 +1909,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
    <div class="row"><button class="btn small" data-act="lessonPdf">✍️ ${T2("Estudar no tablet","Study on tablet")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
-   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${l.html}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
+   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}</button></div>
      <div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div></div>
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
@@ -1908,7 +1931,7 @@ function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } cons
   nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button><details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`; nav.hidden=false; tocTogLbl();
   const btns=nav.querySelectorAll("ol button"); let cur=-1;
   const mark=i=>{ if(i===cur) return; cur=i; btns.forEach((b,k)=>b.classList.toggle("on",k===i)); };
-  S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ if(h.getBoundingClientRect().top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
+  S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ const r=h.getBoundingClientRect(); if(r.height&&r.top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
   hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
 function tocTogLbl(){ const b=$("#tocTog"); if(!b) return; const off=document.documentElement.classList.contains("toc-off"); b.hidden=false; b.setAttribute("aria-pressed",String(!off)); b.textContent="☰ "+T2("Índice","Contents"); b.title=off?T2("Mostrar índice","Show contents"):T2("Recolher índice","Hide contents"); }
 /* ---------- PDF PARA O TABLET ---------- */
@@ -1945,6 +1968,11 @@ const PDF_CSS=`.pg,.pdfc{--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:
 .pdfc ol.flow li::before{content:counter(f);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
 .pdfc ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
 .pdfc ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc ol.flow li.stop::before{background:var(--bad)}
+.pdfc .call.vespera{background:#fff;box-shadow:0 0 0 2px var(--accent) inset} .pdfc .call.vespera .ct{color:var(--accent)} .pdfc .call.vespera ul{padding-left:18px}
+.pdfc .tree{font-size:13px;line-height:1.4} .pdfc .tree .tq{background:var(--ink);color:#fff;border-radius:12px;padding:8px 12px;font-weight:600;text-align:center}
+.pdfc .tree .tb{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px} .pdfc .tree .tn{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-radius:12px;padding:8px 10px}
+.pdfc .tree .tl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--accent);margin-bottom:3px} .pdfc .tree .tn.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc .tree .tn.stop .tl{color:var(--bad)} .pdfc .tree .tf{margin-top:6px;font-size:12px;color:var(--muted)}
+.pdfc .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;line-height:1.3} .pdfc .chain>span{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-radius:10px;padding:5px 8px} .pdfc .chain>i{font-style:normal;color:var(--muted)}
 .pdfc .pq{padding-bottom:16px;font-size:13px;line-height:1.5} .pdfc .pq-h{font-size:11px;color:var(--muted);margin-bottom:4px} .pdfc .pq-h b{color:var(--ink);font-size:13px}
 .pdfc .pq-s{margin:0 0 6px;color:var(--ink)} .pdfc .pq-o{margin:2px 0 2px 18px;text-indent:-18px} .pdfc .pq-o i{font-style:normal;font-weight:600;color:var(--ink);display:inline-block;width:18px;text-indent:0}
 .pdfc .pq-img{margin:4px 0 8px} .pdfc .pq-img img{max-width:100%;max-height:320px;display:block} .pdfc .pq-img span{font-size:12px;color:var(--subtle)}
@@ -2028,7 +2056,7 @@ async function pdfFromHtml(label, html, qual){
   return new File([jpegPdf(jp,label)], label+".pdf", {type:"application/pdf"});
 }
 async function lessonPdf(l, withQ=true){
-  let html=`<h1>${esc(l.title)}</h1>${l.html}`;
+  let html=`<h1>${esc(l.title)}</h1>${(l.html||"").replace(/<button[^>]*class="lfull-sw[^"]*"[^>]*>[^<]*<\/button>/g,`<h2 class="pq-br">Lição completa</h2>`)}`;
   if(withQ){ const qs=pdfQs(l.discipline,l.topic); if(qs.length){ const x=await pqHtml([{qs}]); html+=`<h2 class="pq-br">${T2("Questões do tema","Topic questions")}</h2>${x.q}<h2 class="pq-br">${T2("Gabarito","Answer key")}</h2>${x.g}`; } }
   return pdfFromHtml(pdfLabel(l), html);
 }
@@ -2572,7 +2600,7 @@ function srLessonHl(){ // destaca o termo na lição aberta pela busca e rola at
   const h=S.lessonHl; S.lessonHl=null; if(!h) return; const art=$("#view .lesson"); if(!art) return;
   const w=document.createTreeWalker(art,NodeFilter.SHOW_TEXT), nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   for(const nd of nodes){ const t=nd.nodeValue; if(t.trim().length<2) continue; const html=hlHtml(t,h.hres); if(html.includes("srh")){ const sp=document.createElement("span"); sp.innerHTML=html; nd.replaceWith(...sp.childNodes); } }
-  const hs=art.querySelectorAll(":scope > h2"); const tgt=(h.i>=0&&hs[h.i])||art.querySelector("mark.srh");
+  const hs=art.querySelectorAll(":scope > h2"); const tgt=(h.i>=0&&hs[h.i])||art.querySelector("mark.srh"); lfullReveal(tgt);
   if(tgt) requestAnimationFrame(()=>tgt.scrollIntoView({block:"start"}));
 }
 
@@ -2781,7 +2809,8 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="keys") return openKeys();
   if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); return; }
-  if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
+  if(act==="lfull"){ const on=!a.classList.contains("open"); lfullOpen(a,on,true); if(!on) a.scrollIntoView({block:"center"}); return; }
+  if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ lfullReveal(h); h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
   if(act==="startMarkedReview"){ const pool=markedQuestions(); if(!pool.length)return; S.session=buildSession("review",pool,Object.assign(defaultSetup(),{count:10})); return go("review"); }

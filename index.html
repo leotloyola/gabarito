@@ -3121,7 +3121,9 @@ async function importRun(){
 function mergeCatalog(a,b){
   const out=JSON.parse(JSON.stringify(a)); out.disciplines=out.disciplines||[];
   for(const d of (b.disciplines||[])){ let od=out.disciplines.find(x=>x.id===d.id); if(!od){ out.disciplines.push(JSON.parse(JSON.stringify(d))); continue; } Object.keys(d).forEach(k=>{ if(k!=='topics') od[k]=d[k]; }); od.topics=od.topics||[];
-    for(const t of (d.topics||[])){ const i=od.topics.findIndex(x=>x.id===t.id); if(i<0) od.topics.push(t); else od.topics[i]=Object.assign({},od.topics[i],t); } }
+    // ordem dos temas = a do pacote (ordem das aulas); temas antigos fora do pacote vão para o fim (igual ao sync.js)
+    const nt=(d.topics||[]).map(t=>{ const o=od.topics.find(x=>x.id===t.id); return o?Object.assign({},o,t):t; });
+    od.topics=nt.concat(od.topics.filter(x=>!nt.some(t=>t.id===x.id))); }
   out.updated=new Date().toISOString(); return out;
 }
 function exportJSON(){

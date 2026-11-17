@@ -1949,7 +1949,7 @@ const PDF_CSS=`.pg,.pdfc{--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:
 .pdfc .pq-g{font-size:12px;line-height:1.45;padding-bottom:2px} .pdfc .pq-g b.n{color:var(--ink)} .pdfc .pq-g em{font-style:normal;color:var(--warn)}`;
 // rótulo padronizado: "5º · Disciplina · 03 Tema" (também nome do arquivo, cabeçalho e /Title)
 function pdfLabel(l){ const d=discById(l.discipline), i=(d?.topics||[]).findIndex(t=>t.id===l.topic), t=d?.topics?.[i];
-  return `${d?.period!=null?d.period+"º · ":""}${nm(d)||l.discipline} · ${i>=0?String(i+1).padStart(2,"0")+" ":""}${t?nm(t):l.title}`.replace(/[\/\\:*?"<>|]/g,"").trim(); }
+  return `${d?.period!=null?d.period+"º · ":""}${nm(d)||l.discipline} · ${i>=0&&!/^\d/.test(t?nm(t):"")?String(i+1).padStart(2,"0")+" ":""}${t?nm(t):l.title}`.replace(/[\/\\:*?"<>|]/g,"").trim(); }
 // altura externa (com margens) e margem superior de um bloco
 function pdfM(el){ const c=getComputedStyle(el), mt=parseFloat(c.marginTop)||0; return {el, mt, h:el.getBoundingClientRect().height+mt+(parseFloat(c.marginBottom)||0)}; }
 // divide tabela/lista grande em fragmentos que cabem na página (repete thead; mantém numeração)

@@ -191,6 +191,16 @@ function fixture(){
         S.annId=null; S.annTool="pen"; delete S.prog.annotations["L:lesson:da:t1"]; document.getElementById("annP")?.remove(); go("home"); return out; });
       await p.setViewportSize(vp); await p.waitForTimeout(100);
       if(before.n!==2||!before.v.every(v=>v.startsWith("3"))||!after.mk||!after.pen) throw new Error("âncora: "+JSON.stringify({before,after})); });
+    await step("grifo antigo vira trecho de palavras", async()=>{
+      const r=await p.evaluate(()=>{ S.annId=null; S.lessonId="lesson:da:t1"; go("lesson"); const art=document.querySelector(".lwrap .lesson"); art.insertAdjacentHTML("afterbegin",'<p id="annP">'+"Texto longo de teste para quebrar em várias linhas quando a tela fica estreita. ".repeat(4)+'palavra <b id="annW">ALVOGRANDE</b> e mais texto depois.</p><div id="annE" style="height:60px"></div>');
+        const sf=document.querySelector(".lwrap [data-ann-surface]"), key="L:lesson:da:t1", P=document.getElementById("annP"), bi=annBlocks(sf).indexOf(P);
+        P.style.boxSizing="border-box"; P.style.width="300px"; const pr=P.getBoundingClientRect(), w=document.getElementById("annW").getBoundingClientRect(), bh=pr.height, y=w.top+w.height*.75-pr.top;
+        const ei=annBlocks(sf).indexOf(document.getElementById("annE")), v2=(x0,x1,yy,b=bi)=>({v:2,tool:"marker",color:"#FFE04A",width:18,b,bw:300,bh:annF(bh),pts:[[annF(x0),annF(yy),.5],[annF(x1),annF(yy),.5]]});
+        const strokes=[v2(w.left-pr.left+w.width*.3,w.left-pr.left+w.width*.7,y), v2(10,200,30,ei)]; P.style.width=""; P.style.boxSizing="";
+        S.prog.annotations[key]={ts:Date.now(),strokes}; annDraw(sf); const st=annotationStrokes(key), g=annGeo(sf), m=annMap(st[0],g), W=document.getElementById("annW").getBoundingClientRect(), seg=(m.segs||[m])[0];
+        const out={v:st[0].v,r:!!st[0].r,hide:!!st[1].hide,x0:Math.abs(seg[0][0]+g.sr.left-W.left)<3,x1:Math.abs(seg[1][0]+g.sr.left-W.right)<3,y:Math.abs(seg[0][1]+g.sr.top-(W.top+W.height/2))<3,gone:annMap(st[1],g).length===0};
+        delete S.prog.annotations[key]; P.remove(); document.getElementById("annE")?.remove(); go("home"); return out; });
+      if(r.v!==3||!r.r||!r.hide||!r.x0||!r.x1||!r.y||!r.gone) throw new Error("migração: "+JSON.stringify(r)); });
     await step("modo leitura da lição", async()=>{
       const r=await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector('[data-act="lread"]').click();
         const vis=el=>!!el&&getComputedStyle(el).display!=="none"&&el.getBoundingClientRect().height>0;

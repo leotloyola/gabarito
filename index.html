@@ -532,6 +532,8 @@ body.lread #view>*:not(.lwrap){display:none!important}
 body.lread .lwrap{display:block!important}
 body.lread .ltoc,body.lread .lwrap>.gdrag{display:none!important}
 body.lread .wrap:has(.lwrap){max-width:860px}
+/* coluna da lição com largura fixa (como página do Samsung Notes): em tela larga só crescem as margens e o texto não reflui, então as anotações ficam no lugar */
+.lwrap>[data-ann-surface]{width:100%;font-size:calc(15px * var(--fs));max-width:calc(40em + 36px);margin-inline:auto} /* ~78 letras por linha em qualquer tamanho de fonte (escolha do Léo, 18/11) */
 body.lread{--nav-h:0px}
 body.lread main{padding-top:max(14px,env(safe-area-inset-top,0px))}
 #lreadBar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;display:flex;gap:6px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);backdrop-filter:blur(8px);opacity:.55;transition:opacity .2s}
@@ -1080,6 +1082,7 @@ const ANN={observer:null,observed:new WeakSet(),stroke:null,touch:null,hist:[],s
 function annBlocks(surface){ let el=surface.querySelector(".ann-content"); while(el&&el.children.length===1&&/^(DIV|ARTICLE|SECTION)$/.test(el.firstElementChild.tagName)) el=el.firstElementChild; return el?[...el.children]:[]; }
 function annGeo(surface){ const sr=surface.getBoundingClientRect(); return {W:sr.width,H:sr.height,sr,bl:annBlocks(surface).map(b=>{ const r=b.getBoundingClientRect(); return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height,el:b}; })}; }
 function annMap(st,g){
+  if(st.hide) return [];
   if(st.v===3){ const m=annMapText(st,g); if(m) return m; }
   if(st.v!==2&&st.v!==3) return (st.points||[]).map(p=>[p[0]*g.W,p[1]*g.H,.5]);
   const B=st.b>=0&&g.bl.length?g.bl[Math.min(st.b,g.bl.length-1)]:{x:0,y:0,w:g.W,h:g.H}; if(!B.w&&!B.h) return [];
@@ -1101,29 +1104,47 @@ function annCharAt(el,o){ for(const [n,o0] of annTextNodes(el)){ if(o<o0+n.data.
 function annCharRect(el,o,c,sr){ const h=annCharAt(el,o); if(!h||h[0].data[h[1]]!==c) return null; ANN_RG.setStart(h[0],h[1]); ANN_RG.setEnd(h[0],h[1]+1); const r=ANN_RG.getBoundingClientRect(); return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height}; }
 function annBlockAt(g,y){ let bi=-1,best=1e9; g.bl.forEach((b,i)=>{ const d=y<b.y?b.y-y:y>b.y+b.h?y-b.y-b.h:0; if(d<best){best=d;bi=i;} }); return bi; }
 // no fim do traço: guarda a âncora no texto (ou nada, se não houver texto perto)
+// letras da linha de texto que o traço horizontal cobre (a linha mais próxima da altura do traço)
+function annRangeAt(el,xa,xb,y,sr){ const X0=xa+sr.left, X1=xb+sr.left, Y=y+sr.top, ch=[];
+  for(const [n,o0] of annTextNodes(el)){ const t=n.data; if(!t.trim()) continue; ANN_RG.selectNodeContents(n); const nr=ANN_RG.getBoundingClientRect(); if(!nr.height||Y<nr.top-40||Y>nr.bottom+40) continue;
+    for(let i=0;i<t.length;i++){ ANN_RG.setStart(n,i); ANN_RG.setEnd(n,i+1); const r=ANN_RG.getBoundingClientRect(); if(!r.height||!r.width) continue; const pad=r.height*.45; if(Y<r.top-pad||Y>r.bottom+pad) continue; ch.push({o:o0+i,c:t[i],cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2,h:r.height}); } }
+  if(!ch.length) return null; let best=ch[0]; for(const c of ch) if(Math.abs(c.cy-Y)<Math.abs(best.cy-Y)) best=c;
+  const line=ch.filter(c=>Math.abs(c.cy-best.cy)<best.h/2&&c.cx>=X0-2&&c.cx<=X1+2&&!/\s/.test(c.c)); if(!line.length) return null;
+  let a=line[0],z=line[0]; for(const c of line){ if(c.o<a.o) a=c; if(c.o>z.o) z=c; } return {o1:a.o,c1:a.c,o2:z.o,c2:z.c}; }
 function annAnchor(tool,p,g){
   if(!g.bl.length) return null;
-  if(tool==="marker"&&p.length===2&&p[0][1]===p[1][1]){ // marca-texto reto na horizontal = grifo de um trecho do texto
+  if(tool==="marker"&&p.length===2&&p[0][1]===p[1][1]){ // marca-texto reto na horizontal = grifo das palavras daquela linha
     const L=p[0][0]<=p[1][0]?p[0]:p[1], R=p[0][0]<=p[1][0]?p[1]:p[0], bi=annBlockAt(g,L[1]), el=g.bl[bi]?.el; if(!el) return null;
-    const a=annNear(el,L[0],L[1],g.sr), z=annNear(el,R[0],R[1],g.sr);
-    if(a&&z&&a.dy<=4&&z.dy<=4&&a.dx<=24&&z.dx<=24&&a.o<=z.o) return {r:{b:bi,o1:a.o,c1:a.c,o2:z.o,c2:z.c,d1:annF(L[0]-a.x),d2:annF(R[0]-z.x),yc:Math.round((L[1]-a.y)/(a.h||1)*100)/100}}; }
+    const rg=annRangeAt(el,L[0],R[0],L[1],g.sr); return rg?{r:{b:bi,...rg}}:{none:1}; }
   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const q of p){ x0=Math.min(x0,q[0]); x1=Math.max(x1,q[0]); y0=Math.min(y0,q[1]); y1=Math.max(y1,q[1]); }
   const cx=(x0+x1)/2, cy=(y0+y1)/2, bi=annBlockAt(g,cy), B=g.bl[bi]; if(!B) return null; const n=annNear(B.el,cx,cy,g.sr); if(!n||n.dy>60) return null;
   // traço sobre o texto acompanha a letra; anotação na margem acompanha só a linha (x fica preso à largura do bloco)
   return {a:{b:bi,o:n.o,c:n.c,x:annF(n.x-B.x),y:annF(n.y-B.y),m:n.dx>36?"y":"xy"}}; }
-function annUpgrade(st,p,g,B){ try{ const an=annAnchor(st.tool,p,g); if(!an) return false; st.v=3; if(an.r) st.r=an.r; if(an.a){ const AB=g.bl[an.a.b]; an.a.ox=annF(B.x-AB.x); an.a.oy=annF(B.y-AB.y); an.a.bw=annF(AB.w); st.a=an.a; } return true; }catch(_){ return false; } }
-// traços antigos (v2): quando a tela está na mesma largura em que foram feitos, ganham a âncora no texto
-function annMigrate(surface,g){ const key=surface.dataset.key, list=annotationStrokes(key); let ch=false;
-  const out=list.map(st=>{ if(st.v!==2||st.tool==="eraser"||st.mig) return st; const B=st.b>=0?g.bl[st.b]:null; if(!B||!st.bw||Math.abs(B.w-st.bw)>1.5) return st;
-    const n={...st,mig:1}, p=(st.pts||[]).map(q=>[B.x+q[0],B.y+q[1]*(st.bh&&B.h?B.h/st.bh:1),q[2]]); annUpgrade(n,p,g,B); ch=true; return n; });
-  if(ch){ S.prog.annotations[key]={ts:now(),strokes:out}; saveProg(); } }
+function annUpgrade(st,p,g,B){ try{ const an=annAnchor(st.tool,p,g); if(!an) return false; if(an.none){ if(st.mig) st.hide=1; return false; } st.v=3; delete st.a; delete st.r; if(an.r) st.r=an.r; if(an.a){ const AB=g.bl[an.a.b]; an.a.ox=annF(B.x-AB.x); an.a.oy=annF(B.y-AB.y); an.a.bw=annF(AB.w); st.a=an.a; } return true; }catch(_){ return false; } }
+// âncora (re)calculada no layout original: o bloco volta por um instante à largura em que o traço foi feito,
+// o texto quebra igual àquela hora e o traço é ligado às palavras que ele realmente cobria. Fragmentos de
+// marca-texto que não cobriam palavra nenhuma ficam escondidos (hide).
+const ANN_MIG=2;
+function annMigrate(surface,g){ const key=surface.dataset.key, list=annotationStrokes(key);
+  const need=list.filter(st=>st.tool!=="eraser"&&(st.mig||0)<ANN_MIG&&st.pts&&st.bw&&st.b>=0&&st.b<g.bl.length); if(!need.length) return;
+  const groups=new Map(); for(const st of need){ const k=st.b+"|"+st.bw; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(st); }
+  const done=new Map();
+  for(const sts of groups.values()){ const el=g.bl[sts[0].b].el, sv=[el.style.width,el.style.maxWidth,el.style.boxSizing,el.style.flex];
+    try{ el.style.boxSizing="border-box"; el.style.maxWidth="none"; el.style.flex="none"; el.style.width=sts[0].bw+"px"; const g2=annGeo(surface), B=g2.bl[sts[0].b];
+      for(const st of sts){ const n={...st,mig:ANN_MIG,v:2}; delete n.hide; const sy=st.bh&&B.h?B.h/st.bh:1, p=st.pts.map(q=>[B.x+q[0],B.y+q[1]*(sy>.8&&sy<1.25?sy:1),q[2]]); annUpgrade(n,p,g2,B); done.set(st,n); } }
+    catch(_){} finally{ [el.style.width,el.style.maxWidth,el.style.boxSizing,el.style.flex]=sv; } }
+  if(done.size){ S.prog.annotations[key]={ts:now(),strokes:list.map(st=>done.get(st)||st)}; saveProg(); } }
+// texto do bloco, para ajustar o grifo à palavra inteira
+function annBlockText(el){ return annTextNodes(el).map(x=>x[0].data).join(""); }
+const ANN_W=/[\p{L}\p{N}]/u;
 function annMapText(st,g){
-  if(st.r){ const R=st.r, B=g.bl[Math.min(R.b,g.bl.length-1)]; if(!B||R.b>=g.bl.length) return null; const a=annCharRect(B.el,R.o1,R.c1,g.sr), z=annCharRect(B.el,R.o2,R.c2,g.sr); if(!a||!z) return null; if(!a.h||!z.h) return [];
-    const h1=annCharAt(B.el,R.o1), h2=annCharAt(B.el,R.o2); ANN_RG.setStart(h1[0],h1[1]); ANN_RG.setEnd(h2[0],h2[1]+1);
+  if(st.hide) return [];
+  if(st.r){ const R=st.r, B=g.bl[R.b]; if(!B) return null; const txt=annBlockText(B.el); if(txt[R.o1]!==R.c1||txt[R.o2]!==R.c2) return null;
+    let o1=R.o1,o2=R.o2; while(o1>0&&ANN_W.test(txt[o1-1])) o1--; while(o2<txt.length-1&&ANN_W.test(txt[o2+1])) o2++;
+    const h1=annCharAt(B.el,o1), h2=annCharAt(B.el,o2); if(!h1||!h2) return null; ANN_RG.setStart(h1[0],h1[1]); ANN_RG.setEnd(h2[0],h2[1]+1);
     const lines=[]; for(const r of ANN_RG.getClientRects()){ if(!r.width||!r.height) continue; const t=r.top-g.sr.top, c=t+r.height/2, L=lines.find(l=>Math.abs(l.c-c)<Math.min(l.h,r.height)/2); if(L){ L.x0=Math.min(L.x0,r.left-g.sr.left); L.x1=Math.max(L.x1,r.right-g.sr.left); if(r.height>L.h){ L.h=r.height; L.t=t; L.c=c; } } else lines.push({t,c,h:r.height,x0:r.left-g.sr.left,x1:r.right-g.sr.left}); }
     lines.sort((u,v)=>u.t-v.t); if(!lines.length) return [];
-    const segs=lines.map((l,i)=>{ const y=l.t+R.yc*l.h, xa=i?l.x0:a.x+R.d1, xb=i<lines.length-1?l.x1:z.x+R.d2; return [[xa,y,.5],[Math.max(xb,xa+.5),y,.5]]; });
-    const out=segs.flat(); out.segs=segs; return out; }
+    const segs=lines.map(l=>[[l.x0-1,l.c,.5],[l.x1+1,l.c,.5]]); const out=segs.flat(); out.segs=segs; out.segW=lines.map(l=>annF(l.h*.92)); return out; }
   if(st.a){ const A=st.a, B=g.bl[A.b]; if(!B) return null; const c=annCharRect(B.el,A.o,A.c,g.sr); if(!c) return null; if(!c.h) return [];
     const sx=A.bw&&B.w?B.w/A.bw:1; // pts relativos ao bloco do 1º ponto (st.b); A.ox/A.oy levam ao bloco da âncora
     return (st.pts||[]).map(q=>{ const rx=q[0]+(A.ox||0), ry=q[1]+(A.oy||0); return [A.m==="y"?B.x+rx*sx:c.x+(rx-A.x), c.y+(ry-A.y), q[2]]; }); }
@@ -1151,6 +1172,7 @@ function annStraighten(p){
   return [a,z];
 }
 function annEl(st,p){
+  if(st.tool==="marker"&&p.segW) return p.segs.map((sg,i)=>'<path d="'+annLine(sg)+'" fill="none" stroke="'+esc(st.color||"#FFE04A")+'" stroke-width="'+p.segW[i]+'" stroke-linecap="butt"/>').join("");
   if(st.tool==="marker") return '<path d="'+(p.segs?p.segs.map(annLine).join(""):annLine(p.length===1?[p[0],[p[0][0]+.5,p[0][1]]]:p))+'" fill="none" stroke="'+esc(st.color||"#FFE04A")+'" stroke-width="'+(st.width||18)+'" stroke-linecap="butt" stroke-linejoin="round"/>';
   return '<path d="'+annPenPath(p,st.width||3)+'" fill="'+esc(st.color||"#E11D48")+'"/>';
 }
@@ -1199,7 +1221,7 @@ function annFinish(e,given){
   const g=A.geo, y0=p[0][1]; let bi=-1,best=1e9; g.bl.forEach((b,i)=>{ const d=y0<b.y?b.y-y0:y0>b.y+b.h?y0-b.y-b.h:0; if(d<best){best=d;bi=i;} });
   const B=bi>=0?g.bl[bi]:{x:0,y:0,w:g.W,h:g.H};
   const st={v:2,tool:A.tool,color:A.color,width:A.width,b:bi,bw:annF(B.w),bh:annF(B.h),pts:p.map(q=>[annF(q[0]-B.x),annF(q[1]-B.y),Math.round(q[2]*100)/100])};
-  annUpgrade(st,p,g,B);
+  st.mig=ANN_MIG; annUpgrade(st,p,g,B);
   annSet(A.key,annotationStrokes(A.key).concat([st])); annDraw(A.surface); annRefreshBars();
 }
 function annRefreshBars(){ document.querySelectorAll("[data-ann-bar],#annHost").forEach(b=>{ if(b.id==="annHost"){ const c=annCount(S.annId||""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); return; } const o=b.dataset.annBar; if(o!==S.annId) return; const btn=b.querySelector('[data-act="annToggle"]'); const c=annCount(o); if(btn&&!btn.closest(".ann-float")) btn.textContent="✍ "+tr("annotationOn")+(c?" · "+c:""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); }); }

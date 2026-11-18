@@ -535,6 +535,10 @@ body.lread .wrap:has(.lwrap){max-width:860px}
 /* coluna da lição com largura fixa (como página do Samsung Notes): em tela larga só crescem as margens e o texto não reflui, então as anotações ficam no lugar */
 .lwrap>[data-ann-surface]{width:100%;font-size:calc(15px * var(--fs));max-width:calc(42em + 36px);margin-inline:auto} /* ~82 letras por linha em qualquer tamanho de fonte (escolha do Léo, 18/11) */
 body.lread{--nav-h:0px}
+body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
+/* sem faixa escura dos lados: o fundo da tela vira o mesmo da lição */
+:root.lsn-sepia body.lread{background:#F4ECD8}:root.lsn-light:not(.lsn-sepia) body.lread{background:#FFFFFF}:root.lsn-dark body.lread{background:#191e23}
+:root.lsn-light body.lread .lesson,:root.lsn-dark body.lread .lesson{box-shadow:none}
 body.lread main{padding-top:max(14px,env(safe-area-inset-top,0px))}
 #lreadBar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;display:flex;gap:6px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);backdrop-filter:blur(8px);opacity:.55;transition:opacity .2s}
 #lreadBar:hover,#lreadBar:focus-within{opacity:1}

@@ -527,6 +527,15 @@ nav.tabs button .tl{display:none}
   html body.navc #side{display:none}
 }
 /* focus mode: hide app chrome during a session */
+/* modo leitura da lição: só o texto (e a anotação) */
+body.lread #view>*:not(.lwrap){display:none!important}
+body.lread .lwrap{display:block!important}
+body.lread .ltoc,body.lread .lwrap>.gdrag{display:none!important}
+body.lread .wrap:has(.lwrap){max-width:860px}
+body.lread{--nav-h:0px}
+body.lread main{padding-top:max(14px,env(safe-area-inset-top,0px))}
+#lreadBar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;display:flex;gap:6px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);backdrop-filter:blur(8px);opacity:.55;transition:opacity .2s}
+#lreadBar:hover,#lreadBar:focus-within{opacity:1}
 body.focus .top, body.focus nav.tabs{display:none}
 body.focus main{padding-top:max(10px,env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 body.focus .qnav{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
@@ -1171,7 +1180,7 @@ function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
   document.querySelectorAll("[data-ann-surface]").forEach(s=>s.classList.toggle("ann-enabled",s.dataset.owner===S.annId));
-  annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer"));
+  annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer")); lreadBar();
 }
 function annPt(e,g){ return [e.clientX-g.sr.left,e.clientY-g.sr.top,e.pointerType==="pen"||e.pressure>0&&e.pressure!==.5?Math.max(.05,Math.min(1,e.pressure||.5)):.5]; }
 function annSegDist(p,a,b){ const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy; let t=l?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l:0; t=Math.max(0,Math.min(1,t)); return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy); }
@@ -1472,9 +1481,9 @@ window.addEventListener("popstate", e=>{
   S.view=v; render(); window.scrollTo({top:y});
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
-function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
+function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v);
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v); lreadBar();
 }
 
 /* ---------- MODO: Provas UFPR × Steps USMLE ----------
@@ -2094,7 +2103,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const practiceTop=nQ?`<button class="btn small primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">▶ ${T2("Praticar","Practice")} · ${lpN&&lpN<nQ?lpN:nQ}</button>`:"";
   v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <div class="row">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Gera um PDF da lição (com as questões no fim) para anotar no Samsung Notes","Creates a PDF of the lesson (questions at the end) to annotate")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button>${annBar("L:"+l.id,false)}</div>
+   <div class="row">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Gera um PDF da lição (com as questões no fim) para anotar no Samsung Notes","Creates a PDF of the lesson (questions at the end) to annotate")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
    <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
@@ -2102,6 +2111,21 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
      ${curMode()==="steps"?"":`<div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div>`}</div>
    ${prevL||nextL?`<div class="lnavrow">${navL(prevL,-1)||"<span></span>"}${navL(nextL,1)}</div>`:""}
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
+/* ---------- MODO LEITURA DA LIÇÃO ---------- */
+function lreadOn(){ return S.view==="lesson"&&!!S.lread; }
+function lreadBar(){ let b=document.getElementById("lreadBar"); if(!lreadOn()){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement("div"); b.id="lreadBar"; b.setAttribute("role","toolbar"); document.body.appendChild(b); }
+  const o="L:"+S.lessonId, on=S.annId===o;
+  b.innerHTML=(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>'; }
+// troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
+function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
+  if(sf){ for(const b of annBlocks(sf)){ const r=b.getBoundingClientRect(); if(r.bottom>70&&r.height){ ref=b; top=r.top; break; } } }
+  S.lread=on; try{ localStorage.setItem("gab.lread",on?"1":"0"); }catch(_){}
+  document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); lreadBar();
+  if(ref){ const sc=annScroller(ref); sc.scrollTop+=ref.getBoundingClientRect().top-top; }
+  annInit($("#view")); }
+try{ S.lread=localStorage.getItem("gab.lread")==="1"; }catch(_){}
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&lreadOn()&&!$("#layer").innerHTML&&!document.body.classList.contains("mp-on")){ e.preventDefault(); e.stopImmediatePropagation(); lreadSet(false); } },true);
 const WIDE_L=matchMedia("(min-width:1150px)");
 const WIDE_Q=matchMedia("(min-width:1500px)"); let LP=true; try{ LP=localStorage.getItem("gab.lpane")!=="0"; }catch(e){}
 (()=>{ try{ const w=localStorage.getItem("gab.lpw"); if(w) document.documentElement.style.setProperty("--lpw",w+"px"); }catch(e){}
@@ -3005,6 +3029,7 @@ document.addEventListener("click", async e=>{
   if(act==="srTopic") return srOpenTopic(a.dataset.d,a.dataset.t);
   if(act==="srLesson"){ S.lessonBack="search"; S.lessonId=a.dataset.id; S.lessonHl={i:Number(a.dataset.i), hres:S.srRes?.P.hres||[]}; return go("lesson"); }
   if(act==="settings") return openSettings();
+  if(act==="lread"){ lreadSet(!lreadOn()); return; }
   if(act==="toggleFocus"){ set().focus = set().focus===false; saveProg(); render(); return openSettings(); }
   if(act==="fs"){ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI:"hide"}); }catch(err){ toast(set().lang==="en"?"Full screen is not available here":"Tela cheia não disponível aqui"); } setTimeout(render,150); return; }
   if(act==="signOut") return signOut();

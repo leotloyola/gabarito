@@ -1531,7 +1531,10 @@ function openStepDate(){ const o=set().stepDate||STEP_DEF;
     <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn small" data-act="closeSheet">${T2("Cancelar","Cancel")}</button><button class="btn small primary" data-act="stepDateSave">${T2("Salvar","Save")}</button></div>`); }
 
 /* ---------- STUDY: setup ---------- */
-function defaultSetup(){ return {mode:"study", sub:"", origin:"", filter:"open", prio:"all", order:"pri", count:0, shuffleQ:false, shuffleO:true}; }
+// preparação da sessão: a última escolha (exceto o sub-bloco, que depende do tema) fica salva em settings.setupPref
+const SETUP_KEEP=["origin","filter","prio","order","count","shuffleO"];
+function defaultSetup(){ const b={mode:"study", sub:"", origin:"", filter:"open", prio:"all", order:"pri", count:10, shuffleQ:false, shuffleO:true}; const p=set().setupPref||{}; for(const k of SETUP_KEEP) if(p[k]!==undefined) b[k]=p[k]; return b; }
+function setupKeep(){ const su=S.setup; if(!su) return; const p={}; for(const k of SETUP_KEEP) p[k]=su[k]; set().setupPref=p; saveProg(); }
 // prioridade 1–3 (★ detalhe · ★★ importante · ★★★ essencial): incidência nas provas + importância clínica + USMLE (calculada no repositório de conteúdo)
 function priOf(q){ return q.pri||2; }
 function prioSort(list){ return list.map((q,i)=>[q,i]).sort((a,b)=>priOf(b[0])-priOf(a[0])||a[1]-b[1]).map(x=>x[0]); }
@@ -1557,6 +1560,10 @@ function vStudy(v){
    ${t&&!t.pseudo?`<div class="row">${lessonOf(curDisc()?.id,t.id)?lessonBtn(curDisc().id,t.id,true):lessonReqBtn(curDisc()?.id,t.id,true)}</div>`:""}
    ${t&&!t.pseudo?topicLinksHTML(t):""}
    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+    <div class="field"><span class="flabel">${T2("Quais questões?","Which questions?")}</span><div class="chips">${chip("filter","open",T2("Novas","New"))}${chip("filter","wrong",T2("Erradas","Wrong"))}${chip("filter","marked",T2("Marcadas","Marked"))}${chip("filter","all",T2("Todas","All"))}</div></div>
+    <div class="field"><span class="flabel">${T2("Quantas?","How many?")}</span><div class="chips">${[10,20].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}${[10,20,0].includes(Number(su.count))?"":chip("count",su.count,su.count)}</div></div>
+    <details class="adv"${S.advOpen?" open":""} ontoggle="S.advOpen=this.open"><summary>${T2("Mais filtros","More filters")}${(su.mode==="sim"||su.sub||su.origin||(su.prio&&su.prio!=="all")||su.order!=="pri"||!su.shuffleO)?` · <span style="color:var(--accent)">${T2("em uso","active")}</span>`:""}</summary>
+     <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
       <button type="button" class="chip" data-su="mode" data-val="study" aria-pressed="${su.mode==="study"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mStudy")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mStudyD")}</span></button>
       <button type="button" class="chip" data-su="mode" data-val="sim" aria-pressed="${su.mode==="sim"}" style="text-align:left;border-radius:12px;padding:10px 12px"><b>${tr("mSim")}</b><br><span style="color:var(--muted);font-size:12.5px">${tr("mSimD")}</span></button></div></div>
@@ -1564,10 +1571,9 @@ function vStudy(v){
     <div class="field"><span class="flabel">${tr("origin")}</span><div class="chips">${chip("origin","",tr("oAll"))}${chip("origin","real",tr("oReal"))}${chip("origin","authored",tr("oAuth"))}${hasGen?chip("origin","generated",tr("oGen")):""}</div></div>
     ${set().std==="usmle"?"":`<div class="field"><span class="flabel">${T2("Prioridade","Priority")}</span><div class="chips">${chip("prio","all",T2("Todas","All"))}${chip("prio","2",T2("★★ ou mais","★★ and up"))}${chip("prio","3",T2("Só essenciais ★★★","Essentials only ★★★"))}</div></div>`}
     <div class="field"><span class="flabel">${T2("Ordem","Order")}</span><div class="chips">${chip("order","pri",T2("Mais importantes primeiro","Most important first"))}${chip("order","seq",T2("Do banco","Bank order"))}${chip("order","rand",T2("Aleatória","Random"))}</div></div>
-    <div class="field"><span class="flabel">${tr("filter")}</span><div class="chips">${chip("filter","all",tr("fAll"))}${chip("filter","open",tr("fOpen"))}${chip("filter","wrong",tr("fWrong"))}${chip("filter","marked",tr("fMarked"))}</div></div>
-    <div class="field"><span class="flabel">${tr("count")}</span><div class="chips">${[5,10,20,40].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}</div></div>
-    <details class="adv"${S.advOpen?" open":""} ontoggle="S.advOpen=this.open"><summary>${T2("Opções avançadas","Advanced options")}</summary>
+    <div class="field"><span class="flabel">${T2("Outra quantidade","Other amount")}</span><div class="chips">${[5,40].map(n=>chip("count",n,n)).join("")}</div></div>
       <div class="toggle"><span>${tr("shuffleO")}</span><button type="button" class="switch" role="switch" data-sw="shuffleO" aria-checked="${su.shuffleO}" aria-label="${tr("shuffleO")}"></button></div>
+     </div>
     </details>
     <div class="row" style="justify-content:space-between"><span class="mono" style="color:var(--muted);font-size:13px">${pool.length} ${tr("available")}</span>
       <button class="btn primary" data-act="startSession" ${pool.length?"":"disabled"}>${tr("start")}</button></div>
@@ -2867,8 +2873,8 @@ document.addEventListener("click", async e=>{
   const nav=e.target.closest("[data-nav]"); if(nav){ if($("#layer").innerHTML) closeSheet(); go(nav.dataset.nav); return; }
   const stdB=e.target.closest("[data-std]"); if(stdB){ set().std=stdB.dataset.std; S.session=null; S.fcDeck=null; saveProg(); render(); return; }
   const lgB=e.target.closest("[data-lang]"); if(lgB){ set().lang=lgB.dataset.lang; saveProg(); render(); return; }
-  const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; render(); return; }
-  const sw=e.target.closest("[data-sw]"); if(sw){ const k=sw.dataset.sw; S.setup[k]=!S.setup[k]; render(); return; }
+  const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; setupKeep(); render(); return; }
+  const sw=e.target.closest("[data-sw]"); if(sw){ const k=sw.dataset.sw; S.setup[k]=!S.setup[k]; setupKeep(); render(); return; }
   const pk=e.target.closest("[data-pick]"); if(pk && !pk.disabled){ const s=S.session; if(!s) return; const it=s.items[s.i]; const q=S.qs.get(it.id); const p=Number(pk.dataset.pick);
      if(s.mode==="study"){ it.pick=p; record(q,p,{rev:s.kind==="review", ms:it.t0?now()-it.t0:null}); render(); const r=$(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); }
      else { it.pick=p; render(); }

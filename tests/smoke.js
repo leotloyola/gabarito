@@ -191,6 +191,15 @@ function fixture(){
         S.annId=null; S.annTool="pen"; delete S.prog.annotations["L:lesson:da:t1"]; document.getElementById("annP")?.remove(); go("home"); return out; });
       await p.setViewportSize(vp); await p.waitForTimeout(100);
       if(before.n!==2||!before.v.every(v=>v.startsWith("3"))||!after.mk||!after.pen) throw new Error("âncora: "+JSON.stringify({before,after})); });
+    await step("modo leitura da lição", async()=>{
+      const r=await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector('[data-act="lread"]').click();
+        const vis=el=>!!el&&getComputedStyle(el).display!=="none"&&el.getBoundingClientRect().height>0;
+        const out={on:document.body.classList.contains("lread"),top:vis(document.querySelector(".top")),tabs:vis(document.querySelector("nav.tabs")),text:vis(document.querySelector(".lwrap .lesson")),practice:vis(document.querySelector('#view [data-act="lessonPractice"]'))};
+        document.querySelector('#lreadBar [data-act="annToggle"]').click(); out.ann=S.annId==="L:lesson:da:t1"&&!!document.querySelector(".lwrap .ann-surface.ann-enabled")&&!!document.querySelector("#annHost .ann-float")&&!document.querySelector('#lreadBar [data-act="annToggle"]');
+        document.querySelector('#annHost [data-act="annToggle"]').click();
+        document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); out.off=!document.body.classList.contains("lread")&&!document.getElementById("lreadBar")&&vis(document.querySelector('#view [data-act="lessonPractice"]'));
+        S.annId=null; localStorage.setItem("gab.lread","0"); S.lread=false; go("home"); out.home=!document.body.classList.contains("lread"); return out; });
+      if(!r.on||r.top||r.tabs||!r.text||r.practice||!r.ann||!r.off||!r.home) throw new Error("leitura: "+JSON.stringify(r)); });
     await step("borracha não rola a lição", async()=>{
       await p.evaluate(()=>{ S.annId=null; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.querySelector('.row [data-act="annToggle"]').click(); const se=document.scrollingElement; se.scrollTop=600; });
       await p.waitForTimeout(80);

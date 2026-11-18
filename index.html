@@ -1144,10 +1144,16 @@ const ANN_W=/[\p{L}\p{N}]/u;
 function annMapText(st,g){
   if(st.hide) return [];
   if(st.r){ const R=st.r, B=g.bl[R.b]; if(!B) return null; const txt=annBlockText(B.el); if(txt[R.o1]!==R.c1||txt[R.o2]!==R.c2) return null;
-    let o1=R.o1,o2=R.o2; while(o1>0&&ANN_W.test(txt[o1-1])) o1--; while(o2<txt.length-1&&ANN_W.test(txt[o2+1])) o2++;
-    const h1=annCharAt(B.el,o1), h2=annCharAt(B.el,o2); if(!h1||!h2) return null; ANN_RG.setStart(h1[0],h1[1]); ANN_RG.setEnd(h2[0],h2[1]+1);
-    const lines=[]; for(const r of ANN_RG.getClientRects()){ if(!r.width||!r.height) continue; const t=r.top-g.sr.top, c=t+r.height/2, L=lines.find(l=>Math.abs(l.c-c)<Math.min(l.h,r.height)/2); if(L){ L.x0=Math.min(L.x0,r.left-g.sr.left); L.x1=Math.max(L.x1,r.right-g.sr.left); if(r.height>L.h){ L.h=r.height; L.t=t; L.c=c; } } else lines.push({t,c,h:r.height,x0:r.left-g.sr.left,x1:r.right-g.sr.left}); }
-    lines.sort((u,v)=>u.t-v.t); if(!lines.length) return [];
+    // completa a palavra sem sair do nó de texto (em tabela, células vizinhas não têm espaço entre si no texto do bloco)
+    const n1=annCharAt(B.el,R.o1), n2=annCharAt(B.el,R.o2); if(!n1||!n2) return null; const b1=R.o1-n1[1], e2=R.o2-n2[1]+n2[0].data.length-1;
+    let o1=R.o1,o2=R.o2; while(o1>b1&&ANN_W.test(txt[o1-1])) o1--; while(o2<e2&&ANN_W.test(txt[o2+1])) o2++;
+    // só os retângulos do texto (nunca a caixa de uma célula ou linha de tabela) e, numa mesma linha, só trechos contíguos:
+    // grifo que atravessa células vira um pedaço por célula, sem cobrir o vão entre elas
+    const rs=[]; for(const [n,n0] of annTextNodes(B.el)){ const n1=n0+n.data.length; if(n1<=o1||n0>o2) continue; const a=Math.max(o1,n0)-n0, z=Math.min(o2+1,n1)-n0; if(z<=a||!n.data.slice(a,z).trim()) continue;
+      ANN_RG.setStart(n,a); ANN_RG.setEnd(n,z); for(const r of ANN_RG.getClientRects()) if(r.width>.5&&r.height) rs.push({t:r.top-g.sr.top,h:r.height,x0:r.left-g.sr.left,x1:r.right-g.sr.left}); }
+    if(!rs.length) return [];
+    rs.forEach(r=>r.c=r.t+r.h/2); rs.sort((u,v)=>Math.abs(u.c-v.c)<Math.min(u.h,v.h)/2?u.x0-v.x0:u.c-v.c);
+    const lines=[]; for(const r of rs){ const L=lines[lines.length-1]; if(L&&Math.abs(L.c-r.c)<Math.min(L.h,r.h)/2&&r.x0-L.x1<=Math.max(L.h,r.h)*.7){ L.x1=Math.max(L.x1,r.x1); if(r.h>L.h){ L.h=r.h; L.t=r.t; L.c=r.c; } } else lines.push({...r}); }
     const segs=lines.map(l=>[[l.x0-1,l.c,.5],[l.x1+1,l.c,.5]]); const out=segs.flat(); out.segs=segs; out.segW=lines.map(l=>annF(l.h*.92)); return out; }
   if(st.a){ const A=st.a, B=g.bl[A.b]; if(!B) return null; const c=annCharRect(B.el,A.o,A.c,g.sr); if(!c) return null; if(!c.h) return [];
     const sx=A.bw&&B.w?B.w/A.bw:1; // pts relativos ao bloco do 1º ponto (st.b); A.ox/A.oy levam ao bloco da âncora

@@ -201,6 +201,15 @@ function fixture(){
         const out={v:st[0].v,r:!!st[0].r,hide:!!st[1].hide,x0:Math.abs(seg[0][0]+g.sr.left-W.left)<3,x1:Math.abs(seg[1][0]+g.sr.left-W.right)<3,y:Math.abs(seg[0][1]+g.sr.top-(W.top+W.height/2))<3,gone:annMap(st[1],g).length===0};
         delete S.prog.annotations[key]; P.remove(); document.getElementById("annE")?.remove(); go("home"); return out; });
       if(r.v!==3||!r.r||!r.hide||!r.x0||!r.x1||!r.y||!r.gone) throw new Error("migração: "+JSON.stringify(r)); });
+    await step("grifo em tabela fica por célula", async()=>{
+      const r=await p.evaluate(()=>{ S.annId=null; S.lessonId="lesson:da:t1"; go("lesson"); const art=document.querySelector(".lwrap .lesson"); art.insertAdjacentHTML("afterbegin",'<div class="tbl" id="annT"><table><thead><tr><th>Categoria</th><th>Exemplos</th></tr></thead><tbody><tr><td id="c1">Predisposição</td><td id="c2">Risco alto ou intermediário</td></tr></tbody></table></div>'); document.querySelector('.row [data-act="annToggle"]').click();
+        const sf=document.querySelector(".lwrap [data-ann-surface]"), inp=sf.querySelector(".ann-input"), c1=document.getElementById("c1").getBoundingClientRect(), c2=document.getElementById("c2"), rg=document.createRange(); rg.setStart(c2.firstChild,0); rg.setEnd(c2.firstChild,5); const w=rg.getBoundingClientRect();
+        const f=(t,x,y)=>inp.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,pointerId:21,pointerType:"pen",clientX:x,clientY:y,pressure:.6,buttons:t==="pointerup"?0:1})); const y=w.top+w.height*.6;
+        S.annTool="marker"; f("pointerdown",c1.left-4,y); for(let i=1;i<=10;i++) f("pointermove",c1.left-4+(w.right-c1.left+2)*i/10,y); f("pointerup",w.right-2,y);
+        const st=annotationStrokes("L:lesson:da:t1"), g=annGeo(sf), m=st[0]?annMap(st[0],g):[], segs=m.segs||[]; const t1=document.createRange(); t1.selectNodeContents(document.getElementById("c1").firstChild); const r1=t1.getBoundingClientRect();
+        const out={n:segs.length,gap:segs.length>=2&&segs[0][1][0]+g.sr.left<=r1.right+3&&segs[1][0][0]+g.sr.left>=w.left-3,end:segs.length>=2&&Math.abs(segs[1][1][0]+g.sr.left-w.right)<4};
+        S.annId=null; S.annTool="pen"; delete S.prog.annotations["L:lesson:da:t1"]; document.getElementById("annT")?.remove(); go("home"); return out; });
+      if(r.n!==2||!r.gap||!r.end) throw new Error("tabela: "+JSON.stringify(r)); });
     await step("modo leitura da lição", async()=>{
       const r=await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector('[data-act="lread"]').click();
         const vis=el=>!!el&&getComputedStyle(el).display!=="none"&&el.getBoundingClientRect().height>0;

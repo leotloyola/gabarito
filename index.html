@@ -898,14 +898,14 @@ const IDB={ db:null,
   open(){ if(this.db) return Promise.resolve(this.db); return new Promise((res,rej)=>{ try{ const r=indexedDB.open("gabarito",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{ this.db=r.result; res(this.db); }; r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); },
   async get(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction("kv").objectStore("kv").get(k); t.onsuccess=()=>res(t.result); t.onerror=()=>rej(t.error); }); },
   async set(k,v){ const db=await this.open(); return new Promise((res,rej)=>{ const tx=db.transaction("kv","readwrite"); tx.objectStore("kv").put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); } };
-function applyContent(c){ if(!c) return; if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); if(c.tutor) S.tutor=c.tutor; }
+function applyContent(c){ if(!c) return; if(c.meta) S.qsMeta=c.meta; if(c.catalog) S.catalog=c.catalog; if(c.qs) c.qs.forEach(q=>S.qs.set(q.id,q)); if(c.lessons) c.lessons.forEach(l=>S.lessons.set(l.id,l)); if(c.tutor) S.tutor=c.tutor; }
 async function cacheLoad(){
   try{ applyContent(await IDB.get("content")); const pr=await IDB.get("prog"); if(pr) S.prog=mergeProg(S.prog,pr); }catch(e){}
   // migração do cache antigo (localStorage) — uma vez
   try{ const old=JSON.parse(localStorage.getItem(LS_KEY)||"null"); if(old){ if(!S.qs.size) applyContent(old); if(old.prog&&!Object.keys(S.prog.q).length) S.prog=mergeProg(S.prog,old.prog); localStorage.removeItem(LS_KEY); cacheSave(); } }catch(e){}
 }
 let cacheTimer=null, progTimer=null;
-function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ IDB.set("content",{catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()], tutor:S.tutor||{}}).catch(()=>{}); cacheSaveProg(); },400); }
+function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ IDB.set("content",{catalog:S.catalog, qs:[...S.qs.values()], lessons:[...S.lessons.values()], tutor:S.tutor||{}, meta:S.qsMeta||null}).catch(()=>{}); cacheSaveProg(); },400); }
 function cacheSaveProg(){ clearTimeout(progTimer); progTimer=setTimeout(()=>{ IDB.set("prog",JSON.parse(JSON.stringify(S.prog))).catch(()=>{}); },300); }
 function mergeStampedMap(a,b){ const out=Object.assign({},a||{}); for(const [k,v] of Object.entries(b||{})){ const old=out[k]; if(!old||(+v?.ts||0)>=(+old?.ts||0)) out[k]=v; } return out; }
 function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], reports:p.reports||base.reports||[], read:Object.assign({},base.read||{},p.read||{}), marked:mergeStampedMap(base.marked,p.marked), annotations:mergeStampedMap(base.annotations,p.annotations), tutor:Object.assign({},base.tutor||{},p.tutor||{})}; }
@@ -3176,9 +3176,14 @@ async function fetchAll(){
     const c=await SB.from("catalog").select("id,data").eq("id","main").maybeSingle();
     if(c.error) throw c.error;
     if(c.data) S.catalog=c.data.data;
-    const qs=new Map(), ls=new Map(), tu={}; let from=0;
-    for(;;){ const r=await SB.from("questions").select("id,data").order("id").range(from, from+999); if(r.error) throw r.error; r.data.forEach(x=>{ const o=rowToQ(x); if(o.kind==="lesson") ls.set(o.id,o); else if(o.kind==="tutor") tu[o.id]=o; else qs.set(o.id,o); }); if(r.data.length<1000) break; from+=1000; }
-    S.qs=qs; S.lessons=ls; S.tutor=tu;
+    // questões: download completo só na primeira vez ou a cada 12 h (pega também as apagadas); nas voltas ao app,
+    // só o que mudou desde a última leitura (updated_at do servidor) — economiza dados no 4G
+    const M=S.qsMeta||{}, tNow=Date.now(), full=!S.qs.size||!M.at||tNow-(M.full||0)>12*3600e3;
+    if(full||tNow-(S.qsFetchT||0)>60e3){
+      const qs=full?new Map():S.qs, ls=full?new Map():S.lessons, tu=full?{}:Object.assign({},S.tutor||{}); let from=0, maxAt=full?"":M.at;
+      for(;;){ let rq=SB.from("questions").select("id,data,updated_at"); if(!full) rq=rq.gte("updated_at",M.at); const r=await rq.order("id").range(from, from+999); if(r.error) throw r.error;
+        r.data.forEach(x=>{ if(x.updated_at&&x.updated_at>maxAt) maxAt=x.updated_at; const o=rowToQ(x); if(o.kind==="lesson"){ ls.set(o.id,o); qs.delete(o.id); } else if(o.kind==="tutor") tu[o.id]=o; else qs.set(o.id,o); }); if(r.data.length<1000) break; from+=1000; }
+      S.qs=qs; S.lessons=ls; S.tutor=tu; S.qsFetchT=tNow; S.qsMeta={at:maxAt||M.at||"", full:full?tNow:M.full}; }
     const p=await SB.from("progress").select("state,updated_at").eq("user_id",S.uid).maybeSingle();
     if(p.error) throw p.error;
     if(p.data?.state){ const remote=p.data.state, dirty=progDirty(); S.remoteAt=p.data.updated_at?Date.parse(p.data.updated_at):0;

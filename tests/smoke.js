@@ -237,6 +237,19 @@ function fixture(){
         const Rz=syncMerge({...A,settings:{lang:"pt",resetAt:t-4000}},B,true);
         return {keys:Object.keys(m.q).sort().join(),y:m.q.y.n,ev:m.ev.length,fc:!!m.fc.f,lp:m.settings.lpN,lp2:m2.settings.lpN===undefined?20:m2.settings.lpN,again:syncMerge(m,m).ev.length,rz:Object.keys(Rz.q).sort().join()}; });
       if(r.keys!=="x,y,z"||r.y!==2||r.ev!==2||!r.fc||r.lp!==20||r.again!==2||r.rz!=="y,z") throw new Error("merge: "+JSON.stringify(r)); });
+    await step("busca só o que mudou ao voltar ao app", async()=>{
+      const r=await p.evaluate(async()=>{ const saved={SB,qs:S.qs,ls:S.lessons,tu:S.tutor,meta:S.qsMeta,uid:S.uid,prog:S.prog,cat:S.catalog,ft:S.qsFetchT}; const log=[];
+        const rows=[{id:"zz-1",data:{discipline:"da",topic:"t1",i18n:{pt:{stem:"Q1",opts:[{t:"a",why:""}]}},correct:0},updated_at:"2026-01-01T00:00:00+00:00"},{id:"zz-2",data:{discipline:"da",topic:"t1",i18n:{pt:{stem:"Q2",opts:[{t:"a",why:""}]}},correct:0},updated_at:"2026-01-02T00:00:00+00:00"}];
+        const tbl=name=>{ const st={name,gte:null,eq:null}; const api={select(){return api;}, gte(c,v){st.gte=v;return api;}, eq(){return api;}, order(){return api;},
+          range(a,b){ log.push(name+(st.gte?" gte "+st.gte:"")); const d=name==="questions"?rows.filter(x=>!st.gte||x.updated_at>=st.gte).slice(a,b+1):[]; return Promise.resolve({data:d,error:null}); },
+          maybeSingle(){ log.push(name); return Promise.resolve({data:name==="catalog"?{data:S.catalog}:null,error:null}); }}; return api; };
+        SB={from:tbl,auth:{}}; S.uid="u-test"; S.qs=new Map(); S.qsMeta=null; S.qsFetchT=0; posDone=true;
+        await fetchAll(); const n1=S.qs.size, at1=S.qsMeta&&S.qsMeta.at;
+        S.qsFetchT=0; rows.push({id:"zz-3",data:{discipline:"da",topic:"t1",i18n:{pt:{stem:"Q3",opts:[{t:"a",why:""}]}},correct:0},updated_at:"2026-01-03T00:00:00+00:00"});
+        await fetchAll(); const n2=S.qs.size;
+        const out={n1,at1,n2,log:log.filter(x=>x.startsWith("questions"))};
+        SB=saved.SB; S.qs=saved.qs; S.lessons=saved.ls; S.tutor=saved.tu; S.qsMeta=saved.meta; S.uid=saved.uid; S.prog=saved.prog; S.catalog=saved.cat; S.qsFetchT=saved.ft; S.session=null; go("home"); return out; });
+      if(r.n1!==2||r.at1!=="2026-01-02T00:00:00+00:00"||r.n2!==3||r.log[0]!=="questions"||r.log[1]!=="questions gte 2026-01-02T00:00:00+00:00") throw new Error("incremental: "+JSON.stringify(r)); });
     await step("mapa de conceitos", async()=>{
       const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;
         const now=Math.round(Date.now()/1000);

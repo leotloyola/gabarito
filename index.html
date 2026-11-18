@@ -698,7 +698,7 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
   --bad:#f1a0aa;--bad-soft:#362329;--bad-bar:#b66b78;
   --warn:#e6c580;--warn-soft:#302b20;--warn-line:#695a35;
 }}
-.qgrid .tags{gap:6px;align-items:center}
+.qgrid .tags{gap:6px;align-items:center}.qgrid .tags>.ann-toolbar{display:contents}.qgrid .tags>.ann-toolbar>.btn{min-height:0;padding:4px 10px;font-size:12px;border-radius:999px;line-height:1.35}
 .qgrid .qlang button{font-size:12px;padding:6px 11px;min-height:26px}
 .qgrid .tag{font-size:12px;letter-spacing:.025em;text-transform:none;white-space:normal;overflow-wrap:anywhere}
 .qgrid .stem{font-size:calc(19px * var(--fs));line-height:1.8;max-width:68ch;margin:12px 0 18px;overflow-wrap:anywhere}
@@ -1093,7 +1093,7 @@ function annCount(owner){ return annKeys(owner).reduce((n,k)=>n+annotationStroke
 function annBar(owner,mark){
   const active=S.annId===owner, o=esc(owner), tool=S.annTool||"pen", count=annCount(owner);
   let h='<div class="ann-toolbar" data-ann-bar="'+o+'" data-mark="'+(mark?1:0)+'">';
-  if(mark){ const m=isMarked(owner); h+='<button type="button" class="btn small '+(m?"primary":"")+'" data-act="markToggle" data-q="'+o+'" aria-pressed="'+m+'">'+(m?"🔖 "+tr("unmarkQuestion"):"☆ "+tr("markQuestion"))+'</button>'; }
+  if(mark){ const m=isMarked(owner); h+='<button type="button" class="btn small '+(m?"primary":"")+'" data-act="markToggle" data-q="'+o+'" aria-pressed="'+m+'" title="'+(m?tr("unmarkQuestion"):tr("markQuestion"))+'">'+(m?"🔖 "+T2("Marcada","Marked"):"☆ "+T2("Marcar","Mark"))+'</button>'; }
   h+='<button type="button" class="btn small '+(active?"primary":"")+'" data-act="annToggle" data-q="'+o+'" aria-pressed="'+active+'">✍ '+(active?tr("annotationOn"):tr("annotate"))+(count?" · "+count:"")+'</button>';
   if(active){
     const tb=(t,ic,l)=>'<button type="button" class="btn small '+(tool===t?"primary":"")+'" data-act="annTool" data-v="'+t+'" aria-pressed="'+(tool===t)+'" title="'+l+'">'+ic+' <span class="ann-lbl">'+l+'</span></button>';
@@ -1717,7 +1717,7 @@ function setupKeep(){ const su=S.setup; if(!su) return; const p={}; for(const k 
 function priOf(q){ return q.pri||2; }
 function prioSort(list){ return list.map((q,i)=>[q,i]).sort((a,b)=>priOf(b[0])-priOf(a[0])||a[1]-b[1]).map(x=>x[0]); }
 const STARS=n=>"★".repeat(n);
-function priTag(q){ if(q.standard==="usmle") return ""; const p=priOf(q); const l=[0,T2("Detalhe","Detail"),T2("Importante","Important"),T2("Essencial","Essential")][p]; return `<span class="tag pri p${p}" title="${T2("Prioridade","Priority")}: ${l}">${STARS(p)}${p===3?" "+l:""}</span>`; }
+function priTag(q){ if(q.standard==="usmle") return ""; const p=priOf(q); const l=[0,T2("Detalhe","Detail"),T2("Importante","Important"),T2("Essencial","Essential")][p]; return `<span class="tag pri p${p}" title="${T2("Prioridade","Priority")}: ${l}">${STARS(p)}</span>`; }
 function setupPool(su){ return ctxQs().filter(q=>{
   if(su.sub && subOf(q)!==su.sub) return false;
   if(su.origin && q.origin!==su.origin) return false;
@@ -1848,7 +1848,7 @@ function questionHTML(q, it, reveal, simMode){
   const lp=!!lsn&&LP_Q.matches&&lpOn();
   const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row">${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div></aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
+  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
 function askPrompt(id){

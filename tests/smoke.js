@@ -31,7 +31,7 @@ function fixture(){
     p.on("console",m=>{ if(m.type()==="error"&&!/Failed to load resource|ERR_FAILED|net::/.test(m.text())) errs.push(`[${vp.width}] console: ${m.text()}`); });
     await p.goto(base); await p.waitForTimeout(500);
     const F=fixture();
-    await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; set().disc="da"; set().topic="t1";
+    await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; S.advOpen=true; set().disc="da"; set().topic="t1";
       const t=Date.now(); F.qs.forEach((q,i)=>{ if(i%3) return; S.prog.q[q.id]={n:2,nOk:i%2,ok:!!(i%2),first:true,box:1,due:t-86400000,ts:t}; }); render(); },F);
     const step=async(name,fn)=>{ try{ await fn(); steps++; }catch(e){ errs.push(`[${vp.width}] ${name}: ${e.message.split("\n").slice(0,12).join(" | ")}`); } };
     for(const v of ["home","tutor","mapa","plan","study","review","cards","stats","bank"]) await step("view "+v, ()=>p.evaluate(v=>{ S.session=null; S.fcDeck=null; go(v); },v));
@@ -175,7 +175,7 @@ function fixture(){
       h(R.left+60,R.top+20,0,0); h(R.left+60,R.top+25,1,0); h(R.left+60,R.top+40,1,0); h(R.left+60,R.top+55,1,0); h(R.left+60,R.top+60,0,0); out.ghostErase=annotationStrokes("L:lesson:da:t1").length===0&&!ANN.stroke;
       S.annId=null; delete S.prog.annotations["L:lesson:da:t1"]; go("home"); return out; });
       if(r.n!==1||!r.flat||!r.paths||!r.bar||!r.erased||!r.hoverErase||!r.ctxErase||!r.ghostErase) throw new Error("anotação: "+JSON.stringify(r)); });
-    await step("priority", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("home"); }); const b=await p.$('[data-act="examEssentials"]'); if(b){ await b.click(); } await p.evaluate(()=>{ S.session=null; S.setup=null; go("study"); }); await p.click('[data-su="prio"][data-val="3"]'); await p.click('[data-su="order"][data-val="pri"]'); await p.click('[data-act="startSession"]'); const ok=await p.evaluate(()=>S.session.items.every(it=>S.qs.get(it.id).pri===3)); if(!ok) throw new Error("filtro ★★★ falhou"); });
+    await step("priority", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("home"); }); const b=await p.$('[data-act="examEssentials"]'); if(b){ await b.click(); } await p.evaluate(()=>{ S.session=null; S.setup=null; S.advOpen=true; go("study"); }); await p.click('[data-su="prio"][data-val="3"]'); await p.click('[data-su="order"][data-val="pri"]'); await p.click('[data-act="startSession"]'); const ok=await p.evaluate(()=>S.session.items.every(it=>S.qs.get(it.id).pri===3)); if(!ok) throw new Error("filtro ★★★ falhou"); });
     await step("anotar fixo", async()=>{ const r=await p.evaluate(()=>{ const s=S.session; if(!s||s.items.length<2) return {skip:1}; s.i=0; localStorage.setItem("gab.ann.keep","1"); S.annId=s.items[0].id; render(); const pin=!!document.querySelector('[data-act="annKeep"][aria-pressed="true"]'); document.querySelector('[data-act="next"]')?.click(); const kept=S.annId===s.items[1].id&&!!document.querySelector(".ann-surface.ann-enabled"); localStorage.setItem("gab.ann.keep","0"); document.querySelector('[data-act="prev"]')?.click(); const off=S.annId===null; return {pin,kept,off}; }); if(!r.skip&&(!r.pin||!r.kept||!r.off)) throw new Error("anotar fixo: "+JSON.stringify(r)); });
     await step("full exam sim", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="full"; go("study"); }); await p.click('[data-act="fullExam"][data-mode="sim"]'); await p.click('[data-pick="1"]'); });
     await step("review session", ()=>p.evaluate(()=>{ S.session=null; go("review"); document.querySelector('[data-act="startReview"]')?.click(); }));
@@ -216,7 +216,7 @@ function fixture(){
       await p.evaluate(()=>{ S.srch.text=""; go("home"); }); });
     await step("settings sheet", async()=>{ await p.evaluate(()=>{ S.session=null; go("home"); }); await p.click("#btnSettings"); await p.goBack(); });
     await step("reabrir onde parou", async()=>{
-      await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; posDone=true; set().disc="da"; set().topic="t1"; S.session=null; S.fcDeck=null; S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"all"}); S.session=buildSession("study",setupPool(S.setup),S.setup); go("study"); S.session.i=3; S.session.items[1].pick=2; render(); posSave(); },F);
+      await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; posDone=true; delete set().setupPref; set().disc="da"; set().topic="t1"; S.session=null; S.fcDeck=null; S.setup=Object.assign(defaultSetup(),{mode:"study",count:10,filter:"all"}); S.session=buildSession("study",setupPool(S.setup),S.setup); go("study"); S.session.i=3; S.session.items[1].pick=2; render(); posSave(); },F);
       await p.reload(); await p.waitForTimeout(400);
       await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; const r=posRestore(); if(!r) throw new Error("posRestore false"); render(); },F);
       const r=await p.evaluate(()=>({v:S.view,i:S.session&&S.session.i,pk:S.session&&S.session.items[1].pick,n:S.session&&S.session.items.length}));
@@ -251,7 +251,7 @@ function fixture(){
         SB=saved.SB; S.qs=saved.qs; S.lessons=saved.ls; S.tutor=saved.tu; S.qsMeta=saved.meta; S.uid=saved.uid; S.prog=saved.prog; S.catalog=saved.cat; S.qsFetchT=saved.ft; S.session=null; go("home"); return out; });
       if(r.n1!==2||r.at1!=="2026-01-02T00:00:00+00:00"||r.n2!==3||r.log[0]!=="questions"||r.log[1]!=="questions gte 2026-01-02T00:00:00+00:00") throw new Error("incremental: "+JSON.stringify(r)); });
     await step("lição anterior/próxima + F/G + Continuar", async()=>{
-      const r=await p.evaluate(()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw();
+      const r=await p.evaluate(()=>{ S.session=null; S.tuB=null; delete set().setupPref; set().topic="t1"; if(document.querySelector("#layer").innerHTML) closeSheetRaw();
         S.lessons.set("lesson:da:t3",{id:"lesson:da:t3",kind:"lesson",discipline:"da",topic:"t3",title:"Lição três",html:"<p>três</p>"});
         S.lessonId="lesson:da:t1"; go("lesson"); const out={prev0:!!document.querySelector('[data-act="lessonGo"].ghost'),top:!!document.querySelector('#view .row [data-act="lessonPractice"]')};
         document.querySelector('[data-act="lessonGo"]').click(); out.after=S.lessonId; out.prev=!!document.querySelector('[data-act="lessonGo"][data-id="lesson:da:t1"]');

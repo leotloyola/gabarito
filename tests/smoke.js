@@ -228,6 +228,15 @@ function fixture(){
       if(r2.i!==3||r2.pk!==2) throw new Error("sessão perdida ao fechar com a lição aberta: "+JSON.stringify(r2));
       await p.click('[data-act="lessonBack"]'); await p.waitForTimeout(80); const r3=await p.evaluate(()=>({v:S.view,i:S.session&&S.session.i})); if(r3.v!=="study"||r3.i!==3) throw new Error("voltar da lição restaurada: "+JSON.stringify(r3));
       await p.evaluate(()=>{ localStorage.removeItem("gab.pos"); localStorage.removeItem("gab.pos.y"); }); });
+    await step("sincronização mescla dois aparelhos", async()=>{
+      const r=await p.evaluate(()=>{ const t=Date.now(), base={settings:{lang:"pt"},q:{},fc:{},log:{},ev:[],sims:[],reports:[],marked:{},annotations:{}};
+        const A=JSON.parse(JSON.stringify(base)), B=JSON.parse(JSON.stringify(base));
+        A.q.x={n:1,ok:true,ts:t-5000}; A.ev=[[Math.round((t-5000)/1000),"x",1,0,10,0]]; A.q.y={n:1,ok:false,ts:t-9000};
+        B.q.z={n:1,ok:false,ts:t-3000}; B.ev=[[Math.round((t-3000)/1000),"z",0,0,10,1]]; B.q.y={n:2,ok:true,ts:t-1000}; B.fc.f={ts:t-100,due:t}; B.settings.lpN=20;
+        const m=syncMerge(A,B,false), m2=syncMerge(A,B,true);
+        const Rz=syncMerge({...A,settings:{lang:"pt",resetAt:t-4000}},B,true);
+        return {keys:Object.keys(m.q).sort().join(),y:m.q.y.n,ev:m.ev.length,fc:!!m.fc.f,lp:m.settings.lpN,lp2:m2.settings.lpN===undefined?20:m2.settings.lpN,again:syncMerge(m,m).ev.length,rz:Object.keys(Rz.q).sort().join()}; });
+      if(r.keys!=="x,y,z"||r.y!==2||r.ev!==2||!r.fc||r.lp!==20||r.again!==2||r.rz!=="y,z") throw new Error("merge: "+JSON.stringify(r)); });
     await step("mapa de conceitos", async()=>{
       const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;
         const now=Math.round(Date.now()/1000);

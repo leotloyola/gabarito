@@ -153,6 +153,12 @@ h2{font-family:var(--f-display);font-weight:600;font-size:calc(15px * var(--fs))
 .contbtn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;cursor:pointer;border-radius:20px;padding:16px 18px;background:var(--accent);color:var(--accent-ink);box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 28%,transparent)}
 .m-steps .contbtn{background:var(--usmle);box-shadow:0 6px 22px color-mix(in srgb,var(--usmle) 28%,transparent)}
 :root[data-theme="dark"] .m-steps .contbtn{color:#1E1B4B}
+.recbox{display:flex;flex-direction:column;gap:6px}
+details.recmore>summary{list-style:none;cursor:pointer;font-size:13px;color:var(--muted);padding:4px 6px;width:max-content}details.recmore>summary::-webkit-details-marker{display:none}
+details.recmore>summary::after{content:" ▾"}details.recmore[open]>summary::after{content:" ▴"}
+.recl{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.recrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:0;cursor:pointer;border-radius:14px;padding:10px 14px;background:var(--surface);color:var(--ink);font:inherit;box-shadow:0 0 0 1px var(--hair) inset;min-height:48px}
+.recrow span{display:flex;flex-direction:column;min-width:0}.recrow b{font-size:14px;font-weight:600}.recrow small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .contbtn .ci{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);font-size:15px;flex:none}
 .contbtn .ct{flex:1;min-width:0;display:flex;flex-direction:column}.contbtn .ct b{font-size:16px}.contbtn .ct small{opacity:.85;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .contbtn .go{opacity:.8}
@@ -1455,8 +1461,23 @@ function contTarget(){ const s=S.session;
     if(i>=0){ const b=P.blocks[i]; return {act:b.type==="lesson"?"tutorLesson":"tutorBlock",i,b:T2("Continuar plano do Tutor","Continue tutor plan"),s:`${i+1}/${sm.total} · ${b.title||""}${b.min?` · ~${b.min} min`:""}`}; } }
   const due=dueQs().length; if(due) return {act:"startReview",b:T2("Revisões de hoje","Today's reviews"),s:`${due} ${T2("questões","questions")} · ${esc(scopeLabel())}`};
   return {act:"quick",mode:"study",b:T2("Estudar agora","Study now"),s:`${T2("10 questões","10 questions")} · ${esc(nm(curTopic()))}`}; }
-function contHTML(){ const c=contTarget();
-  return `<button type="button" class="contbtn" data-act="${c.act}"${c.i!=null?` data-i="${c.i}"`:""}${c.mode?` data-mode="${c.mode}"`:""}><span class="ci">▶</span><span class="ct"><b>${c.b}</b><small>${esc(c.s)}</small></span><span class="go">${CHEV}</span></button>`; }
+/* ---------- PRÓXIMA AÇÃO (recomendação única da Início) ----------
+   Junta os sinais que antes ficavam espalhados (sessão aberta, plano do Tutor, prova próxima, revisões vencidas,
+   erros pendentes, competência fraca) numa pontuação simples. O primeiro vira o botão grande, com o motivo;
+   "Escolher outro" mostra os demais. Pesos: sessão aberta > Tutor > ★★★ de prova em ≤14 dias > revisões/erros/competência > novas. */
+function recCands(){ const C=[], c0=contTarget(), steps=curMode()==="steps";
+  if(c0.act==="contSession"||c0.act==="tutorLesson"||c0.act==="tutorBlock") C.push(Object.assign({sc:c0.act==="contSession"?1000:300,why:c0.act==="contSession"?T2("sessão em andamento","session in progress"):T2("plano de hoje do Tutor","today's tutor plan")},c0));
+  if(!steps){ const x=examReadiness()[0]; if(x&&x.e3&&x.days<=14&&(x.e3s<x.e3||x.e3o<x.e3s))
+    C.push({sc:200+(14-x.days)*10, act:"examEssentials", d:x.d.id, ex:x.ex.id, b:(x.e3s<x.e3?T2("Trilha ★★★","★★★ track"):T2("Erros da trilha ★★★","★★★ misses"))+" · "+nm(x.d), s:`${x.e3s}/${x.e3} ${T2("feitas","done")}`, why:`${nm(x.ex)} ${T2("em","in")} ${x.days} ${T2(x.days===1?"dia":"dias",x.days===1?"day":"days")}`}); }
+  const due=dueQs().length; if(due) C.push({sc:100+Math.min(due,50)*2, act:"startReview", b:T2("Revisões de hoje","Today's reviews"), s:`${due} ${T2("questões","questions")} · ${scopeLabel()}`, why:T2("vencidas na revisão espaçada","due for spaced review")});
+  const bad=modeQs().filter(q=>status(q.id)==="bad").length; if(bad) C.push({sc:80+Math.min(bad,30)*2, act:"dashErrors", b:T2("Refazer erros","Redo misses"), s:`${bad} ${T2(bad===1?"questão errada":"questões erradas",bad===1?"missed question":"missed questions")}`, why:T2("errou e ainda não acertou","missed and not yet fixed")});
+  try{ const X=cxState(), r=X&&cxRank()[0], st=r&&X.M.get(r.id); if(st&&st.status==="fraco") C.push({sc:90+Math.round((1-(st.m||0))*60), act:"cxTrain", c:r.id, b:T2("Treinar","Train")+" · "+X.G.N.get(r.id).n, s:`${T2("domínio","mastery")} ${cxPct(st)}`, why:T2("competência mais fraca","weakest competency")}); }catch(_){}
+  if(c0.act==="quick") C.push(Object.assign({sc:50,why:T2("questões novas do tema","new questions in this topic")},c0)); else C.push({sc:40,act:"quick",mode:"study",b:T2("Questões novas","New questions"),s:`10 · ${nm(curTopic())}`,why:T2("questões novas do tema","new questions in this topic")});
+  const seen=new Set(); return C.sort((a,b)=>b.sc-a.sc).filter(c=>{ const k=c.act+(c.c||"")+(c.ex||""); if(seen.has(k)) return false; seen.add(k); return true; }); }
+function recAttrs(c){ return `data-act="${c.act}"${c.i!=null?` data-i="${c.i}"`:""}${c.mode?` data-mode="${c.mode}"`:""}${c.d?` data-d="${esc(c.d)}"`:""}${c.ex?` data-ex="${esc(c.ex)}"`:""}${c.c?` data-c="${esc(c.c)}"`:""}`; }
+function contHTML(){ const R=recCands(), c=R[0], rest=R.slice(1,5);
+  return `<div class="recbox"><button type="button" class="contbtn" ${recAttrs(c)}><span class="ci">▶</span><span class="ct"><b>${esc(c.b)}</b><small>${esc(c.s)}</small>${c.why?`<small class="why">${T2("Por quê","Why")}: ${esc(c.why)}</small>`:""}</span><span class="go">${CHEV}</span></button>
+    ${rest.length?`<details class="recmore"><summary>${T2("Escolher outro","Pick something else")}</summary><div class="recl">${rest.map(x=>`<button type="button" class="recrow" ${recAttrs(x)}><span><b>${esc(x.b)}</b><small>${esc(x.s)}${x.why?" · "+esc(x.why):""}</small></span>${CHEV}</button>`).join("")}</div></details>`:""}</div>`; }
 function todayHTML(){ const t=todayStats();
   return `<div class="kpis today"><div class="kpi"><div class="v">${t.n}</div><div class="l">${T2("questões hoje","today")}</div></div>
     <div class="kpi"><div class="v">${t.n?Math.round(100*t.ok/t.n)+"%":"—"}</div><div class="l">${T2("acerto hoje","accuracy")}</div></div>

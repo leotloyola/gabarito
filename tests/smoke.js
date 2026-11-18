@@ -270,6 +270,13 @@ function fixture(){
         const v=await p.evaluate(()=>({v:S.view,open:!!document.querySelector("#layer").innerHTML,cur:document.querySelector('.tmore')?.getAttribute("aria-current")})); if(v.v!=="plan"||v.open||v.cur!=="page") throw new Error("Mais: "+JSON.stringify(v)); }
       else if(r.vis.includes("navMore")||r.vis.length<8) throw new Error("menu lateral: "+r.vis.join());
       await p.evaluate(()=>go("home")); });
+    await step("próxima ação na Início", async()=>{
+      const r=await p.evaluate(()=>{ S.session=null; S.tuB=null; S.tutor={}; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); delete set().setupPref; set().disc="da"; set().topic="t1"; go("home");
+        const R=recCands(); const out={first:R[0].act,n:R.length,more:!!document.querySelector("details.recmore"),rows:document.querySelectorAll(".recrow").length,big:document.querySelector(".contbtn")?.dataset.act};
+        S.session=buildSession("study",setupPool(Object.assign(defaultSetup(),{filter:"all"})),Object.assign(defaultSetup(),{filter:"all"})); out.withSess=recCands()[0].act; S.session=null; go("home"); return out; });
+      if(r.withSess!=="contSession"||!r.n||r.big!==r.first||(r.n>1&&(!r.more||!r.rows))) throw new Error("recomendação: "+JSON.stringify(r));
+      await p.click("details.recmore>summary").catch(()=>{}); const b=await p.$(".recrow"); if(b){ await b.click(); await p.waitForTimeout(80); const v=await p.evaluate(()=>S.view); if(v==="home") throw new Error("Escolher outro não abriu nada"); }
+      await p.evaluate(()=>{ S.session=null; S.fcDeck=null; go("home"); }); });
     await step("mapa de conceitos", async()=>{
       const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;
         const now=Math.round(Date.now()/1000);

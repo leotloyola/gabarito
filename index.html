@@ -2199,20 +2199,27 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const practiceTop=nQ?`<button class="btn small primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">▶ ${T2("Praticar","Practice")} · ${lpN&&lpN<nQ?lpN:nQ}</button>`:"";
   v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <div class="row">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Gera um PDF da lição (com as questões no fim) para anotar no Samsung Notes","Creates a PDF of the lesson (questions at the end) to annotate")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
+   <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Gera um PDF da lição (com as questões no fim) para anotar no Samsung Notes","Creates a PDF of the lesson (questions at the end) to annotate")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
    <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
      ${lpChips}
      ${curMode()==="steps"?"":`<div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div>`}</div>
    ${prevL||nextL?`<div class="lnavrow">${navL(prevL,-1)||"<span></span>"}${navL(nextL,1)}</div>`:""}
-   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); }
+   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); lbtnsWatch(); }
 /* ---------- MODO LEITURA DA LIÇÃO ---------- */
 function lreadOn(){ return S.view==="lesson"&&!!S.lread; }
-function lreadBar(){ let b=document.getElementById("lreadBar"); if(!lreadOn()){ if(b) b.remove(); return; }
+// fora do modo leitura, a mesma pílula aparece quando os botões do topo da lição saem da tela
+function lbtnsWatch(){ if(S.lbObs){ S.lbObs.disconnect(); S.lbObs=null; } S.lbOff=false; const r=document.getElementById("lbtns"); if(!r||!("IntersectionObserver" in window)) return;
+  const hb=Math.round(document.querySelector("header.top")?.getBoundingClientRect().bottom||0);
+  S.lbObs=new IntersectionObserver(es=>{ const e=es[es.length-1]; const off=!e.isIntersecting&&e.boundingClientRect.top<hb+10; if(off!==S.lbOff){ S.lbOff=off; lreadBar(); } },{rootMargin:(-hb)+"px 0px 0px 0px"});
+  S.lbObs.observe(r); }
+function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn(), fl=!rd&&S.view==="lesson"&&!!S.lbOff&&!!document.getElementById("lbtns");
+  if(!rd&&!fl){ if(b) b.remove(); return; }
   if(!b){ b=document.createElement("div"); b.id="lreadBar"; b.setAttribute("role","toolbar"); document.body.appendChild(b); }
   const o="L:"+S.lessonId, on=S.annId===o;
-  b.innerHTML=(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>'; }
+  b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
+  b.innerHTML=(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
 // troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
 function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
   if(sf){ for(const b of annBlocks(sf)){ const r=b.getBoundingClientRect(); if(r.bottom>70&&r.height){ ref=b; top=r.top; break; } } }

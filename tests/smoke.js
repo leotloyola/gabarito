@@ -236,6 +236,17 @@ function fixture(){
         document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); out.off=!document.body.classList.contains("lread")&&!document.getElementById("lreadBar")&&vis(document.querySelector('#view [data-act="lessonPractice"]'));
         S.annId=null; localStorage.setItem("gab.lread","0"); S.lread=false; go("home"); out.home=!document.body.classList.contains("lread"); return out; });
       if(!r.on||r.top||r.tabs||!r.text||r.practice||!r.ann||!r.off||!r.home) throw new Error("leitura: "+JSON.stringify(r)); });
+    await step("botões flutuantes ao rolar a lição", async()=>{
+      await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.scrollingElement.scrollTop=0; });
+      await p.waitForTimeout(150);
+      const a=await p.evaluate(()=>!document.getElementById("lreadBar"));
+      await p.evaluate(()=>{ document.scrollingElement.scrollTop=1500; });
+      await p.waitForTimeout(250);
+      const b=await p.evaluate(()=>{ const bar=document.getElementById("lreadBar"); return !!bar&&bar.classList.contains("fl")&&!!bar.querySelector('[data-act="lread"]')&&!!bar.querySelector('[data-act="annToggle"]'); });
+      await p.evaluate(()=>{ document.scrollingElement.scrollTop=0; });
+      await p.waitForTimeout(250);
+      const c=await p.evaluate(()=>{ const ok=!document.getElementById("lreadBar"); go("home"); return ok; });
+      if(!a||!b||!c) throw new Error("flutuantes: "+JSON.stringify({a,b,c})); });
     await step("borracha não rola a lição", async()=>{
       await p.evaluate(()=>{ S.annId=null; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.querySelector('.row [data-act="annToggle"]').click(); const se=document.scrollingElement; se.scrollTop=600; });
       await p.waitForTimeout(80);

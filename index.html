@@ -909,6 +909,25 @@ function cacheSave(){ clearTimeout(cacheTimer); cacheTimer=setTimeout(()=>{ IDB.
 function cacheSaveProg(){ clearTimeout(progTimer); progTimer=setTimeout(()=>{ IDB.set("prog",JSON.parse(JSON.stringify(S.prog))).catch(()=>{}); },300); }
 function mergeStampedMap(a,b){ const out=Object.assign({},a||{}); for(const [k,v] of Object.entries(b||{})){ const old=out[k]; if(!old||(+v?.ts||0)>=(+old?.ts||0)) out[k]=v; } return out; }
 function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.settings||{}), q:p.q||{}, fc:p.fc||{}, log:p.log||{}, sims:p.sims||[], ev:p.ev||base.ev||[], reports:p.reports||base.reports||[], read:Object.assign({},base.read||{},p.read||{}), marked:mergeStampedMap(base.marked,p.marked), annotations:mergeStampedMap(base.annotations,p.annotations), tutor:Object.assign({},base.tutor||{},p.tutor||{})}; }
+/* ---------- SINCRONIZAÇÃO CELULAR × TABLET ----------
+   Une dois progressos registro a registro, em vez de um aparelho sobrescrever o outro inteiro:
+   questões/flashcards/marcas/anotações → o registro mais novo de cada id; respostas (ev) → união sem repetir;
+   dia do histórico → o que tem mais respostas; simulados/contestações → união. "Zerar progresso" grava
+   settings.resetAt e tudo que é anterior a ele é descartado dos dois lados. Configurações: as do aparelho
+   que tem alterações ainda não enviadas (localSet), senão as da nuvem. */
+function syncMerge(L,R,localSet){ L=L||{}; R=R||{};
+  const rs=Math.max(+L.settings?.resetAt||0,+R.settings?.resetAt||0), rsDay=rs?dayKey(new Date(rs)):"";
+  const newer=(a,b)=>{ const o={}; for(const src of [a||{},b||{}]) for(const [k,v] of Object.entries(src)){ if(rs&&(+v?.ts||0)<rs) continue; const c=o[k]; if(!c||(+v?.ts||0)>(+c?.ts||0)) o[k]=v; } return o; };
+  const em=new Map(); for(const e of [...(L.ev||[]),...(R.ev||[])]){ if(!Array.isArray(e)||(rs&&e[0]*1000<rs)) continue; em.set(e[0]+"|"+e[1],e); }
+  const ev=[...em.values()].sort((a,b)=>a[0]-b[0]); if(ev.length>20000) ev.splice(0,ev.length-20000);
+  const log={}; for(const src of [L.log||{},R.log||{}]) for(const [k,v] of Object.entries(src)){ if(rsDay&&k<rsDay) continue; const c=log[k]; if(!c||(+v?.n||0)>(+c.n||0)) log[k]=v; }
+  const uni=(a,b,key)=>{ const m=new Map(); for(const x of [...(a||[]),...(b||[])]) if(x&&!(rs&&(+x.ts||0)&&x.ts<rs)) m.set(key(x),x); return [...m.values()]; };
+  const settings=localSet?Object.assign({},R.settings||{},L.settings||{}):Object.assign({},L.settings||{},R.settings||{}); if(rs) settings.resetAt=rs;
+  return {settings, q:newer(L.q,R.q), fc:newer(L.fc,R.fc), log, ev,
+    sims:uni(L.sims,R.sims,x=>x.ts+"|"+(x.topic||x.exam||"")).sort((a,b)=>(a.ts||0)-(b.ts||0)), reports:uni(L.reports,R.reports,x=>x.id||JSON.stringify(x)),
+    read:Object.assign({},L.read||{},R.read||{}), marked:mergeStampedMap(L.marked,R.marked), annotations:mergeStampedMap(L.annotations,R.annotations),
+    tutor:Object.assign({},L.tutor||{},R.tutor||{})}; }
+function progSig(p){ return JSON.stringify([Object.keys(p.q||{}).length,Object.keys(p.fc||{}).length,(p.ev||[]).length,progClock(p),Math.max(0,...Object.values(p.fc||{}).map(x=>+x?.ts||0)),(p.sims||[]).length,(p.reports||[]).length,Object.keys(p.read||{}).length,p.settings||{}]); }
 function progClock(p){ return Math.max(0,...Object.values(p?.q||{}).map(x=>+x?.ts||0),...Object.values(p?.marked||{}).map(x=>+x?.ts||0),...Object.values(p?.annotations||{}).map(x=>+x?.ts||0)); }
 const set = () => S.prog.settings;
 const tr = k => (T[set().lang]||T.pt)[k] ?? T.pt[k] ?? k;
@@ -1211,17 +1230,33 @@ function dueCards(){ const end=startOfDay(now())+DAY; const seen=revPool().filte
 function scopeChips(){ const sc=set().revScope==="ctx"?"ctx":"disc"; const t=curTopic(); const b=(v,l)=>`<button type="button" class="chip" data-act="revScope" data-val="${v}" aria-pressed="${sc===v}">${l}</button>`;
   return `<div class="chips">${b("disc",(set().lang==="en"?"Whole discipline":"Disciplina inteira"))}${b("ctx",(set().lang==="en"?"Only ":"Só ")+esc(nm(t)))}</div>`; }
 function scopeLabel(){ return set().revScope==="ctx" ? nm(curTopic()) : nm(curDisc()); }
-let saveTimer=null, saving=false, saveAgain=false;
-function saveProg(){ cacheSaveProg(); if(!S.db||!S.uid) return; clearTimeout(saveTimer); saveTimer=setTimeout(flushProg, 1200); }
+let saveTimer=null, saving=false, saveAgain=false, retryTimer=null, retryMs=15000;
+// alterações ainda não enviadas ficam marcadas também no aparelho (sobrevive a fechar o app)
+function progDirty(on){ if(on===undefined){ try{ return localStorage.getItem("gab.dirty")==="1"; }catch(_){ return !!S.dirty; } } S.dirty=on; try{ on?localStorage.setItem("gab.dirty","1"):localStorage.removeItem("gab.dirty"); }catch(_){} }
+function saveProg(){ cacheSaveProg(); S.saveN=(S.saveN||0)+1; progDirty(true); syncLabel(); if(!S.db||!S.uid) return; clearTimeout(saveTimer); saveTimer=setTimeout(flushProg, 1200); }
 async function flushProg(){
-  if(saving){ saveAgain=true; return; } saving=true;
-  try{ await S.db.doc("data/users/"+S.uid+"/state").set(JSON.parse(JSON.stringify(S.prog))); setSync("on"); }
-  catch(e){ setSync("warn"); }
+  if(!S.db||!S.uid) return;
+  if(saving){ saveAgain=true; return; } saving=true; clearTimeout(retryTimer); const n0=S.saveN||0;
+  try{
+    // outro aparelho gravou depois da nossa última leitura? junta antes de enviar, para não apagar o que ele fez
+    if(typeof SB!=="undefined"&&SB?.from){ const h=await SB.from("progress").select("updated_at").eq("user_id",S.uid).maybeSingle(); if(h.error) throw h.error;
+      const ra=h.data?.updated_at?Date.parse(h.data.updated_at):0;
+      if(ra&&ra!==S.remoteAt){ const r=await SB.from("progress").select("state,updated_at").eq("user_id",S.uid).maybeSingle(); if(r.error) throw r.error; if(r.data?.state) S.prog=syncMerge(S.prog,r.data.state,true); cacheSaveProg(); } }
+    const at=new Date().toISOString(); await S.db.doc("data/users/"+S.uid+"/state").set(JSON.parse(JSON.stringify(S.prog)),at); S.remoteAt=Date.parse(at);
+    if((S.saveN||0)===n0) progDirty(false); S.syncAt=Date.now(); retryMs=15000; setSync("on"); }
+  catch(e){ setSync("warn"); clearTimeout(retryTimer); retryTimer=setTimeout(()=>{ if(progDirty()) flushProg(); },retryMs); retryMs=Math.min(retryMs*2,300000); }
   finally{ saving=false; if(saveAgain){ saveAgain=false; flushProg(); } }
 }
 
 /* ---------- sync indicator ---------- */
-function setSync(s){ S.dbState=s; const d=$("#syncDot"), t=$("#syncTxt"); d.className="dot"+(s==="on"?" on":s==="warn"||s==="off"?" warn":""); t.textContent= s==="on"? tr("online") : s==="loading"? tr("loading") : tr("offline"); }
+function setSync(s){ S.dbState=s; syncLabel(); }
+// indicador honesto: "salvando…" com alteração pendente, "salvo no aparelho" sem conexão, "sincronizado às HH:MM" só depois de gravar na nuvem
+function syncLabel(){ const d=$("#syncDot"), t=$("#syncTxt"); if(!d||!t) return; const s=S.dbState, pend=progDirty();
+  const hm=S.syncAt?new Date(S.syncAt).toLocaleTimeString(set().lang==="en"?"en-US":"pt-BR",{hour:"2-digit",minute:"2-digit"}):"";
+  d.className="dot"+(s==="on"&&!pend?" on":s==="warn"||s==="off"?" warn":"");
+  t.textContent= s==="loading"? tr("loading") : (s==="warn"||s==="off")? (pend?T2("salvo no aparelho","saved on device"):tr("offline"))
+    : pend? T2("salvando…","saving…") : (hm?T2("sincronizado ","synced ")+hm:tr("online"));
+  const box=$("#sync"); if(box) box.title=(s==="warn"||s==="off")&&pend?T2("Respostas salvas no aparelho; envio automático quando a conexão voltar.","Answers saved on this device; they upload when the connection returns."):t.textContent; }
 
 /* ---------- chrome ---------- */
 function renderTabs(){
@@ -2976,7 +3011,7 @@ document.addEventListener("click", async e=>{
   if(act==="export") return exportJSON();
   if(act==="markRev"){ const id=a.dataset.q; try{ await S.db.doc("questions/"+id).update({reviewed:true}); toast(tr("reviewed")); closeSheet(); }catch(err){ toast(tr("aiErr")); } return; }
   if(act==="delQ"){ const id=a.dataset.q; return arm(a, tr("confirmDel"), async ()=>{ try{ await S.db.doc("questions/"+id).delete(); S.qs.delete(id); toast(tr("deleted")); closeSheet(); cacheSave(); render(); }catch(err){ toast(tr("aiErr")); } }); }
-  if(act==="resetProg"){ return arm(a, tr("confirmReset"), ()=>{ S.prog=mergeProg(S.prog,{settings:S.prog.settings}); S.session=null; S.fcDeck=null; saveProg(); closeSheet(); toast(tr("resetDone")); render(); }); }
+  if(act==="resetProg"){ return arm(a, tr("confirmReset"), ()=>{ S.prog=mergeProg(S.prog,{settings:Object.assign({},S.prog.settings,{resetAt:now()})}); S.session=null; S.fcDeck=null; saveProg(); closeSheet(); toast(tr("resetDone")); render(); }); }
 });
 document.addEventListener("input", e=>{ if(e.target.id!=="srQ") return; clearTimeout(srRefresh.it); srRefresh.it=setTimeout(()=>{ S.srch.text=e.target.value; srRefresh(); },180); });
 document.addEventListener("change", e=>{
@@ -3118,8 +3153,8 @@ const DBA = {
   doc(path){
     const [col,id] = path.startsWith("data/users/") ? ["progress", null] : path.split("/");
     return {
-      async set(obj){
-        if(col==="progress"){ const {error}=await SB.from("progress").upsert({user_id:S.uid, state:obj, updated_at:new Date().toISOString()}); if(error) throw error; return; }
+      async set(obj,at){
+        if(col==="progress"){ const {error}=await SB.from("progress").upsert({user_id:S.uid, state:obj, updated_at:at||new Date().toISOString()}); if(error) throw error; return; }
         if(col==="questions"){ const {error}=await SB.from("questions").upsert(qToRow(Object.assign({id},obj))); if(error) throw error; return; }
         if(col==="catalog"){ const {error}=await SB.from("catalog").upsert({id, data:obj, updated_at:new Date().toISOString()}); if(error) throw error; return; }
       },
@@ -3146,8 +3181,9 @@ async function fetchAll(){
     S.qs=qs; S.lessons=ls; S.tutor=tu;
     const p=await SB.from("progress").select("state,updated_at").eq("user_id",S.uid).maybeSingle();
     if(p.error) throw p.error;
-    if(p.data?.state){ const remote=p.data.state; const lt=progClock(S.prog); const rt=progClock(remote);
-      if(rt>=lt) S.prog=mergeProg(S.prog,remote); else saveProg(); }
+    if(p.data?.state){ const remote=p.data.state, dirty=progDirty(); S.remoteAt=p.data.updated_at?Date.parse(p.data.updated_at):0;
+      const merged=syncMerge(S.prog,remote,dirty); S.prog=merged;
+      if(dirty||progSig(merged)!==progSig(remote)) saveProg(); else { progDirty(false); S.syncAt=Date.now(); } }
     else if(Object.keys(S.prog.q).length) saveProg();
     applyTheme(); setSync("on"); cacheSave();
   }catch(e){ console.error(e); setSync("off"); }

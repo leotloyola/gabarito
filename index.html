@@ -603,6 +603,28 @@ html.toc-off .lwrap>.gdrag{display:none!important}
   .ltoc summary{list-style:none;pointer-events:none;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 10px}
   .ltoc summary::-webkit-details-marker{display:none}
 }
+/* ---- lição ao lado da questão (>=900px). Até 1499px: questão numa coluna (enunciado em cima, explicação embaixo) e lição na outra ---- */
+@media (min-width:900px){
+  .qdrag{position:absolute;left:-22px;top:0;bottom:0;width:16px;cursor:col-resize;touch-action:none;z-index:2}
+  .qdrag::after{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--line);transition:background .15s,width .15s,left .15s}
+  .qdrag:hover::after,.qdrag:active::after{background:var(--accent);width:4px;left:6px}
+  body #view .qgrid.l3 .qlesson{display:flex;flex-direction:column;gap:10px;position:sticky;top:14px;max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px);min-width:0}
+  body:not(.focus) #view .qgrid.l3 .qlesson{top:130px;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px)}
+  body.mp-on #view .qgrid.l3 .qlesson{display:none}
+  .qlh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .qlh b{font-size:13px;font-weight:600;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qlh .row{flex-wrap:nowrap;gap:6px;flex:none}
+  .qlbody{overflow:auto;min-height:0;flex:1;border-radius:20px;scrollbar-width:thin;overscroll-behavior:contain}
+}
+@media (min-width:900px) and (max-width:1499.98px){
+  html .wrap:has(.qgrid.l3){max-width:none}
+  html body #view .qgrid.l3{display:grid;grid-template-columns:minmax(0,1fr) var(--lpw,minmax(0,1fr));grid-template-areas:"l p" "r p";grid-template-rows:auto 1fr;gap:18px 36px;align-items:start}
+  #view .qgrid.l3>.qleft{grid-area:l} #view .qgrid.l3>.qright{grid-area:r} #view .qgrid.l3>.qlesson{grid-area:p}
+  html body #view .qgrid.l3>.qleft,html body #view .qgrid.l3>.qright{display:flex;flex-direction:column;gap:12px;position:static;max-height:none;overflow:visible;min-width:0}
+  html body #view .qgrid.l3 .qleft .ann-surface:not(.ann-enabled){min-height:0}
+  html body #view .qgrid.l3 .qright>.gdrag{display:none!important}
+  body.mp-on #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
+}
 /* ---- ultrawide (>=1500px): lição ao lado da questão, temas fixos à esquerda, plano em colunas ---- */
 .qlesson,#side{display:none}.plexams{display:contents}
 @media (min-width:1500px){
@@ -1812,9 +1834,9 @@ function questionHTML(q, it, reveal, simMode){
     <div class="row">${lsnRow?`<button class="btn small qrow-lesson" data-act="lesson" data-id="${esc(lsnRow.id)}">📖 ${T2("Lição do tema","Topic lesson")}</button>`:""}<button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><details class="qmore"><summary class="btn small ghost">⋯ ${T2("Mais opções","More")}</summary><div class="qmore-in"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div></details></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
-  const lp=!!lsn&&WIDE_Q.matches&&LP;
+  const lp=!!lsn&&LP_Q.matches&&lpOn();
   const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div>${annBar("L:"+lsn.id,false)}<div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div></aside>`:"";
-  const lpTag=lsn&&WIDE_Q.matches&&!LP?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
+  const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
@@ -2157,7 +2179,12 @@ function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-s
 try{ S.lread=localStorage.getItem("gab.lread")==="1"; }catch(_){}
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&lreadOn()&&!$("#layer").innerHTML&&!document.body.classList.contains("mp-on")){ e.preventDefault(); e.stopImmediatePropagation(); lreadSet(false); } },true);
 const WIDE_L=matchMedia("(min-width:1150px)");
-const WIDE_Q=matchMedia("(min-width:1500px)"); let LP=true; try{ LP=localStorage.getItem("gab.lpane")!=="0"; }catch(e){}
+const WIDE_Q=matchMedia("(min-width:1500px)");
+// lição ao lado da questão: a partir de 900 px (tablet). Aberta/fechada fica salva ("gab.lpane"); sem escolha salva,
+// abre sozinha só em tela ≥1500 px. No celular estreito a lição abre por cima (lessonSheet).
+const LP_Q=matchMedia("(min-width:900px)"); let LP_S=null; try{ const v=localStorage.getItem("gab.lpane"); LP_S=v==="1"?true:v==="0"?false:null; }catch(e){}
+function lpOn(){ return LP_S!=null?LP_S:WIDE_Q.matches; }
+function lpSet(on){ LP_S=!!on; try{ localStorage.setItem("gab.lpane",on?"1":"0"); }catch(e){} }
 (()=>{ try{ const w=localStorage.getItem("gab.lpw"); if(w) document.documentElement.style.setProperty("--lpw",w+"px"); }catch(e){}
   let dr=null; const R=document.documentElement.style;
   document.addEventListener("pointerdown",e=>{ const h=e.target.closest&&e.target.closest(".qdrag"); if(!h) return; dr={g:h.closest(".qgrid"),h}; try{ h.setPointerCapture(e.pointerId); }catch(_){} document.body.style.userSelect="none"; e.preventDefault(); });
@@ -2167,6 +2194,7 @@ const WIDE_Q=matchMedia("(min-width:1500px)"); let LP=true; try{ LP=localStorage
   document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".qdrag")){ R.removeProperty("--lpw"); try{ localStorage.removeItem("gab.lpw"); }catch(_){} } });
 })();
 WIDE_Q.addEventListener&&WIDE_Q.addEventListener("change",()=>{ if(S.catalog) render(); });
+LP_Q.addEventListener&&LP_Q.addEventListener("change",()=>{ if(S.catalog&&inQSession()) render(); });
 function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=$("#view .lesson"), nav=$("#ltoc"); if(!art||!nav) return;
   let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return;
   hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
@@ -3095,9 +3123,11 @@ document.addEventListener("click", async e=>{
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
-  if(act==="lpane"){ LP=!LP; try{ localStorage.setItem("gab.lpane",LP?"1":"0"); }catch(e){} return render(); }
+  if(act==="lpane"){ lpSet(!lpOn()); return render(); }
   if(act==="lesson"){ S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); }
     // durante uma sessão de questões a lição abre por cima (folha), sem desmontar a questão; "Abrir página" leva à lição inteira
+    // tablet/computador: abre (ou mantém) o painel ao lado, que acompanha a questão; celular: folha por cima
+    if(!a.dataset.full&&inQSession()&&LP_Q.matches&&!$("#layer").innerHTML){ if(!lpOn()){ lpSet(true); render(); } const pb=$("#view .qlbody"); if(pb) pb.closest(".qlesson")?.scrollIntoView({block:"nearest"}); return; }
     if(!a.dataset.full&&inQSession()) return lessonSheet(a.dataset.id);
     if($("#layer").innerHTML){ closeSheetRaw(); if(S.sheetPushed){ S.sheetPushed=false; try{ history.replaceState(Object.assign({},history.state||{},{sheet:undefined}),"",location.hash); }catch(_){} } document.body.style.overflow=""; }
     if(S.view==="study"||S.view==="review") S.qY=Math.round(window.scrollY||0);

@@ -532,8 +532,6 @@ body.lread #view>*:not(.lwrap){display:none!important}
 body.lread .lwrap{display:block!important}
 body.lread .ltoc,body.lread .lwrap>.gdrag{display:none!important}
 body.lread .wrap:has(.lwrap){max-width:860px}
-/* coluna da lição com largura fixa (como página do Samsung Notes): em tela larga só crescem as margens e o texto não reflui, então as anotações ficam no lugar */
-.lwrap>[data-ann-surface]{width:100%;font-size:calc(15px * var(--fs));max-width:calc(42em + 36px);margin-inline:auto} /* ~82 letras por linha em qualquer tamanho de fonte (escolha do Léo, 18/11) */
 body.lread{--nav-h:0px}
 body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
 /* sem faixa escura dos lados: o fundo da tela vira o mesmo da lição */

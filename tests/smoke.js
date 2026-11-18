@@ -73,7 +73,18 @@ function fixture(){
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
     await step("report sheet", async()=>{ await p.click('details.qmore>summary'); await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
-    await step("lesson from question", async()=>{
+    await step("lição ao lado no tablet", async()=>{ if(vp.width<900) return;
+      const r=await p.evaluate(async()=>{ localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; S.setup=null; S.tuB=null; set().topic="t1"; go("study");
+        document.querySelector('[data-act="startSession"]').click(); const s=S.session; s.items[s.i].pick=0; render();
+        const out={before:!!document.querySelector("#view .qlesson")};
+        document.querySelector('#view .qrow-lesson[data-act="lesson"]').click(); await new Promise(r=>setTimeout(r,50));
+        out.pane=!!document.querySelector("#view .qgrid.l3 .qlesson .lesson"); out.sheet=!!document.querySelector("#layer").innerHTML; out.v=S.view;
+        const pb=document.querySelector("#view .qlesson"); out.w=pb?Math.round(pb.getBoundingClientRect().width):0; out.over=document.documentElement.scrollWidth-document.documentElement.clientWidth;
+        document.querySelector('#view [data-act="next"]')?.click(); await new Promise(r=>setTimeout(r,50)); out.n=S.session.items.length; out.i=S.session.i; out.after=!!document.querySelector("#view .qlesson .lesson");
+        document.querySelector('#view .qlesson [data-act="lpane"]').click(); out.closed=!document.querySelector("#view .qlesson"); out.saved=localStorage.getItem("gab.lpane");
+        localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; render(); return out; });
+      if(r.before||!r.pane||r.sheet||r.v!=="study"||r.w<250||r.over>0||(r.n>1&&r.i!==1)||!r.after||!r.closed||r.saved!=="0") throw new Error("painel: "+JSON.stringify(r)); });
+    await step("lesson from question", async()=>{ if(vp.width>=900){ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); return; }
       await p.evaluate(()=>{ const s=S.session; s.items[s.i].pick=0; render(); window.scrollTo(0,99999); }); const y0=await p.evaluate(()=>Math.round(scrollY));
       await p.evaluate(()=>document.querySelector('#view .qrow-lesson[data-act="lesson"]').click()); await p.waitForSelector("#layer .lsheet .lesson");
       const a=await p.evaluate(()=>({v:S.view,q:!!document.querySelector("#view .stem"),i:S.session.i}));

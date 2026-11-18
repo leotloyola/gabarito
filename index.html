@@ -471,6 +471,11 @@ nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:
 .scrim{position:fixed;inset:0;background:rgba(24,24,27,.25);backdrop-filter:blur(2px);z-index:40}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:28px 28px 0 0;max-height:88vh;overflow:auto;padding:14px max(18px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));box-shadow:0 -8px 40px rgba(24,24,27,.10)}
 .sheet .grab{width:36px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 16px}
+.sheet.lsheet{top:0;max-height:none;height:100dvh;border-radius:0;padding-top:max(10px,env(safe-area-inset-top,0px));background:var(--surface)}
+.sheet.lsheet .grab{display:none}
+.sheet.lsheet .sheet-in{display:flex;flex-direction:column;gap:12px;max-width:820px;margin:0 auto}
+.lsh-top{position:sticky;top:-10px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;background:var(--surface)}
+.lsh-top .btn{min-height:44px}
 .sheet-in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;font-size:13px;z-index:50;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(24,24,27,.18)}
 @media (min-width:960px){
@@ -486,6 +491,7 @@ nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:
   .qnav{bottom:12px}
   .toast{bottom:24px}
   .sheet{left:50%;right:auto;transform:translateX(-50%);width:min(680px,100%);bottom:auto;top:10vh;border-radius:28px;max-height:80vh}
+  .sheet.lsheet{width:min(900px,100%);top:3vh;height:auto;max-height:94vh;border-radius:28px}
 }
 @media (max-width:380px){ .kpi{padding:14px 10px 12px} .kpi .v{font-size:22px} .big{font-size:40px} .due{padding:18px 16px} }
 /* menu lateral recolhível (>=960px) */
@@ -703,18 +709,18 @@ body.qnav-on .ann-float{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0p
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ann-svg.mk{mix-blend-mode:normal;opacity:.4}}:root[data-theme="dark"] .ann-svg.mk{mix-blend-mode:normal;opacity:.4}
 :root.lsn-light .lesson .ann-svg.mk,:root.lsn-light .qlesson .ann-svg.mk,:root.lsn-light .lwrap .ann-svg.mk{mix-blend-mode:multiply;opacity:1}
 /* lição em fundo claro no tablet, mesmo com o app no escuro */
-:root.lsn-light .lwrap>.ann-surface,:root.lsn-light .lesson,:root.lsn-light .qlesson{--bg:#F5F5F4;--surface:#FFFFFF;--surface-2:#F4F4F5;--pill:rgba(228,228,231,.5);--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:#A1A1AA;--line:#E4E4E7;--hair:rgba(24,24,27,.06);--accent:#0F766E;--accent-ink:#FFFFFF;--accent-soft:#F0FDFA;--usmle:#4338CA;--usmle-soft:#EEF2FF;--usmle-line:#C7D2FE;--ok:#059669;--ok-soft:#ECFDF5;--ok-bar:#6EE7B7;--bad:#E11D48;--bad-soft:#FFF1F2;--bad-bar:#FDA4AF;--warn:#B45309;--warn-soft:#FFFBEB;--warn-line:#FDE68A;color-scheme:light}
+:root.lsn-light .lwrap>.ann-surface,:root.lsn-light .lesson,:root.lsn-light .qlesson,:root.lsn-light .sheet.lsheet{--bg:#F5F5F4;--surface:#FFFFFF;--surface-2:#F4F4F5;--pill:rgba(228,228,231,.5);--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:#A1A1AA;--line:#E4E4E7;--hair:rgba(24,24,27,.06);--accent:#0F766E;--accent-ink:#FFFFFF;--accent-soft:#F0FDFA;--usmle:#4338CA;--usmle-soft:#EEF2FF;--usmle-line:#C7D2FE;--ok:#059669;--ok-soft:#ECFDF5;--ok-bar:#6EE7B7;--bad:#E11D48;--bad-soft:#FFF1F2;--bad-bar:#FDA4AF;--warn:#B45309;--warn-soft:#FFFBEB;--warn-line:#FDE68A;color-scheme:light}
 :root.lsn-light .lesson{background:#FFFFFF;color:#27272A}
 :root.lsn-light .qlesson .qlh b{color:var(--ink-2)}:root.lsn-light .qlesson .qlbody{background:#FFFFFF}
 :root.lsn-light .qlesson{background:#FFFFFF;border-radius:20px;padding:10px 10px 0;color:var(--ink)}
 :root.lsn-light .qlesson .btn:not(.primary){background:var(--surface-2);color:var(--ink)}
 :root.lsn-light .lesson .call.usmle{background:var(--usmle-soft);box-shadow:0 0 0 1px var(--usmle-line) inset}:root.lsn-light .lesson .call.usmle .ct{color:var(--usmle)}
 /* lição em sépia (papel creme, texto cinza-escuro): padrão, cansa menos a vista */
-:root.lsn-sepia .lwrap>.ann-surface,:root.lsn-sepia .lesson,:root.lsn-sepia .qlesson{--bg:#EDE3CC;--surface:#F4ECD8;--surface-2:#EADFC6;--pill:rgba(214,198,164,.45);--ink:#2F2A24;--ink-2:#3D362E;--muted:#6B6153;--subtle:#8A7F6E;--line:#DCCDAE;--hair:rgba(70,50,20,.08);--accent-soft:color-mix(in srgb,#0F766E 9%,#F4ECD8);--usmle-soft:color-mix(in srgb,#4338CA 8%,#F4ECD8);--usmle-line:color-mix(in srgb,#4338CA 25%,#F4ECD8);--ok-soft:color-mix(in srgb,#059669 10%,#F4ECD8);--bad-soft:color-mix(in srgb,#E11D48 8%,#F4ECD8);--warn-soft:color-mix(in srgb,#B45309 9%,#F4ECD8);--warn-line:color-mix(in srgb,#B45309 30%,#F4ECD8)}
+:root.lsn-sepia .lwrap>.ann-surface,:root.lsn-sepia .lesson,:root.lsn-sepia .qlesson,:root.lsn-sepia .sheet.lsheet{--bg:#EDE3CC;--surface:#F4ECD8;--surface-2:#EADFC6;--pill:rgba(214,198,164,.45);--ink:#2F2A24;--ink-2:#3D362E;--muted:#6B6153;--subtle:#8A7F6E;--line:#DCCDAE;--hair:rgba(70,50,20,.08);--accent-soft:color-mix(in srgb,#0F766E 9%,#F4ECD8);--usmle-soft:color-mix(in srgb,#4338CA 8%,#F4ECD8);--usmle-line:color-mix(in srgb,#4338CA 25%,#F4ECD8);--ok-soft:color-mix(in srgb,#059669 10%,#F4ECD8);--bad-soft:color-mix(in srgb,#E11D48 8%,#F4ECD8);--warn-soft:color-mix(in srgb,#B45309 9%,#F4ECD8);--warn-line:color-mix(in srgb,#B45309 30%,#F4ECD8)}
 :root.lsn-sepia .lesson{background:#F4ECD8;color:var(--ink-2)}
 :root.lsn-sepia .qlesson,:root.lsn-sepia .qlesson .qlbody{background:#F4ECD8}
 /* lição escura mesmo com o app no claro */
-:root.lsn-dark .lwrap>.ann-surface,:root.lsn-dark .lesson,:root.lsn-dark .qlesson{--bg:#101316;--surface:#191e23;--surface-2:#22292f;--pill:rgba(63,63,70,.5);--ink:#e6ebef;--ink-2:#cbd4dc;--muted:#a7b3be;--subtle:#96a3af;--line:#35404a;--hair:rgba(207,222,234,.12);--accent:#83d8c8;--accent-ink:#102b27;--accent-soft:#193b35;--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;--ok:#83d8b3;--ok-soft:#182f29;--ok-bar:#4e9e7d;--bad:#f1a0aa;--bad-soft:#362329;--bad-bar:#b66b78;--warn:#e6c580;--warn-soft:#302b20;--warn-line:#695a35;color-scheme:dark}
+:root.lsn-dark .lwrap>.ann-surface,:root.lsn-dark .lesson,:root.lsn-dark .qlesson,:root.lsn-dark .sheet.lsheet{--bg:#101316;--surface:#191e23;--surface-2:#22292f;--pill:rgba(63,63,70,.5);--ink:#e6ebef;--ink-2:#cbd4dc;--muted:#a7b3be;--subtle:#96a3af;--line:#35404a;--hair:rgba(207,222,234,.12);--accent:#83d8c8;--accent-ink:#102b27;--accent-soft:#193b35;--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;--ok:#83d8b3;--ok-soft:#182f29;--ok-bar:#4e9e7d;--bad:#f1a0aa;--bad-soft:#362329;--bad-bar:#b66b78;--warn:#e6c580;--warn-soft:#302b20;--warn-line:#695a35;color-scheme:dark}
 :root.lsn-dark .lesson{background:#191e23;color:var(--ink-2)}
 :root.lsn-dark .qlesson{background:#191e23;border-radius:20px;padding:10px 10px 0;color:var(--ink)}:root.lsn-dark .qlesson .qlbody{background:#191e23}
 :root.lsn-dark .lesson .ann-svg.mk,:root.lsn-dark .qlesson .ann-svg.mk,:root.lsn-dark .lwrap .ann-svg.mk{mix-blend-mode:normal;opacity:.4}
@@ -1073,7 +1079,7 @@ function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
   document.querySelectorAll("[data-ann-surface]").forEach(s=>s.classList.toggle("ann-enabled",s.dataset.owner===S.annId));
-  annInit($("#view"));
+  annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer"));
 }
 function annPt(e,g){ return [e.clientX-g.sr.left,e.clientY-g.sr.top,e.pointerType==="pen"||e.pressure>0&&e.pressure!==.5?Math.max(.05,Math.min(1,e.pressure||.5)):.5]; }
 function annSegDist(p,a,b){ const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy; let t=l?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l:0; t=Math.max(0,Math.min(1,t)); return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy); }
@@ -1326,7 +1332,8 @@ window.addEventListener("popstate", e=>{
   const v=(e.state&&e.state.v)||(location.hash||"#home").slice(1)||"home";
   if(!["home","tutor","mapa","plan","study","review","cards","stats","bank","lesson","search"].includes(v) || v===S.view) return;
   if(v==="lesson" && !S.lessons.get(S.lessonId)) return;
-  S.view=v; render(); window.scrollTo({top:0});
+  const backQ=S.view==="lesson"&&(v==="study"||v==="review")&&S.qY!=null&&S.session&&!S.session.done; const y=backQ?S.qY:0; S.qY=null;
+  S.view=v; render(); window.scrollTo({top:y});
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
@@ -1562,6 +1569,7 @@ function vPlayer(v){
   hydrateAI(q);
 }
 function questionHTML(q, it, reveal, simMode){
+  const lsnRow=!simMode&&lessonOf(q.discipline,q.topic); // botão "Lição do tema" junto da explicação, sem precisar subir até as etiquetas
   const {c, lang, fallback} = content(q); if(!c) return "";
   const perm = it?.perm || c.opts.map((_,i)=>i);
   const pick = it?.pick ?? null;
@@ -1604,7 +1612,7 @@ function questionHTML(q, it, reveal, simMode){
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore+driveLinks(c.peg,c.pegMore):c.peg)}${q.standard==="usmle"?driveInline(c.peg+(det&&c.pegMore?" "+c.pegMore:"")):""}</div>`:""}
     ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
-    <div class="row"><button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
+    <div class="row">${lsnRow?`<button class="btn small qrow-lesson" data-act="lesson" data-id="${esc(lsnRow.id)}">📖 ${T2("Lição do tema","Topic lesson")}</button>`:""}<button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&WIDE_Q.matches&&LP;
@@ -2317,13 +2325,26 @@ function bankTable(list){ const en=set().lang==="en"; const so=S.bankSort||(S.ba
   const hasUw=rows.length>0&&rows.every(x=>x.std==="usmle"); return `<div class="panel" style="padding:6px 6px 2px"><div class="btbl-w"><table class="btbl"><thead><tr>${th("n","#","num")}${th("t",en?"Question":"Enunciado")}${th("sub",en?"Subtopic":"Subtema")}${th("orig",en?"Source":"Origem")}${hasUw?"":th("pri",en?"Priority":"Prior.")}${th("std",en?"Std":"Padrão")}${th("acc",en?"Correct":"Acerto","num")}${th("last",en?"Last":"Última","num")}</tr></thead><tbody>
    ${rows.map(x=>{ const st=status(x.q.id); return `<tr data-act="bankOpen" data-q="${esc(x.q.id)}" tabindex="0"><td class="num mono">${x.n+1}</td><td class="bt"><span>${safe(x.t)}</span>${isMarked(x.q.id)?' <span title="'+tr("markedReview")+'">🔖</span>':""}${x.q.i18n?.[set().lang]?.outdated||x.q.i18n?.pt?.outdated?` <span class="tag old">${en?"Outdated":"Defasada"}</span>`:""}</td><td class="bs">${esc(x.sub)}</td><td>${x.q.exam?`<span class="tag real">${esc(x.orig)}</span>`:`<span class="muted">${esc(x.orig)}</span>`}</td>${x.std==="usmle"?"":`<td><span class="stars p${x.pri}" title="${T2("Prioridade","Priority")} ${x.pri}">${STARS(x.pri)}</span></td>`}<td><span class="tag std ${x.std==="usmle"?"usmle":""}">${x.std.toUpperCase()}</span></td><td class="num"><span class="st ${st}">${x.r?`${x.r.nOk||0}/${x.r.n}`:"·"}</span></td><td class="num muted">${ago(x.last)}</td></tr>`; }).join("") || `<tr><td colspan="8"><p class="empty">${tr("none")}</p></td></tr>`}</tbody></table></div></div>`; }
 WIDE_B.addEventListener?.("change",()=>{ if(S.view==="bank") render(); });
-function openSheet(html, onMount){
+function openSheet(html, onMount, cls){
   if(!$("#layer").innerHTML){ try{ history.pushState(Object.assign({v:S.view},S.tuB!=null&&tuOn()?{tb:S.tuB}:{},{sheet:1}),"",location.hash||"#"+S.view); S.sheetPushed=true; }catch(e){} }
-  $("#layer").innerHTML = `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="sheet-in">${html}</div></div>`;
+  $("#layer").innerHTML = `<div class="scrim" data-act="closeSheet"></div><div class="sheet${cls?" "+cls:""}" role="dialog" aria-modal="true"><div class="grab"></div><div class="sheet-in">${html}</div></div>`;
+  if(S.sheetY==null) S.sheetY=Math.round(window.scrollY||0);
   document.body.style.overflow="hidden"; onMount && onMount($("#layer .sheet"));
 }
-function closeSheetRaw(){ $("#layer").innerHTML=""; document.body.style.overflow=""; S.gen=null; }
+function closeSheetRaw(){ $("#layer").innerHTML=""; document.body.style.overflow=""; S.gen=null;
+  // devolve a tela exatamente onde estava antes da folha (o navegador às vezes zera a rolagem ao travar o fundo)
+  const y=S.sheetY; S.sheetY=null; if(y!=null&&Math.abs((window.scrollY||0)-y)>1){ window.scrollTo(0,y); requestAnimationFrame(()=>{ if(Math.abs((window.scrollY||0)-y)>1) window.scrollTo(0,y); }); } }
 function closeSheet(){ closeSheetRaw(); if(S.sheetPushed){ S.sheetPushed=false; try{ history.back(); }catch(e){} } }
+/* ---------- LIÇÃO POR CIMA DA QUESTÃO ----------
+   Na sessão (celular/tablet), "📖 Lição" abre a lição numa folha de tela cheia. A questão continua montada embaixo,
+   com a resposta e a rolagem intactas; "Voltar à questão" ou o voltar do Android fecham a folha. */
+function inQSession(){ const s=S.session; return !!(s&&!s.done&&(S.view==="study"||S.view==="review")); }
+function lessonSheet(id){ const l=S.lessons.get(id); if(!l) return;
+  openSheet(`<div class="lsh-top"><button type="button" class="btn small primary" data-act="closeSheet">← ${T2("Voltar à questão","Back to question")}</button><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(l.id)}" data-full="1">${T2("Abrir página","Open page")}</button></div>
+    <div class="lsh-h"><div class="eyebrow">${esc(nm(discById(l.discipline)))} · ${T2("Lição","Lesson")}${l.minutes?` · ~${l.minutes} min`:""}</div><h2 style="margin:2px 0 0">${esc(l.title)}</h2></div>
+    <div class="row">${annBar("L:"+l.id,false)}</div>
+    <div class="lsh-b">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}</div>`,
+    sh=>{ sh.scrollTop=0; requestAnimationFrame(()=>annInit(sh)); }, "lsheet"); }
 function bankPreview(id){
   const q=S.qs.get(id); if(!q) return;
   const it={id, perm:[...Array(content(q).c.opts.length).keys()], pick:q.correct};
@@ -2855,7 +2876,12 @@ document.addEventListener("click", async e=>{
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
   if(act==="lpane"){ LP=!LP; try{ localStorage.setItem("gab.lpane",LP?"1":"0"); }catch(e){} return render(); }
-  if(act==="lesson"){ S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); } return go("lesson"); }
+  if(act==="lesson"){ S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); }
+    // durante uma sessão de questões a lição abre por cima (folha), sem desmontar a questão; "Abrir página" leva à lição inteira
+    if(!a.dataset.full&&inQSession()) return lessonSheet(a.dataset.id);
+    if($("#layer").innerHTML){ closeSheetRaw(); if(S.sheetPushed){ S.sheetPushed=false; try{ history.replaceState(Object.assign({},history.state||{},{sheet:undefined}),"",location.hash); }catch(_){} } document.body.style.overflow=""; }
+    if(S.view==="study"||S.view==="review") S.qY=Math.round(window.scrollY||0);
+    S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; return go("lesson"); }
   if(act==="lessonPdf"){ return pdfRun([S.lessons.get(S.lessonId)], a); }
   if(act==="discPdf"){ const d=curDisc(); return d&&pdfRun(lessonsOf(d.id), a, d.id); }
   if(act==="pdfShare"){ const fs=S.pdfFiles||[]; return pdfShare(a.dataset.i==="all"?fs:[fs[a.dataset.i]]); }
@@ -3194,7 +3220,7 @@ let posDone=false;
 function posSave(){
   if(!posDone||!S.catalog) return;
   try{
-    const s=S.session; const keep=s&&!s.done&&!s.reviewing&&(S.view==="study"||S.view==="review");
+    const s=S.session; const keep=s&&!s.done&&!s.reviewing&&s.items?.length>0; // sessão ativa fica salva mesmo com a lição (ou outra tela) aberta
     const fc=S.fcDeck&&S.fcDeck.i<S.fcDeck.ids.length&&S.view==="cards"?S.fcDeck:null;
     const v=POS_VIEWS.includes(S.view)?S.view:(S.view==="search"?(S.srBack&&POS_VIEWS.includes(S.srBack)?S.srBack:"home"):"home");
     localStorage.setItem(POS_K,JSON.stringify({v,tab:S.studyTab||null,lesson:v==="lesson"?S.lessonId:null,lb:S.lessonBack||null,sess:keep?s:null,fc,tb:(S.tuB!=null&&tuOn())?S.tuB:null,tpd:tutorPlan()?.date||null,t:Date.now()}));
@@ -3211,7 +3237,7 @@ function posRestore(){
   let v=o.v;
   if(v==="lesson"){ if(!S.lessons.get(o.lesson)) v="study"; else { S.lessonId=o.lesson; S.lessonBack=o.lb||"study"; } }
   if(o.tab) S.studyTab=o.tab;
-  if(o.sess&&fresh&&(v==="study"||v==="review")){
+  if(o.sess&&fresh){
     const s=o.sess; s.items=(s.items||[]).filter(it=>S.qs.has(it.id));
     if(s.items.length&&Array.isArray(s.items)){ s.i=Math.min(s.i||0,s.items.length-1); S.session=s; }
   }
@@ -3225,7 +3251,9 @@ function posRestore(){
   S.view=v; S.tuB=(v==="tutor"&&tb<0)?null:tb;
   // pilha do voltar: Início embaixo (o voltar não fecha o app) e, no Tutor, plano › bloco › tela
   const top=tb!=null?{v,tb}:{v}, chain=tuChain(top);
-  try{ history.replaceState({v:"home"},"","#home"); if(v!=="home") (chain.length?chain:[top]).forEach(st=>history.pushState(st,"","#"+st.v)); }catch(_){}
+  // lição reaberta: a tela de onde ela veio (ex.: a questão) fica logo abaixo, para o voltar cair nela
+  const lb=S.lessonBack, under=(v==="lesson"&&!chain.length&&lb&&lb!=="home"&&lb!=="lesson"&&POS_VIEWS.includes(lb)&&((lb!=="study"&&lb!=="review")||S.session))?[{v:lb}]:[];
+  try{ history.replaceState({v:"home"},"","#home"); if(v!=="home") (chain.length?chain:under.concat([top])).forEach(st=>history.pushState(st,"","#"+st.v)); }catch(_){}
   S.posY=(yv===v)?y:0;
   return true;
 }

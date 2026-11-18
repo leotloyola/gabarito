@@ -73,7 +73,19 @@ function fixture(){
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
     await step("report sheet", async()=>{ await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
-    await step("lesson from question", async()=>{ await p.click('.tags [data-act="lesson"]'); await p.waitForSelector(".lesson"); await p.goBack(); });
+    await step("lesson from question", async()=>{
+      await p.evaluate(()=>{ const s=S.session; s.items[s.i].pick=0; render(); window.scrollTo(0,99999); }); const y0=await p.evaluate(()=>Math.round(scrollY));
+      await p.evaluate(()=>document.querySelector('#view .qrow-lesson[data-act="lesson"]').click()); await p.waitForSelector("#layer .lsheet .lesson");
+      const a=await p.evaluate(()=>({v:S.view,q:!!document.querySelector("#view .stem"),i:S.session.i}));
+      if(a.v!=="study"||!a.q) throw new Error("folha da lição desmontou a questão: "+JSON.stringify(a));
+      await p.evaluate(()=>{ posDone=true; posSave(); }); const saved=await p.evaluate(()=>JSON.parse(localStorage.getItem("gab.pos")||"{}").sess); if(!saved) throw new Error("sessão não salva com a lição aberta");
+      await p.goBack(); await p.waitForTimeout(80); const b2=await p.evaluate(()=>({open:!!document.querySelector("#layer").innerHTML,v:S.view,y:Math.round(scrollY)}));
+      if(b2.open||b2.v!=="study"||Math.abs(b2.y-y0)>2) throw new Error("voltar da folha: "+JSON.stringify({...b2,y0}));
+      await p.click('.tags [data-act="lesson"]'); await p.click('#layer .lsh-top [data-act="closeSheet"]'); await p.waitForTimeout(50); if(await p.evaluate(()=>!!document.querySelector("#layer").innerHTML)) throw new Error("Voltar à questão não fechou");
+      await p.evaluate(()=>window.scrollTo(0,99999)); const y1=await p.evaluate(()=>Math.round(scrollY));
+      await p.evaluate(()=>document.querySelector('#view .qrow-lesson[data-act="lesson"]').click()); await p.click('#layer [data-full="1"]'); await p.waitForTimeout(50); if(await p.evaluate(()=>S.view)!=="lesson") throw new Error("Abrir página");
+      await p.goBack(); await p.waitForTimeout(120); const c=await p.evaluate(()=>({v:S.view,y:Math.round(scrollY),open:!!document.querySelector("#layer").innerHTML}));
+      if(c.v!=="study"||c.open||Math.abs(c.y-y1)>2) throw new Error("voltar da página da lição: "+JSON.stringify({...c,y1})); });
     await step("topic picker", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; S.studyTab="build"; set().std="all"; set().topic="t1"; go("study"); }); await p.click('#selTopic'); await p.evaluate(()=>document.querySelectorAll("details.pg").forEach(g=>g.open=true)); await p.click('[data-act="pickTopic"][data-val="t3"]'); const t=await p.evaluate(()=>set().topic); if(t!=="t3") throw new Error("tema não trocou: "+t); await p.click('#selTopic'); await p.evaluate(()=>document.querySelectorAll("details.pg").forEach(g=>g.open=true)); await p.click('[data-act="pickTopic"][data-val="exam:P1"]'); await p.click('#suSub'); await p.click('[data-act="pickSub"][data-val="t2"]'); const su=await p.evaluate(()=>S.setup.sub); if(su!=="t2") throw new Error("subtema: "+su); await p.evaluate(()=>{ S.setup=null; set().topic="t1"; render(); }); });
     await step("idioma da questão", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().lang="pt"; set().topic="t3"; for(const q of S.qs.values()) if(q.topic==="t3"&&q.i18n.pt) q.i18n.en={...q.i18n.pt,stem:"EN "+q.i18n.pt.stem}; go("study"); }); await p.click('[data-act="startSession"]');
       await p.click('.qlang [data-v="en"]'); if(!/^EN /.test(await p.textContent("#view .stem"))) throw new Error("não trocou para EN");
@@ -209,10 +221,12 @@ function fixture(){
       await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; const r=posRestore(); if(!r) throw new Error("posRestore false"); render(); },F);
       const r=await p.evaluate(()=>({v:S.view,i:S.session&&S.session.i,pk:S.session&&S.session.items[1].pick,n:S.session&&S.session.items.length}));
       if(r.v!=="study"||r.i!==3||r.pk!==2||!r.n) throw new Error("sessão não restaurada: "+JSON.stringify(r));
-      await p.evaluate(F=>{ posDone=true; S.session=null; S.lessonId="lesson:da:t1"; S.lessonBack="study"; go("lesson"); posSave(); },F);
+      await p.evaluate(F=>{ posDone=true; S.lessonId="lesson:da:t1"; S.lessonBack="study"; go("lesson"); posSave(); },F);
       await p.reload(); await p.waitForTimeout(400);
       await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; posRestore(); render(); },F);
-      const r2=await p.evaluate(()=>({v:S.view,l:S.lessonId})); if(r2.v!=="lesson"||r2.l!=="lesson:da:t1") throw new Error("lição não restaurada: "+JSON.stringify(r2));
+      const r2=await p.evaluate(()=>({v:S.view,l:S.lessonId,i:S.session&&S.session.i,pk:S.session&&S.session.items[1].pick})); if(r2.v!=="lesson"||r2.l!=="lesson:da:t1") throw new Error("lição não restaurada: "+JSON.stringify(r2));
+      if(r2.i!==3||r2.pk!==2) throw new Error("sessão perdida ao fechar com a lição aberta: "+JSON.stringify(r2));
+      await p.click('[data-act="lessonBack"]'); await p.waitForTimeout(80); const r3=await p.evaluate(()=>({v:S.view,i:S.session&&S.session.i})); if(r3.v!=="study"||r3.i!==3) throw new Error("voltar da lição restaurada: "+JSON.stringify(r3));
       await p.evaluate(()=>{ localStorage.removeItem("gab.pos"); localStorage.removeItem("gab.pos.y"); }); });
     await step("mapa de conceitos", async()=>{
       const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;

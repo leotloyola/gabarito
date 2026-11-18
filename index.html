@@ -1883,10 +1883,37 @@ function askGemini(id){
 }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
-  const secs=s.secs ?? (now()-s.t0)/1000;
+  const ans=s.items.filter(it=>it.pick!==null).length, bad=ans-ok, secs=s.secs ?? (now()-s.t0)/1000;
+  const sim=!s.end; // simulado mantém o cabeçalho de nota; lista de estudo ganha os próximos passos
+  let head, acts;
+  if(sim){
+    head=`<div class="eyebrow">${tr("simDone")}</div><h1>${ok}/${n} · ${Math.round(100*ok/n)}%</h1><p class="lede">${tr("time")}: ${fmtTime(secs)} · ${fmtTime(secs/n)}/${set().lang==="en"?"question":"questão"}</p>`;
+    acts=`${s.from==="cx"?`<button class="btn primary" data-nav="mapa">🧠 ${T2("Voltar às competências","Back to competencies")}</button>`:s.exam?`<button class="btn primary" data-act="endExams">📄 ${T2("Voltar às provas","Back to exams")}</button>`:`<button class="btn primary" data-act="newSession">${tr("newSession")}</button>`}<button class="btn" data-nav="home">${tr("backHome")}</button>`;
+  } else {
+    // tema da lista: o da lição de origem, senão o tema comum a todas as questões
+    const q0=S.qs.get(s.items[0]?.id), one=q0&&s.items.every(it=>{ const q=S.qs.get(it.id); return q&&q.discipline===q0.discipline&&q.topic===q0.topic; });
+    const lsn=(s.lid&&S.lessons.get(s.lid))||(one?lessonFor(q0.discipline,q0.topic):null);
+    const d=lsn?lsn.discipline:one?q0.discipline:null, t=lsn?lsn.topic:one?q0.topic:null;
+    const L=d?lessonsOf(d):[], k=lsn?L.findIndex(l=>l.id===lsn.id):-1, nx=k>=0?L[k+1]:null;
+    const left=d&&t?lpQs(d,t).open.length:0;
+    const B=[];
+    if(lsn) B.push(`<button class="btn${s.from==="lesson"?" primary":""}" data-act="endLesson" data-id="${esc(lsn.id)}">📖 ${s.from==="lesson"?T2("Voltar à lição","Back to the lesson"):T2("Ler a lição do tema","Read the topic lesson")}</button>`);
+    if(nx) B.push(`<button class="btn${s.from==="lesson"&&!left?" primary":""}" data-act="endLesson" data-id="${esc(nx.id)}">${T2("Próxima lição","Next lesson")} → <small style="opacity:.75">${esc(nx.title||"")}</small></button>`);
+    if(d&&t) B.push(`<button class="btn${s.from==="lesson"&&left?"":(!lsn&&left?" primary":"")}" data-act="lessonPractice" data-d="${esc(d)}" data-t="${esc(t)}">▶ ${left?T2(`Praticar mais · ${left} novas`,`Practice more · ${left} new`):T2("Praticar de novo","Practice again")}</button>`);
+    if(bad) B.push(`<button class="btn" data-act="endWrong">↺ ${T2(`Refazer as erradas · ${bad}`,`Redo the missed · ${bad}`)}</button>`);
+    if(s.from==="cx") B.push(`<button class="btn" data-nav="mapa">🧠 ${T2("Voltar às competências","Back to competencies")}</button>`);
+    if(s.from==="search") B.push(`<button class="btn" data-act="endBack" data-v="search">🔎 ${T2("Voltar à busca","Back to search")}</button>`);
+    if(s.exam) B.push(`<button class="btn" data-act="endExams">📄 ${T2("Voltar às provas","Back to exams")}</button>`);
+    if(s.kind==="review") B.push(`<button class="btn" data-act="endBack" data-v="review">${T2("Voltar à revisão","Back to review")}</button>`);
+    else if(!(d&&t)&&!s.exam) B.push(`<button class="btn" data-act="newSession">${tr("newSession")}</button>`);
+    B.push(`<button class="btn ghost" data-nav="home">${T2("Início","Home")}</button>`);
+    if(!B.some(x=>x.includes("btn primary"))) B[0]=B[0].replace('class="btn','class="btn primary');
+    head=`<div class="eyebrow">${T2("Fim da lista","List finished")}${d&&t?` · ${esc(topicName(d,t))}`:""}</div><h1>${ok}/${ans||n} ${T2("certas","correct")}${ans?` · ${Math.round(100*ok/ans)}%`:""}</h1><p class="lede">${ans<n?T2(`${n-ans} sem resposta · `,`${n-ans} unanswered · `):""}${tr("time")}: ${fmtTime(secs)}</p>`;
+    acts=B.join("");
+  }
   v.innerHTML = `
-   <div><div class="eyebrow">${tr("simDone")}</div><h1>${ok}/${n} · ${Math.round(100*ok/n)}%</h1><p class="lede">${tr("time")}: ${fmtTime(secs)} · ${fmtTime(secs/n)}/${set().lang==="en"?"question":"questão"}</p></div>
-   <div class="row">${s.from==="cx"?`<button class="btn primary" data-nav="mapa">🧠 ${T2("Voltar às competências","Back to competencies")}</button>`:`<button class="btn primary" data-act="newSession">${tr("newSession")}</button>`}<button class="btn" data-nav="home">${tr("backHome")}</button></div>
+   <div>${head}</div>
+   <div class="row endacts" style="flex-wrap:wrap;gap:8px">${acts}</div>
    <div class="panel"><h2>${tr("reviewList")}</h2><div class="list">${s.items.map((it,i)=>{ const q=S.qs.get(it.id); if(!q) return ""; const c=content(q).c; const good=it.pick===q.correct; return `
      <button type="button" class="li" data-act="reviewItem" data-i="${i}"><span class="t">${i+1}. ${safe(c.stem)}</span><span class="st ${it.pick===null?"no":good?"ok":"bad"}">${it.pick===null?"—":good?"✓":"✗"}</span>
      <span class="m">${tagsOf(q).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</span></button>`; }).join("")}</div></div>`;
@@ -2051,6 +2078,12 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
 function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="group" aria-label="${T2("Tipo de revisão","Review type")}" style="align-self:flex-start"><button type="button" data-nav="review" aria-pressed="${!fc}">${T2("Questões","Questions")}${dueQs().length?` · ${dueQs().length}`:""}</button><button type="button" data-nav="cards" aria-pressed="${fc}">Flashcards${dueCards().length?` · ${dueCards().length}`:""}</button></div>`; }
 /* ---------- LIÇÕES ---------- */
 function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
+function topicName(d,t){ return nm((discById(d)?.topics||[]).find(x=>x.id===t)); }
+function lessonFor(d,t){ for(const l of S.lessons.values()) if(l.discipline===d&&l.topic===t) return l; return null; }
+/* sai da lista para uma lição: se a lista foi aberta a partir da lição (entrada logo abaixo no histórico), volta nela; senão troca a tela */
+function endToLesson(id){ const l=S.lessons.get(id); if(!l) return; const s=S.session; S.session=null; S.lessonId=id; S.prog.read=S.prog.read||{}; if(!S.prog.read[id]){ S.prog.read[id]=now(); saveProg(); }
+  if(s&&s.from==="lesson"&&s.hl===history.length&&history.state?.v===S.view&&S.view!=="lesson"){ history.back(); return; }
+  if(!S.lessonBack||S.lessonBack==="lesson"||S.lessonBack==="study"||S.lessonBack==="review") S.lessonBack="study"; go("lesson",true); }
 function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
 function lessonReqBtn(dId,tId,small){ if(!dId||!tId||lessonOf(dId,tId)) return ""; return `<button class="btn ${small?"small ":""}ghost" data-act="askLesson" data-d="${esc(dId)}" data-t="${esc(tId)}">✉ ${T2("Pedir lição ao Claude","Request lesson from Claude")}</button>`; }
@@ -3155,7 +3188,8 @@ document.addEventListener("click", async e=>{
   if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); const n=lpCount(); const lq=lpQs(a.dataset.d,a.dataset.t);
     // não feitas primeiro (por ★); se faltar para completar a quantidade, entram as já feitas (erradas antes)
     const done=lq.all.filter(q=>status(q.id)!=="no"); const pool=prioSort(lq.open).concat(prioSort(done.filter(q=>status(q.id)==="bad")),prioSort(done.filter(q=>status(q.id)!=="bad")));
-    if(!pool.length) return toast(tr("none")); S.setup=Object.assign(defaultSetup(),{mode:"study",count:n,filter:"all",order:"seq"}); S.session=buildSession("study",pool,S.setup); return go("study"); }
+    if(!pool.length) return toast(tr("none")); S.setup=Object.assign(defaultSetup(),{mode:"study",count:n,filter:"all",order:"seq"}); S.session=buildSession("study",pool,S.setup);
+    const lid=lessonFor(a.dataset.d,a.dataset.t)?.id; Object.assign(S.session,{from:"lesson",lid}); const wasQ=S.view==="study"; go("study",wasQ); S.session.hl=history.length; return; }
   if(act==="statsTab"){ S.statsTab=a.dataset.val; render(); window.scrollTo({top:0}); return; }
   if(act==="examEssentials"){ if(a.dataset.d&&a.dataset.d!==set().disc){ set().disc=a.dataset.d; } set().topic="exam:"+a.dataset.ex; S.fcDeck=null; saveProg(); S.studyTab="build"; S.setup=Object.assign(defaultSetup(),{prio:"3",order:"pri",count:20,filter:"open"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="wrong"; pool=setupPool(S.setup); } if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup); } if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }
   if(act==="planCfg") return openPlanCfg();
@@ -3210,12 +3244,20 @@ document.addEventListener("click", async e=>{
   if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); S.annId=annKeepNext(s); render(); window.scrollTo({top:0}); return; }
   if(act==="finish"){ const s=S.session;
     if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick,{rev:false})) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std,exam:s.exam||null}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
-    const v=S.view, fs=s.from; S.session=null; toast("✓");
-    if(fs==="tutor") return tuGo(s.tb>=0?{v:"tutor",tb:s.tb}:{v:"tutor"}); // fim do bloco: volta ao bloco (resultado + próximo)
-    return go(fs==="search"?"search":v==="review"?"review":"home"); }
+    const fs=s.from;
+    if(fs==="tutor"){ S.session=null; toast("✓"); return tuGo(s.tb>=0?{v:"tutor",tb:s.tb}:{v:"tutor"}); } // fim do bloco: volta ao bloco (resultado + próximo)
+    // fim da lista: tela de fim com o próximo passo lógico (lição, próxima lição, praticar mais, erradas), nunca o Início direto
+    s.done=true; s.end=true; s.reviewing=false; s.secs=(now()-s.t0)/1000; saveProg(); render(); window.scrollTo({top:0}); return; }
   if(act==="exit"){ clearInterval(timerInt); const s=S.session, fs=s?.from;
     if(fs==="tutor"){ if(!(s.tb>=0)) S.session=null; return tuGo(s.tb>=0?{v:"tutor",tb:s.tb}:{v:"tutor"}); } // ✕ no Tutor: sobe para o bloco e guarda a sessão para "Continuar"
+    if(fs==="lesson"&&s.lid&&S.lessons.get(s.lid)) return endToLesson(s.lid);
+    if(s?.exam) S.studyTab="full"; // ✕ numa prova na íntegra volta à lista de provas
     S.session=null; return fs==="search"?go("search"):render(); }
+  if(act==="endLesson") return endToLesson(a.dataset.id);
+  if(act==="endExams"){ S.session=null; S.studyTab="full"; return go("study",true); }
+  if(act==="endWrong"){ const s=S.session; if(!s) return; const L=s.items.filter(it=>{ const q=S.qs.get(it.id); return q&&it.pick!==null&&it.pick!==q.correct; }).map(it=>S.qs.get(it.id)); if(!L.length) return toast(tr("none"));
+    const n=buildSession(s.kind,L,Object.assign(defaultSetup(),{mode:"study",count:0,order:"seq",shuffleO:true})); Object.assign(n,{from:s.from,lid:s.lid,cx:s.cx,hl:s.hl}); S.session=n; render(); window.scrollTo({top:0}); return; }
+  if(act==="endBack"){ const v=a.dataset.v; S.session=null; if(v===S.view){ render(); window.scrollTo({top:0}); return; } return go(v,true); }
   if(act==="newSession"){ S.session=null; return go("study"); }
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
   if(act==="qlang"){ const id=a.dataset.q, q=S.qs.get(id); if(!q) return; const v=a.dataset.v||(content(q).lang==="pt"?"en":"pt"); if(v===set().lang) delete S.qLang[id]; else S.qLang[id]=v; const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }

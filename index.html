@@ -981,13 +981,21 @@ function applyTheme(){ const t=set().theme; const r=document.documentElement; if
 /* ---------- catalog / filters ---------- */
 // período: set().per = número (ex. 5) ou "all"; sem escolha → período da disciplina atual (ou o mais alto)
 function allDiscs(){ return S.catalog?.disciplines || []; }
-function periods(){ return [...new Set(allDiscs().map(d=>d.period).filter(p=>p!=null))].sort((a,b)=>a-b); }
+/* desempenho: estas funções eram chamadas uma vez por questão (milhares) e cada chamada ordenava as disciplinas
+   de novo; agora guardam o resultado enquanto catálogo/período/disciplina/idioma não mudam */
+let _pdCat,_pd=[];
+function periods(){ if(_pdCat!==S.catalog){ _pdCat=S.catalog; _pd=[...new Set(allDiscs().map(d=>d.period).filter(p=>p!=null))].sort((a,b)=>a-b); } return _pd; }
 // disciplinas sem `period` (ex. USMLE UWorld) ficam na opção "USMLE" do seletor
 function hasFree(){ return allDiscs().some(d=>d.period==null); }
-function curPer(){ const p=set().per, ps=periods(); if(p==="all"||!ps.length) return "all"; if(p==="usmle"&&hasFree()) return "usmle"; if(ps.includes(p)) return p; const d=allDiscs().find(x=>x.id===set().disc); return d ? (d.period ?? "usmle") : ps[ps.length-1]; }
+let _cpK=null,_cpV=null;
+function curPer(){ const k=[S.catalog&&allDiscs().length,_pdCat===S.catalog,set().per,set().disc].join("|"); if(k===_cpK&&_pdCat===S.catalog&&_cpCat===S.catalog) return _cpV; _cpCat=S.catalog; _cpK=k; return (_cpV=curPer0()); }
+let _cpCat=null;
+function curPer0(){ const p=set().per, ps=periods(); if(p==="all"||!ps.length) return "all"; if(p==="usmle"&&hasFree()) return "usmle"; if(ps.includes(p)) return p; const d=allDiscs().find(x=>x.id===set().disc); return d ? (d.period ?? "usmle") : ps[ps.length-1]; }
 function inPer(d){ const p=curPer(); return p==="all" || (p==="usmle" ? d.period==null : d.period===p); }
 // menus: alfabética (pt, sem acento) dentro de cada período; cores seguem a ordem do catálogo (allDiscs)
-function discs(){ return allDiscs().filter(inPer).sort((a,b)=>(a.period??99)-(b.period??99) || nm(a).localeCompare(nm(b),"pt",{sensitivity:"base"})); }
+let _dsK=null,_dsCat=null,_dsV=null;
+function discs(){ const k=curPer()+"|"+set().lang; if(k===_dsK&&_dsCat===S.catalog) return _dsV; _dsK=k; _dsCat=S.catalog; return (_dsV=discs0()); }
+function discs0(){ return allDiscs().filter(inPer).sort((a,b)=>(a.period??99)-(b.period??99) || nm(a).localeCompare(nm(b),"pt",{sensitivity:"base"})); }
 let _dmCat=null,_dm=null;
 function discById(id){ if(_dmCat!==S.catalog){ _dmCat=S.catalog; _dm=new Map(allDiscs().map(d=>[d.id,d])); } return _dm.get(id); }
 function perOk(q){ if(curPer()==="all") return true; const d=discById(q.discipline); return !d || inPer(d); }
@@ -1005,7 +1013,14 @@ function subName(id){ const t=curTopic(); const s=t?.subs?.find(x=>x.id===id); r
 // Banco MED: standard "banco" só aparece em "Banco"/"Tudo"; "Ambos" = UFPR+USMLE (como antes)
 function stdM(q,st){ if(curPer()==="usmle") return q.standard==="usmle"; return st==="tudo" || (st==="all" ? q.standard!=="banco" : q.standard===st); }
 function inCtx(q){ const d=curDisc(), t=curTopic(); if(!d||!t||q.discipline!==d.id) return false; if(t.pseudo? !t.topics.includes(q.topic) : q.topic!==t.id) return false; if(curPer()==="usmle"&&set().sub&&q.sub!==set().sub) return false; const st=set().std; return stdM(q,st); }
-function ctxQs(){ return [...S.qs.values()].filter(inCtx).sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); }
+let _cqK=null,_cqV=null,_cqQs=null;
+function ctxQs(){ const d=curDisc(), t=curTopic(); if(!d||!t) return [];
+  const per=curPer(), st=set().std, sub=per==="usmle"?(set().sub||""):"";
+  const k=[S.qs.size,S.qsMeta?.at||"",d.id,t.id,t.pseudo?t.topics.join(","):"",per,st,sub].join("|");
+  if(k===_cqK&&_cqQs===S.qs) return _cqV.slice(); _cqK=k; _cqQs=S.qs;
+  const tp=t.pseudo?new Set(t.topics):null, out=[];
+  for(const q of S.qs.values()){ if(q.discipline!==d.id) continue; if(tp?!tp.has(q.topic):q.topic!==t.id) continue; if(sub&&q.sub!==sub) continue; if(!stdM(q,st)) continue; out.push(q); }
+  out.sort((a,b)=>(a.order??999)-(b.order??999) || a.id.localeCompare(b.id)); _cqV=out; return out.slice(); }
 function qLangOf(q){ const o=S.qLang[q.id]; return (o&&q.i18n?.[o])?o:set().lang; } // idioma escolhido dentro da questão
 function content(q){ // returns {c, lang, fallback}
   const L0=qLangOf(q), other=L0==="pt"?"en":"pt";

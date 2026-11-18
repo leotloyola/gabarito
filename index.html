@@ -617,13 +617,19 @@ html.toc-off .lwrap>.gdrag{display:none!important}
   .qlbody{overflow:auto;min-height:0;flex:1;border-radius:20px;scrollbar-width:thin;overscroll-behavior:contain}
 }
 @media (min-width:900px) and (max-width:1499.98px){
+  /* questão e lição rolam cada uma no seu lado; a página não rola (altura --qh medida em lpFit) */
   html .wrap:has(.qgrid.l3){max-width:none}
-  html body #view .qgrid.l3{display:grid;grid-template-columns:minmax(0,1fr) var(--lpw,minmax(0,1fr));grid-template-areas:"l p" "r p";grid-template-rows:auto 1fr;gap:18px 36px;align-items:start}
-  #view .qgrid.l3>.qleft{grid-area:l} #view .qgrid.l3>.qright{grid-area:r} #view .qgrid.l3>.qlesson{grid-area:p}
-  html body #view .qgrid.l3>.qleft,html body #view .qgrid.l3>.qright{display:flex;flex-direction:column;gap:12px;position:static;max-height:none;overflow:visible;min-width:0}
+  html body #view .qgrid.l3{display:grid;grid-template-columns:minmax(0,1fr) var(--lpw,minmax(0,1fr));gap:0 36px;align-items:stretch;height:var(--qh,calc(100dvh - 190px))}
+  html body #view .qgrid.l3>.qcol{display:flex;flex-direction:column;gap:18px;overflow-y:auto;min-height:0;min-width:0;overscroll-behavior:contain;padding:0 6px 24px 0;scrollbar-width:thin}
+  html body #view .qgrid.l3 .qleft,html body #view .qgrid.l3 .qright{display:flex;flex-direction:column;gap:12px;position:static;max-height:none;overflow:visible;min-width:0}
   html body #view .qgrid.l3 .qleft .ann-surface:not(.ann-enabled){min-height:0}
   html body #view .qgrid.l3 .qright>.gdrag{display:none!important}
+  html body #view .qgrid.l3 .qlesson{position:relative;top:auto;height:100%;max-height:none;min-height:0}
+  body:has(#view .qgrid.l3) #view .qnav-space{display:none}
+  html body:has(#view .qgrid.l3) main,html body:has(#view .qgrid.l3) #view{padding-bottom:0}
   body.mp-on #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
+}
+@media (min-width:1500px){ #view .qgrid.l3>.qcol{display:contents} }
 }
 /* ---- ultrawide (>=1500px): lição ao lado da questão, temas fixos à esquerda, plano em colunas ---- */
 .qlesson,#side{display:none}.plexams{display:contents}
@@ -1785,8 +1791,13 @@ function vPlayer(v){
    </div><div class="qnav-space" aria-hidden="true"></div>`;
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
   const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
-  hydrateAI(q);
+  hydrateAI(q); lpFit();
 }
+// tablet com a lição ao lado: a grade ocupa só a altura visível (do topo da questão até a barra ←/→), e cada coluna rola sozinha
+function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches||WIDE_Q.matches){ g.style.removeProperty("--qh"); return; }
+  const top=g.getBoundingClientRect().top+(window.scrollY||0), nav=$("#view .qnav"), nh=nav?nav.getBoundingClientRect().height+20:90;
+  g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
+window.addEventListener("resize",()=>{ if($("#view .qgrid.l3")) lpFit(); });
 function questionHTML(q, it, reveal, simMode){
   const lsnRow=!simMode&&lessonOf(q.discipline,q.topic); // botão "Lição do tema" junto da explicação, sem precisar subir até as etiquetas
   const {c, lang, fallback} = content(q); if(!c) return "";
@@ -1837,7 +1848,7 @@ function questionHTML(q, it, reveal, simMode){
   const lp=!!lsn&&LP_Q.matches&&lpOn();
   const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div>${annBar("L:"+lsn.id,false)}<div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div></aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}"><div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${pane}</div>`;
+  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}</div>${fb}${annotationControls(q)}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
 function askPrompt(id){

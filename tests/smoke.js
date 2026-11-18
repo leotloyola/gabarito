@@ -72,7 +72,7 @@ function fixture(){
       await p.click('[data-pick="1"]'); const m=await p.evaluate(()=>document.querySelectorAll("#view .opt.correct,#view .opt.wrong,#view .result").length); if(m) throw new Error("revelou ao marcar no simulado: "+m); });
     await step("study session", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="build"; go("study"); }); await p.click('[data-act="startSession"]'); await p.click('[data-pick="0"]'); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
-    await step("report sheet", async()=>{ await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
+    await step("report sheet", async()=>{ await p.click('details.qmore>summary'); await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
     await step("lesson from question", async()=>{
       await p.evaluate(()=>{ const s=S.session; s.items[s.i].pick=0; render(); window.scrollTo(0,99999); }); const y0=await p.evaluate(()=>Math.round(scrollY));
       await p.evaluate(()=>document.querySelector('#view .qrow-lesson[data-act="lesson"]').click()); await p.waitForSelector("#layer .lsheet .lesson");
@@ -250,6 +250,18 @@ function fixture(){
         const out={n1,at1,n2,log:log.filter(x=>x.startsWith("questions"))};
         SB=saved.SB; S.qs=saved.qs; S.lessons=saved.ls; S.tutor=saved.tu; S.qsMeta=saved.meta; S.uid=saved.uid; S.prog=saved.prog; S.catalog=saved.cat; S.qsFetchT=saved.ft; S.session=null; go("home"); return out; });
       if(r.n1!==2||r.at1!=="2026-01-02T00:00:00+00:00"||r.n2!==3||r.log[0]!=="questions"||r.log[1]!=="questions gte 2026-01-02T00:00:00+00:00") throw new Error("incremental: "+JSON.stringify(r)); });
+    await step("lição anterior/próxima + F/G + Continuar", async()=>{
+      const r=await p.evaluate(()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw();
+        S.lessons.set("lesson:da:t3",{id:"lesson:da:t3",kind:"lesson",discipline:"da",topic:"t3",title:"Lição três",html:"<p>três</p>"});
+        S.lessonId="lesson:da:t1"; go("lesson"); const out={prev0:!!document.querySelector('[data-act="lessonGo"].ghost'),top:!!document.querySelector('#view .row [data-act="lessonPractice"]')};
+        document.querySelector('[data-act="lessonGo"]').click(); out.after=S.lessonId; out.prev=!!document.querySelector('[data-act="lessonGo"][data-id="lesson:da:t1"]');
+        S.lessons.delete("lesson:da:t3");
+        const q={id:"fg-1",discipline:"da",topic:"t1",origin:"authored",standard:"ufpr",i18n:{pt:{stem:"x",opts:"abcdefg".split("").map(t=>({t,why:""}))}},correct:6};
+        S.qs.set(q.id,q); const ss=buildSession("study",[q],Object.assign(defaultSetup(),{shuffleO:true})); out.perm=ss.items[0].perm.length; S.qs.delete(q.id);
+        S.session=buildSession("study",setupPool(Object.assign(defaultSetup(),{filter:"all"})),Object.assign(defaultSetup(),{filter:"all"})); S.session.i=1; out.cont=contTarget(); S.session=null; return out; });
+      if(r.prev0||!r.top||r.after!=="lesson:da:t3"||!r.prev) throw new Error("navegação: "+JSON.stringify(r));
+      if(r.perm!==7) throw new Error("F/G sumiram: "+r.perm);
+      if(!/2 de/.test(r.cont.b)||!r.cont.s) throw new Error("Continuar: "+JSON.stringify(r.cont)); });
     await step("mapa de conceitos", async()=>{
       const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;
         const now=Math.round(Date.now()/1000);

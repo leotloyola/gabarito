@@ -1224,6 +1224,29 @@ document.addEventListener("contextmenu",e=>{ const A=ANN.stroke; if(e.target.clo
     const path=A.raw.slice(), g=A.geo; A.tool="eraser"; A.width=annSize("eraser"); A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)]));
     A.surface.querySelectorAll(".ann-svg .live").forEach(l=>l.innerHTML=""); A.raw=[path[0]]; for(let i=0;i<path.length;i++){ annErase(A,path[i],i?path[i-1]:null); } A.raw=path; annDraw(A.surface,A.keep); } });
 window.addEventListener("resize",()=>annInit());
+/* Trava de rolagem da anotação: no Galaxy Tab, encostar a S Pen com o botão lateral apertado não gera pointerdown e o Chrome
+   trata o gesto como seleção/arraste nativo, que pode rolar a lição até o fim. Enquanto a caneta está sobre a área de anotação,
+   qualquer rolagem que não venha do dedo é desfeita. */
+function annGuardArm(surface){ const now=performance.now(), G=ANN.guard;
+  if(G&&G.surface===surface){ G.until=now+1800; if(!ANN.stroke) G.list.forEach(x=>{ x[1]=x[0].scrollTop; x[2]=x[0].scrollLeft; }); return; }
+  const list=[]; for(let n=surface.parentElement;n&&n!==document.body&&n!==document.documentElement;n=n.parentElement){ const o=getComputedStyle(n).overflowY; if(o==="auto"||o==="scroll") list.push([n,n.scrollTop,n.scrollLeft]); }
+  const se=document.scrollingElement||document.documentElement; list.push([se,se.scrollTop,se.scrollLeft]); ANN.guard={surface,list,until:now+1800}; }
+function annGuardFinger(){ const T=ANN.touch; return !!(T&&(!T.done||T.raf)); }
+document.addEventListener("scroll",e=>{ const G=ANN.guard; if(!G) return; if(performance.now()>G.until||!S.annId||!G.surface.isConnected){ ANN.guard=null; return; }
+  const el=e.target===document?(document.scrollingElement||document.documentElement):e.target, x=G.list.find(r=>r[0]===el); if(!x) return;
+  if(annGuardFinger()){ x[1]=el.scrollTop; x[2]=el.scrollLeft; return; }
+  if(Math.abs(el.scrollTop-x[1])>1||Math.abs(el.scrollLeft-x[2])>1){ penLog("rolagem revertida "+Math.round(el.scrollTop)+"→"+Math.round(x[1])+" em "+(el.className||el.tagName)); el.scrollTop=x[1]; el.scrollLeft=x[2]; } },true);
+["pointerdown","pointermove","pointerup"].forEach(t=>document.addEventListener(t,e=>{ if(!S.annId) return;
+  const sf=e.target.closest?.(".ann-enabled .ann-input")?.closest("[data-ann-surface]");
+  if(e.pointerType==="pen"){ if(sf) annGuardArm(sf); else if(t==="pointerdown") ANN.guard=null; }
+  else if(t==="pointerdown"&&!sf) ANN.guard=null; // dedo/mouse fora da área: rolagem normal
+},true));
+document.addEventListener("wheel",()=>{ ANN.guard=null; },{capture:true,passive:true});
+document.addEventListener("keydown",()=>{ ANN.guard=null; },true);
+document.addEventListener("contextmenu",()=>{ if(ANN.guard) ANN.guard.until=performance.now()+1800; },true);
+// com Anotar ligado, nenhum gesto da caneta deve abrir seleção de texto nem arrastar
+["selectstart","dragstart"].forEach(t=>document.addEventListener(t,e=>{ if(S.annId&&(ANN.guard||e.target.closest?.(".ann-enabled"))){ penLog(t+" bloqueado"); e.preventDefault(); } },true));
+document.addEventListener("focusin",e=>{ if(ANN.guard) penLog("foco "+(e.target.className||e.target.tagName)); },true);
 /* ---------- LIÇÃO EM FUNDO CLARO NO TABLET ---------- */
 const TABLET_Q=matchMedia("(pointer:coarse) and (min-width:600px)");
 function isTablet(){ return TABLET_Q.matches||ANN.pen; }

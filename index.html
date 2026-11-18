@@ -533,7 +533,7 @@ body.lread .lwrap{display:block!important}
 body.lread .ltoc,body.lread .lwrap>.gdrag{display:none!important}
 body.lread .wrap:has(.lwrap){max-width:860px}
 /* coluna da lição com largura fixa (como página do Samsung Notes): em tela larga só crescem as margens e o texto não reflui, então as anotações ficam no lugar */
-.lwrap>[data-ann-surface]{width:100%;max-width:760px;margin-inline:auto}
+.lwrap>[data-ann-surface]{width:100%;font-size:calc(15px * var(--fs));max-width:calc(40em + 36px);margin-inline:auto} /* ~78 letras por linha em qualquer tamanho de fonte (escolha do Léo, 18/11) */
 body.lread{--nav-h:0px}
 body.lread main{padding-top:max(14px,env(safe-area-inset-top,0px))}
 #lreadBar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;display:flex;gap:6px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);backdrop-filter:blur(8px);opacity:.55;transition:opacity .2s}

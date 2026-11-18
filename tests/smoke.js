@@ -262,6 +262,14 @@ function fixture(){
       if(r.prev0||!r.top||r.after!=="lesson:da:t3"||!r.prev) throw new Error("navegação: "+JSON.stringify(r));
       if(r.perm!==7) throw new Error("F/G sumiram: "+r.perm);
       if(!/2 de/.test(r.cont.b)||!r.cont.s) throw new Error("Continuar: "+JSON.stringify(r.cont)); });
+    await step("barra do celular com Mais", async()=>{
+      const r=await p.evaluate(()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false; go("home");
+        const vis=[...document.querySelectorAll("#tabs button")].filter(b=>b.offsetParent!==null&&getComputedStyle(b).display!=="none").map(b=>b.dataset.nav||b.dataset.act); return {vis,w:innerWidth}; });
+      if(r.w<960){ if(r.vis.join()!=="home,tutor,study,review,navMore") throw new Error("barra: "+r.vis.join());
+        await p.click('[data-act="navMore"]'); await p.click('#layer [data-nav="plan"]'); await p.waitForTimeout(50);
+        const v=await p.evaluate(()=>({v:S.view,open:!!document.querySelector("#layer").innerHTML,cur:document.querySelector('.tmore')?.getAttribute("aria-current")})); if(v.v!=="plan"||v.open||v.cur!=="page") throw new Error("Mais: "+JSON.stringify(v)); }
+      else if(r.vis.includes("navMore")||r.vis.length<8) throw new Error("menu lateral: "+r.vis.join());
+      await p.evaluate(()=>go("home")); });
     await step("mapa de conceitos", async()=>{
       const r=await p.evaluate(async()=>{ S.session=null; S.tuB=null; if(document.querySelector("#layer").innerHTML) closeSheetRaw(); S.sheetPushed=false;
         const now=Math.round(Date.now()/1000);

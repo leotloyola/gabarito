@@ -463,6 +463,10 @@ details.adv summary::before{content:"+ ";} details.adv[open] summary::before{con
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border:0;box-shadow:0 -4px 24px rgba(0,0,0,.04);display:grid;grid-template-columns:repeat(8,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{border:0;background:none;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:500;letter-spacing:.01em;color:var(--subtle);cursor:pointer;position:relative;transition:color .15s ease}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:959.98px){ nav.tabs{grid-template-columns:repeat(5,1fr)!important} nav.tabs button.tx{display:none} nav.tabs button[data-nav="tutor"]{order:3} nav.tabs .tmore{order:4} }
+@media (min-width:960px){ nav.tabs button.tmore{display:none} }
+.navx{display:flex;align-items:center;justify-content:flex-start;gap:14px;width:100%;min-height:52px;font-size:15px}.navx-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
+.navx[aria-current="page"]{background:var(--pill)}
 nav.tabs button[aria-current="page"]{color:var(--ink)}
 nav.tabs button[aria-current="page"] svg{stroke-width:1.9}
 nav.tabs button[aria-current="page"]::after{content:"";position:absolute;bottom:7px;width:4px;height:4px;border-radius:50%;background:var(--ink)}
@@ -1266,8 +1270,12 @@ function syncLabel(){ const d=$("#syncDot"), t=$("#syncTxt"); if(!d||!t) return;
 /* ---------- chrome ---------- */
 function renderTabs(){
   const due = dueQs().length; renderSide();
-  $("#tabs").innerHTML = ["home","tutor","mapa","plan","study","review","stats","bank"].map(v=>`<button type="button" data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}${v==="mapa"?`<span class="tl">${tr(v)}</span><span class="ts">${T2("Mapa","Map")}</span>`:`<span>${tr(v)}</span>`}${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`;
+  // celular: 4 fixos (Início, Questões, Revisar, Tutor) + "Mais"; tablet/computador (menu lateral): todos
+  const XTRA=["mapa","plan","stats","bank"], curX=!tuOn()&&XTRA.includes(S.view);
+  $("#tabs").innerHTML = ["home","tutor","mapa","plan","study","review","stats","bank"].map(v=>`<button type="button" ${XTRA.includes(v)?'class="tx" ':""}data-nav="${v}" ${(v==="tutor"?tuOn():!tuOn()&&(S.view===v||(v==="review"&&S.view==="cards")||(v==="study"&&S.view==="lesson")))?'aria-current="page"':""}>${ICONS[v]}${v==="mapa"?`<span class="tl">${tr(v)}</span><span class="ts">${T2("Mapa","Map")}</span>`:`<span>${tr(v)}</span>`}${v==="review"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("")+`<button type="button" class="navtog" data-navtog aria-label="${T2("Recolher/expandir menu","Collapse/expand menu")}" title="${T2("Recolher/expandir menu","Collapse/expand menu")}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>${T2("Recolher","Collapse")}</span></button>`+`<button type="button" class="tmore" data-act="navMore" ${curX?'aria-current="page"':""} aria-haspopup="dialog"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>${curX?tr(S.view==="mapa"?"mapa":S.view):T2("Mais","More")}</span></button>`;
 }
+function openNavMore(){ const X=["mapa","plan","stats","bank"];
+  openSheet(`<h2 style="margin:0">${T2("Mais","More")}</h2><div class="plist">${X.map(v=>`<button type="button" class="prow navx" data-nav="${v}" ${S.view===v?'aria-current="page"':""}><span class="navx-ic">${ICONS[v]}</span><span>${tr(v)}</span></button>`).join("")}</div>`); }
 function renderCtx(){
   const cp=curPer(), root=curDisc(), isUSMLE=cp==="usmle"&&root?.id==="usmle";
   if(isUSMLE&&!(root.topics||[]).some(x=>x.id===set().topic)){ set().topic=root.topics.find(x=>topicCount(x.id)>0)?.id||root.topics[0]?.id||null; set().sub=""; saveProg(); }
@@ -1332,7 +1340,7 @@ function openSubPicker(){ const d=curDisc(), t=curTopic(); if(!d||!t) return; co
     body=pickRow("pickSub","",tr("allSubs"),sum(t.topics),{cur:!su.sub})+(t.subs||[]).map(s=>pickRow("pickSub",s.id,nm(s),agg[s.id],{cur:su.sub===s.id})).join(""); }
   else body=pickRow("pickSub","",tr("allSubs"),agg[t.id],{cur:!su.sub})+(t.subs||[]).map(s=>pickRow("pickSub",s.id,nm(s),agg[t.id+"|"+s.id],{cur:su.sub===s.id})).join("");
   pickSheet(esc(nm(t)), body, (t.subs||[]).length); }
-function go(v){ if(v==="tutor") return tuGo({v:"tutor"}); S.tuB=null; const changed=S.view!==v; S.view=v; try{ if(changed) history.pushState({v},"","#"+v); else history.replaceState({v},"","#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+function go(v,rep){ if(v==="tutor") return tuGo({v:"tutor"}); S.tuB=null; const changed=S.view!==v; S.view=v; try{ if(changed&&!rep) history.pushState({v},"","#"+v); else history.replaceState({v},"","#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
 /* ---------- MÓDULO TUTOR: navegação própria ----------
    Pilha no histórico: plano {v:"tutor"} › bloco {v:"tutor",tb:i} › questões/lição do bloco {v:"study"|"review"|"lesson",tb:i}.
    "Rever com as notas" fica logo abaixo do plano ({v:"review",tb:-1}). O voltar do Android/tablet recua um nível
@@ -1561,7 +1569,7 @@ function vStudy(v){
    ${t&&!t.pseudo?topicLinksHTML(t):""}
    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
     <div class="field"><span class="flabel">${T2("Quais questões?","Which questions?")}</span><div class="chips">${chip("filter","open",T2("Novas","New"))}${chip("filter","wrong",T2("Erradas","Wrong"))}${chip("filter","marked",T2("Marcadas","Marked"))}${chip("filter","all",T2("Todas","All"))}</div></div>
-    <div class="field"><span class="flabel">${T2("Quantas?","How many?")}</span><div class="chips">${[10,20].map(n=>chip("count",n,n)).join("")}${chip("count",0,tr("all"))}${[10,20,0].includes(Number(su.count))?"":chip("count",su.count,su.count)}</div></div>
+    <div class="field"><span class="flabel">${T2("Quantas?","How many?")}</span><div class="chips">${[10,20].map(n=>chip("count",n,n)).join("")}${chip("count",0,T2("Todas","All"))}${[10,20,0].includes(Number(su.count))?"":chip("count",su.count,su.count)}</div></div>
     <details class="adv"${S.advOpen?" open":""} ontoggle="S.advOpen=this.open"><summary>${T2("Mais filtros","More filters")}${(su.mode==="sim"||su.sub||su.origin||(su.prio&&su.prio!=="all")||su.order!=="pri"||!su.shuffleO)?` · <span style="color:var(--accent)">${T2("em uso","active")}</span>`:""}</summary>
      <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
     <div class="field"><span class="flabel">${tr("mode")}</span><div class="grid2">
@@ -2870,7 +2878,7 @@ function vTutor(v){ const P=tutorPlan(), T=TU(), msg=T.msg||{};
 /* ---------- events ---------- */
 document.addEventListener("click", async e=>{
   const dl=e.target.closest('a[href^="https://drive.google.com/file/d/"]'); if(dl&&!dl.dataset.ext){ const m=dl.href.match(DRIVE_RE); if(m){ e.preventDefault(); return openDrive(m[1], dl.textContent.trim()); } }
-  const nav=e.target.closest("[data-nav]"); if(nav){ if($("#layer").innerHTML) closeSheet(); go(nav.dataset.nav); return; }
+  const nav=e.target.closest("[data-nav]"); if(nav){ let rep=false; if($("#layer").innerHTML){ rep=!!S.sheetPushed&&nav.dataset.nav!=="tutor"; if(rep){ closeSheetRaw(); S.sheetPushed=false; } else closeSheet(); } go(nav.dataset.nav,rep); return; }
   const stdB=e.target.closest("[data-std]"); if(stdB){ set().std=stdB.dataset.std; S.session=null; S.fcDeck=null; saveProg(); render(); return; }
   const lgB=e.target.closest("[data-lang]"); if(lgB){ set().lang=lgB.dataset.lang; saveProg(); render(); return; }
   const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; setupKeep(); render(); return; }
@@ -2898,6 +2906,7 @@ document.addEventListener("click", async e=>{
   if(act==="fs"){ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI:"hide"}); }catch(err){ toast(set().lang==="en"?"Full screen is not available here":"Tela cheia não disponível aqui"); } setTimeout(render,150); return; }
   if(act==="signOut") return signOut();
   if(act==="closeSheet") return closeSheet();
+  if(act==="navMore") return openNavMore();
   if(act==="keys") return openKeys();
   if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); return; }
   if(act==="lfull"){ const on=!a.classList.contains("open"); lfullOpen(a,on,true); if(!on) a.scrollIntoView({block:"center"}); return; }

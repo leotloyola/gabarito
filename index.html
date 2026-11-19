@@ -616,20 +616,42 @@ html.toc-off .lwrap>.gdrag{display:none!important}
   .qlh .row{flex-wrap:nowrap;gap:6px;flex:none}
   .qlbody{overflow:auto;min-height:0;flex:1;border-radius:20px;scrollbar-width:thin;overscroll-behavior:contain}
 }
-@media (min-width:900px) and (max-width:1499.98px){
-  /* questão e lição rolam cada uma no seu lado; a página não rola (altura --qh medida em lpFit) */
+  /* questão e lição lado a lado (≥900): coluna da questão rola sozinha e leva junto a contagem (topo) e a barra ← →;
+     a lição ocupa a altura toda à direita (altura --qh medida em lpFit); a página não rola */
   html .wrap:has(.qgrid.l3){max-width:none}
-  html body #view .qgrid.l3{display:grid;grid-template-columns:minmax(0,1fr) var(--lpw,minmax(0,1fr));gap:0 36px;align-items:stretch;height:var(--qh,calc(100dvh - 190px))}
-  html body #view .qgrid.l3>.qcol{display:flex;flex-direction:column;gap:18px;overflow-y:auto;min-height:0;min-width:0;overscroll-behavior:contain;padding:0 6px 24px 0;scrollbar-width:thin}
-  html body #view .qgrid.l3 .qleft,html body #view .qgrid.l3 .qright{display:flex;flex-direction:column;gap:12px;position:static;max-height:none;overflow:visible;min-width:0}
+  html body #view .qgrid.l3{display:grid;grid-template-columns:minmax(0,1fr) var(--lpw,minmax(0,1fr));gap:0 32px;align-items:stretch;height:var(--qh,calc(100dvh - 120px))}
+  html body #view .qgrid.l3>.qcol{display:flex;flex-direction:column;gap:18px;overflow-y:auto;min-height:0;min-width:0;overscroll-behavior:contain;padding:0 6px 0 0;scrollbar-width:thin}
+  html body #view .qgrid.l3 .qleft,html body #view .qgrid.l3 .qright{display:flex;flex-direction:column;gap:12px;position:static;top:auto;max-height:none;overflow:visible;min-width:0}
   html body #view .qgrid.l3 .qleft .ann-surface:not(.ann-enabled){min-height:0}
   html body #view .qgrid.l3 .qright>.gdrag{display:none!important}
-  html body #view .qgrid.l3 .qlesson{position:relative;top:auto;height:100%;max-height:none;min-height:0}
+  html body #view .qgrid.l3 aside.qlesson.qlesson{position:relative;top:auto;height:100%;max-height:none;min-height:0}
+  html body #view .qgrid.l3>.qcol>.qtop{position:sticky;top:0;z-index:6;background:var(--bg);padding:4px 0 8px;margin:0}
+  html body #view .qgrid.l3>.qcol>.qnav{position:sticky;left:auto;right:auto;transform:none;bottom:0;width:auto;margin:auto 0 0;z-index:6}
   body:has(#view .qgrid.l3) #view .qnav-space{display:none}
   html body:has(#view .qgrid.l3) main,html body:has(#view .qgrid.l3) #view{padding-bottom:0}
   body.mp-on #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
+  .lptn{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;display:flex;gap:8px;z-index:7;max-width:calc(100% - 24px);pointer-events:none}
+  .lptn>*{pointer-events:auto}.lptn i{display:none}
+  .lptn-b{display:inline-flex;align-items:center;gap:4px;max-width:240px;padding:7px 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);background:color-mix(in srgb,var(--surface) 55%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--ink-2);font:600 12.5px var(--f-ui,inherit);opacity:.72;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+  .lptn-b span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .lptn-b:hover,.lptn-b:focus-visible{opacity:1}
+  html body #view .qgrid.l3 .qlbody{padding-bottom:56px}
+  /* modo leitura da lição ao lado: só a lição, sem a questão nem os menus */
+  body.lpread #view>*:not(.qgrid),body.lpread .top,body.lpread nav.tabs,body.lpread #side{display:none!important}
+  body.lpread{--nav-h:0px}
+  html body.lpread #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
+  html body.lpread #view .qgrid.l3>.qcol,body.lpread .qdrag{display:none!important}
+  html body.lpread .wrap:has(.qgrid.l3){max-width:900px}
+  :root.lsn-sepia body.lpread{background:#F4ECD8}:root.lsn-light:not(.lsn-sepia) body.lpread{background:#FFFFFF}:root.lsn-dark body.lpread{background:#191e23}
+@media (min-width:1500px){
+  html body .wrap:has(.qgrid.l3){max-width:2300px}
+  html body #view .qgrid.l3{grid-template-columns:minmax(0,1.8fr) var(--lpw,minmax(0,1.5fr));gap:0 36px}
+  html body #view .qgrid.l3>.qcol{display:grid;grid-template-columns:var(--qlw,minmax(0,.8fr)) minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:18px 36px;align-items:start}
+  html body #view .qgrid.l3>.qcol>.qtop,html body #view .qgrid.l3>.qcol>.qnav{grid-column:1/-1}
+  html body #view .qgrid.l3>.qcol>.qnav{align-self:end}
+  html body #view .qgrid.l3 .qright>.gdrag[data-g="q"]{display:block!important}
+  html body.lpread #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
 }
-@media (min-width:1500px){ #view .qgrid.l3>.qcol{display:contents} }
 }
 /* ---- ultrawide (>=1500px): lição ao lado da questão, temas fixos à esquerda, plano em colunas ---- */
 .qlesson,#side{display:none}.plexams{display:contents}
@@ -1083,7 +1105,10 @@ function annotationStrokes(key){ return S.prog.annotations?.[key]?.strokes||[]; 
 function annSet(key,strokes,hist=true){ S.prog.annotations=S.prog.annotations||{}; if(hist){ ANN.hist.push({key,prev:annotationStrokes(key)}); if(ANN.hist.length>80) ANN.hist.shift(); } S.prog.annotations[key]={ts:now(),strokes}; saveProg(); }
 const ANN_COLORS={pen:["#111827","#E11D48","#2563EB","#16A34A","#FFFFFF"],marker:["#FFE04A","#78D7A3","#FF8FB5","#7DD3FC"]};
 const ANN_SIZES={pen:[1.8,3,5],marker:[12,18,26],eraser:[8,16,28]};
-function annKeepNext(s){ return annPref("keep","0")==="1"&&S.annId&&!String(S.annId).startsWith("L:")&&s.items[s.i]?s.items[s.i].id:null; }
+function annKeepNext(s){
+  // anotando na lição ao lado: segue anotando na lição (a do tema da nova questão)
+  if(S.annId&&String(S.annId).startsWith("L:")&&LP_Q.matches&&lpOn()){ const q=S.qs.get(s.items[s.i]?.id), l=q&&lessonFor(q.discipline,q.topic); return l?"L:"+l.id:null; }
+  return annPref("keep","0")==="1"&&S.annId&&!String(S.annId).startsWith("L:")&&s.items[s.i]?s.items[s.i].id:null; }
 function annPref(k,d){ try{ return localStorage.getItem("gab.ann."+k)||d; }catch(_){ return d; } }
 function annColor(tool){ return annPref("color."+tool, tool==="marker"?"#FFE04A":"#E11D48"); }
 function annSizeIx(tool){ const i=+annPref("size."+tool,"1"); return i>=0&&i<3?i:1; }
@@ -1539,7 +1564,7 @@ window.addEventListener("popstate", e=>{
   S.view=v; render(); window.scrollTo({top:y});
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
-function render(){ document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
+function render(){ document.body.classList.remove("lpread"); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
   ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v); lreadBar();
 }
@@ -1790,12 +1815,14 @@ function vPlayer(v){
        : (s.mode==="sim" ? `<button class="btn primary" data-act="finish">${tr("finish")}</button>` : `<button class="btn primary" data-act="finish">${tr("finish")}</button>`)}
    </div><div class="qnav-space" aria-hidden="true"></div>`;
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
+  const qc=$("#view .qgrid.l3>.qcol"); if(qc){ const t=$("#view>.qtop"), n=$("#view>.qnav"); if(t) qc.prepend(t); if(n) qc.append(n); }
+  document.body.classList.toggle("lpread",!!(S.lpRead&&$("#view .qgrid.l3")));
   const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
   hydrateAI(q); lpFit();
 }
 // tablet com a lição ao lado: a grade ocupa só a altura visível (do topo da questão até a barra ←/→), e cada coluna rola sozinha
-function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches||WIDE_Q.matches){ g.style.removeProperty("--qh"); return; }
-  const top=g.getBoundingClientRect().top+(window.scrollY||0), nav=$("#view .qnav"), nh=nav?nav.getBoundingClientRect().height+20:90;
+function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches){ g.style.removeProperty("--qh"); return; }
+  const top=g.getBoundingClientRect().top+(window.scrollY||0), tb=$("nav.tabs"), tr0=tb&&getComputedStyle(tb).display!=="none"?tb.getBoundingClientRect():null, nh=(tr0&&tr0.top>innerHeight/2?tr0.height:0)+12;
   g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
 window.addEventListener("resize",()=>{ if($("#view .qgrid.l3")) lpFit(); });
 function questionHTML(q, it, reveal, simMode){
@@ -1846,7 +1873,7 @@ function questionHTML(q, it, reveal, simMode){
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&LP_Q.matches&&lpOn();
-  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row">${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div></aside>`:"";
+  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row">${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Modo leitura","Reading mode")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button>${S.lpRead?"":`<button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button>`}<button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${lpTopicNav(lsn)}</aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
 }
@@ -2078,6 +2105,10 @@ function radarHTML(){ const ds=discs().filter(d=>[...S.qs.values()].some(q=>q.di
 function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="group" aria-label="${T2("Tipo de revisão","Review type")}" style="align-self:flex-start"><button type="button" data-nav="review" aria-pressed="${!fc}">${T2("Questões","Questions")}${dueQs().length?` · ${dueQs().length}`:""}</button><button type="button" data-nav="cards" aria-pressed="${fc}">Flashcards${dueCards().length?` · ${dueCards().length}`:""}</button></div>`; }
 /* ---------- LIÇÕES ---------- */
 function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
+/* tela dividida: tema anterior/próximo (ordem das aulas) troca juntos a lição e as questões */
+function lpTopicNav(lsn){ if(S.lpRead) return ""; const L=lessonsOf(lsn.discipline), k=L.findIndex(l=>l.id===lsn.id); if(k<0||L.length<2) return "";
+  const b=(l,dir)=>l?`<button type="button" class="lptn-b" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" title="${esc(l.title||"")}">${dir<0?"← ":""}<span>${esc(topicName(l.discipline,l.topic)||l.title||"")}</span>${dir>0?" →":""}</button>`:"<i></i>";
+  return `<nav class="lptn" aria-label="${T2("Tema anterior e próximo","Previous and next topic")}">${b(L[k-1],-1)}${b(L[k+1],1)}</nav>`; }
 function topicName(d,t){ return nm((discById(d)?.topics||[]).find(x=>x.id===t)); }
 function lessonFor(d,t){ for(const l of S.lessons.values()) if(l.discipline===d&&l.topic===t) return l; return null; }
 /* sai da lista para uma lição: se a lista foi aberta a partir da lição (entrada logo abaixo no histórico), volta nela; senão troca a tela */
@@ -3174,7 +3205,8 @@ document.addEventListener("click", async e=>{
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
-  if(act==="lpane"){ lpSet(!lpOn()); return render(); }
+  if(act==="lpane"){ lpSet(!lpOn()); S.lpRead=false; return render(); }
+  if(act==="lpRead"){ S.lpRead=!S.lpRead; return render(); }
   if(act==="lesson"){ S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); }
     // durante uma sessão de questões a lição abre por cima (folha), sem desmontar a questão; "Abrir página" leva à lição inteira
     // tablet/computador: abre (ou mantém) o painel ao lado, que acompanha a questão; celular: folha por cima
@@ -3297,6 +3329,7 @@ document.addEventListener("change", e=>{
 document.addEventListener("keydown", e=>{
   if(e.target.closest("input,textarea,select,[contenteditable='true']")||e.ctrlKey||e.metaKey||e.altKey) return;
   if(e.key==="Escape" && $("#layer").innerHTML){ closeSheet(); return; }
+  if(e.key==="Escape" && document.body.classList.contains("lpread")){ S.lpRead=false; render(); return; }
   if($("#layer").innerHTML) return;
   if(e.target.closest("summary")) return; // Enter/Space operate disclosure controls, not session navigation.
   const k=e.key.toLowerCase(); const click=sel=>{ const b=document.querySelector(sel); if(b&&!b.disabled){ b.click(); e.preventDefault(); return true; } return false; };

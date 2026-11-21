@@ -1024,6 +1024,16 @@ function safe(html){ // allow a tiny tag set from content
   s = s.replace(/&lt;(\/?)(b|i|em|strong|sub|sup|br)&gt;/g, "<$1$2>");
   return s.replace(/&lt;a href=&quot;(https:\/\/drive\.google\.com\/[^&]+)&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;([^<]+)&lt;\/a&gt;/g, '<a href="$1" target="_blank" rel="noopener">$2</a>');
 }
+// Enunciado: cada afirmativa (I., II –, a), ( ) …) começa em linha nova; "\n" vira quebra de linha
+function stemHtml(html){
+  let s=safe(html).replace(/&amp;nbsp;/g,"&nbsp;").replace(/[ \t]*\r?\n[ \t]*/g,"<br>");
+  const P="(^|<br>|(?<!&#?\\w+)[:;.?!])(\\s*)";
+  const brk=(re,need)=>{ const r=new RegExp(P+re,"g"), found=new Set(); s.replace(r,(m,a,b,c)=>{found.add(c.replace(/\s|[.)–—-]/g,""));return m;}); if(!need.every(x=>found.has(x))) return; s=s.replace(r,(m,a,b,c)=>a===""||a==="<br>"?m:a+"<br>"+c); };
+  brk("((?:VIII|VII|VI|IV|IX|V|X|III|II|I)\\s?[.)–—-])(?=\\s)",["I","II"]);
+  brk("([a-e]\\))(?=\\s)",["a","b"]);
+  if((s.match(/\(\s*\)/g)||[]).length>=2) s=s.replace(/(^|<br>)?(\s*)(\(\s*\))/g,(m,a,b,c,o)=>a!==undefined||o===0?m:"<br>"+c);
+  return s;
+}
 // links do Drive (figuras/tabelas) que estão só na versão curta: repete no fim da versão detalhada
 function driveLinks(short,long){ const L=(String(short||"").match(/<a href="https:\/\/drive\.google\.com\/[^"]+" target="_blank" rel="noopener">[^<]+<\/a>/g)||[]).filter((x,i,A)=>{ const h=x.match(/href="([^"]+)"/)[1]; return !String(long||"").includes(h) && A.findIndex(y=>y.includes(h))===i; }); return L.length?"<br><br><strong>"+T2("Recursos visuais","Visual resources")+":</strong><br>"+L.join("<br>"):""; }
 function md(text){ // minimal markdown for Claude answers
@@ -1881,7 +1891,7 @@ function questionHTML(q, it, reveal, simMode){
   const lp=!!lsn&&LP_Q.matches&&lpOn();
   const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row">${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Modo leitura","Reading mode")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button>${S.lpRead?"":`<button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button>`}<button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${lpTopicNav(lsn)}</aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${safe(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
+  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
 function askPrompt(id){
@@ -2492,7 +2502,7 @@ async function pqHtml(groups, inline=false){
     for(const x of gr.qs){ n++; const c=x.i18n?.[lang]||x.i18n?.pt||x.i18n?.en; if(!c){ n--; continue; }
       let im=""; if(x.img?.url){ const d=await pqImgData(x.img.url); im=d?`<div class="pq-img"><img src="${d}" alt=""></div>`:`<div class="pq-img"><span>[${T2("figura: ver no app","figure: see in app")}]</span></div>`; }
       const ok=c.opts[x.correct], gb=`<div class="pq-g"><b class="n">Q${n} — ${L[x.correct]??"?"}</b> · ${safe(ok?.why||"")}${c.peg?` <em>${T2("Pegadinha","Trap")}:</em> ${safe(c.peg)}`:""}</div>`;
-      q+=`<div class="pq"><div class="pq-h"><b>Q${n}</b> · ${"★".repeat(x.pri||1)}${x.exam?" · "+esc(x.exam):""}${x.exc?" · "+T2("EXCETO","EXCEPT"):""}</div><p class="pq-s">${safe(c.stem)}</p>${im}${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i> ${safe(o.t)}</div>`).join("")}${inline?gb:""}</div>`;
+      q+=`<div class="pq"><div class="pq-h"><b>Q${n}</b> · ${"★".repeat(x.pri||1)}${x.exam?" · "+esc(x.exam):""}${x.exc?" · "+T2("EXCETO","EXCEPT"):""}</div><p class="pq-s">${stemHtml(c.stem)}</p>${im}${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i> ${safe(o.t)}</div>`).join("")}${inline?gb:""}</div>`;
       if(!inline) g+=gb; } }
   return {q,g};
 }
@@ -2699,7 +2709,7 @@ function vCards(v){
   v.innerHTML = `
    <div class="qtop"><span class="qnum">${d.i+1} / ${d.ids.length}</span><div class="progress"><i style="width:${100*d.i/d.ids.length}%"></i></div>${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn kbtn" data-act="keys" aria-label="${T2("Atalhos de teclado","Keyboard shortcuts")}" title="${T2("Atalhos (?)","Shortcuts (?)")}">⌨</button><button class="btn small ghost fsbtn" data-act="fcReset" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
    <div class="card"><div class="tags">${tagsOf(q).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
-     ${annotationControls(q)}${annotationSurface(q,`<div class="face">${safe(c.stem)}</div>${qImg(q)}${driveFig(c.stem)}`)}
+     ${annotationControls(q)}${annotationSurface(q,`<div class="face">${stemHtml(c.stem)}</div>${qImg(q)}${driveFig(c.stem)}`)}
      ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(corr.why)}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}`:""}
    </div>
    <div class="qnav">${d.show?`<div class="rate" style="flex:1"><button class="btn" data-act="fcRate" data-g="0">${tr("again")}<small>${previewDays(S.prog.fc[q.id],1)}${tr("days")}</small></button><button class="btn" data-act="fcRate" data-g="1">${tr("hard")}<small>${previewDays(S.prog.fc[q.id],2)}${tr("days")}</small></button><button class="btn primary" data-act="fcRate" data-g="2">${tr("good")}<small>${previewDays(S.prog.fc[q.id],3)}${tr("days")}</small></button></div>`:`<button class="btn primary block" data-act="fcShow">${tr("show")}</button>`}</div>`;

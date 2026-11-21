@@ -999,6 +999,7 @@ function mergeProg(base, p){ return {settings:Object.assign({},base.settings,p.s
    dia do histórico → o que tem mais respostas; simulados/contestações → união. "Zerar progresso" grava
    settings.resetAt e tudo que é anterior a ele é descartado dos dois lados. Configurações: as do aparelho
    que tem alterações ainda não enviadas (localSet), senão as da nuvem. */
+const NAV_SET=["per","disc","topic","sub","std","perP","stdP","discP","topicP","topicS","revScope"];
 function syncMerge(L,R,localSet){ L=L||{}; R=R||{};
   const rs=Math.max(+L.settings?.resetAt||0,+R.settings?.resetAt||0), rsDay=rs?dayKey(new Date(rs)):"";
   const newer=(a,b)=>{ const o={}; for(const src of [a||{},b||{}]) for(const [k,v] of Object.entries(src)){ if(rs&&(+v?.ts||0)<rs) continue; const c=o[k]; if(!c||(+v?.ts||0)>(+c?.ts||0)) o[k]=v; } return o; };
@@ -1007,6 +1008,9 @@ function syncMerge(L,R,localSet){ L=L||{}; R=R||{};
   const log={}; for(const src of [L.log||{},R.log||{}]) for(const [k,v] of Object.entries(src)){ if(rsDay&&k<rsDay) continue; const c=log[k]; if(!c||(+v?.n||0)>(+c.n||0)) log[k]=v; }
   const uni=(a,b,key)=>{ const m=new Map(); for(const x of [...(a||[]),...(b||[])]) if(x&&!(rs&&(+x.ts||0)&&x.ts<rs)) m.set(key(x),x); return [...m.values()]; };
   const settings=localSet?Object.assign({},R.settings||{},L.settings||{}):Object.assign({},L.settings||{},R.settings||{}); if(rs) settings.resetAt=rs;
+  // onde parou é de cada aparelho: período/modo, disciplina, tema e filtros de navegação ficam os deste aparelho
+  // (a nuvem só serve de ponto de partida para um aparelho novo, que ainda não tem nenhum)
+  const Ls=L.settings||{}; if(NAV_SET.some(k=>Ls[k]!=null)) NAV_SET.forEach(k=>{ if(Ls[k]!=null) settings[k]=Ls[k]; else delete settings[k]; });
   return {settings, q:newer(L.q,R.q), fc:newer(L.fc,R.fc), log, ev,
     sims:uni(L.sims,R.sims,x=>x.ts+"|"+(x.topic||x.exam||"")).sort((a,b)=>(a.ts||0)-(b.ts||0)), reports:uni(L.reports,R.reports,x=>x.id||JSON.stringify(x)),
     read:Object.assign({},L.read||{},R.read||{}), marked:mergeStampedMap(L.marked,R.marked), annotations:mergeStampedMap(L.annotations,R.annotations),
@@ -3667,7 +3671,7 @@ function subscribeQs(){ /* questions are fetched on open and when the app return
 
 /* ---------- REABRIR ONDE PAROU ----------
    Guarda tela/aba, lição, sessão (questão atual e respostas), flashcards e rolagem em localStorage ("gab.pos"; rolagem em "gab.pos.y").
-   Período/disciplina/tema já vão em progress.settings. Restaura uma vez, quando o catálogo está disponível. */
+   Período/disciplina/tema ficam em progress.settings, mas o syncMerge mantém os deste aparelho (NAV_SET). Restaura uma vez, quando o catálogo está disponível. */
 const POS_K="gab.pos", POS_Y="gab.pos.y", POS_VIEWS=["home","tutor","mapa","plan","study","review","cards","stats","bank","lesson"];
 let posDone=false;
 function posSave(){

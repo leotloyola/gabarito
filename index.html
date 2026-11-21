@@ -1123,14 +1123,15 @@ function markToggle(id){ S.prog.marked=S.prog.marked||{}; S.prog.marked[id]={on:
 /* ---------- ANOTAÇÕES (S Pen): caneta com pressão, marca-texto que endireita, borracha por traço ---------- */
 function annotationStrokes(key){ return S.prog.annotations?.[key]?.strokes||[]; }
 function annSet(key,strokes,hist=true){ S.prog.annotations=S.prog.annotations||{}; if(hist){ ANN.hist.push({key,prev:annotationStrokes(key)}); if(ANN.hist.length>80) ANN.hist.shift(); } S.prog.annotations[key]={ts:now(),strokes}; saveProg(); }
-const ANN_COLORS={pen:["#111827","#E11D48","#2563EB","#16A34A","#FFFFFF"],marker:["#FFE04A","#78D7A3","#FF8FB5","#7DD3FC"]};
+const ANN_COLORS={pen:["#111827","#E11D48","#2563EB","#16A34A","#FFFFFF"],marker:["#FFE04A","#78D7A3","#FF6B6B","#7DD3FC"]};
+const annMk=c=>{ c=c||"#FFE04A"; return /^#FF8FB5$/i.test(c)?"#FF6B6B":c; }; // rosa antigo do marca-texto → vermelho (21/11/2026)
 const ANN_SIZES={pen:[1.8,3,5],marker:[12,18,26],eraser:[8,16,28]};
 function annKeepNext(s){
   // anotando na lição ao lado: segue anotando na lição (a do tema da nova questão)
   if(S.annId&&String(S.annId).startsWith("L:")&&LP_Q.matches&&lpOn()){ const q=S.qs.get(s.items[s.i]?.id), l=q&&lessonFor(q.discipline,q.topic); return l?"L:"+l.id:null; }
   return annPref("keep","0")==="1"&&S.annId&&!String(S.annId).startsWith("L:")&&s.items[s.i]?s.items[s.i].id:null; }
 function annPref(k,d){ try{ return localStorage.getItem("gab.ann."+k)||d; }catch(_){ return d; } }
-function annColor(tool){ return annPref("color."+tool, tool==="marker"?"#FFE04A":"#E11D48"); }
+function annColor(tool){ const c=annPref("color."+tool, tool==="marker"?"#FFE04A":"#E11D48"); return tool==="marker"?annMk(c):c; }
 function annSizeIx(tool){ const i=+annPref("size."+tool,"1"); return i>=0&&i<3?i:1; }
 function annSize(tool){ return ANN_SIZES[tool][annSizeIx(tool)]; }
 function annKeys(owner){ return Object.keys(S.prog.annotations||{}).filter(k=>k===owner||k.startsWith(owner+"#")); }
@@ -1253,8 +1254,8 @@ function annStraighten(p){
   return [a,z];
 }
 function annEl(st,p){
-  if(st.tool==="marker"&&p.segW) return p.segs.map((sg,i)=>'<path d="'+annLine(sg)+'" fill="none" stroke="'+esc(st.color||"#FFE04A")+'" stroke-width="'+p.segW[i]+'" stroke-linecap="butt"/>').join("");
-  if(st.tool==="marker") return '<path d="'+(p.segs?p.segs.map(annLine).join(""):annLine(p.length===1?[p[0],[p[0][0]+.5,p[0][1]]]:p))+'" fill="none" stroke="'+esc(st.color||"#FFE04A")+'" stroke-width="'+(st.width||18)+'" stroke-linecap="butt" stroke-linejoin="round"/>';
+  if(st.tool==="marker"&&p.segW) return p.segs.map((sg,i)=>'<path d="'+annLine(sg)+'" fill="none" stroke="'+esc(annMk(st.color))+'" stroke-width="'+p.segW[i]+'" stroke-linecap="butt"/>').join("");
+  if(st.tool==="marker") return '<path d="'+(p.segs?p.segs.map(annLine).join(""):annLine(p.length===1?[p[0],[p[0][0]+.5,p[0][1]]]:p))+'" fill="none" stroke="'+esc(annMk(st.color))+'" stroke-width="'+(st.width||18)+'" stroke-linecap="butt" stroke-linejoin="round"/>';
   return '<path d="'+annPenPath(p,st.width||3)+'" fill="'+esc(st.color||"#E11D48")+'"/>';
 }
 function annDraw(surface,keep){

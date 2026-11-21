@@ -537,6 +537,15 @@ body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-righ
 /* sem faixa escura dos lados: o fundo da tela vira o mesmo da lição */
 :root.lsn-sepia body.lread{background:#F4ECD8}:root.lsn-light:not(.lsn-sepia) body.lread{background:#FFFFFF}:root.lsn-dark body.lread{background:#191e23}
 :root.lsn-light body.lread .lesson,:root.lsn-dark body.lread .lesson{box-shadow:none}
+/* "Ver na lição": trecho achado pisca de leve (sem mexer no texto, para não deslocar anotações) */
+.lesson .lspot{background:color-mix(in srgb,var(--accent) 18%,transparent);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 18%,transparent);border-radius:4px;transition:background 1.4s ease,box-shadow 1.4s ease}
+.lesson .lspot.lspot-out{background:transparent;box-shadow:0 0 0 6px transparent}
+/* barra de progresso da lição: 2 px, só a parte lida, sem trilho */
+#lprog{position:fixed;left:0;top:env(safe-area-inset-top,0px);height:2px;width:100%;z-index:26;pointer-events:none;transform-origin:0 50%;background:var(--accent);opacity:.55;transition:opacity .25s}
+.lprog{position:sticky;top:0;height:2px;margin-bottom:-2px;z-index:6;pointer-events:none;transform-origin:0 50%;background:var(--accent);opacity:.55;transition:opacity .25s}
+#lprog.off,.lprog.off{opacity:0}
+@keyframes qswIn{from{opacity:.35}to{opacity:1}}
+#view .qgrid.qsw{animation:qswIn .18s ease-out}
 body.lread main{padding-top:max(14px,env(safe-area-inset-top,0px))}
 #lreadBar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;display:flex;gap:6px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);backdrop-filter:blur(8px);opacity:.55;transition:opacity .2s}
 #lreadBar:hover,#lreadBar:focus-within{opacity:1}
@@ -1917,7 +1926,7 @@ function questionHTML(q, it, reveal, simMode){
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore+driveLinks(c.peg,c.pegMore):c.peg)}${q.standard==="usmle"?driveInline(c.peg+(det&&c.pegMore?" "+c.pegMore:"")):""}</div>`:""}
     ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
-    <div class="row">${lsnRow?`<button class="btn small qrow-lesson" data-act="lesson" data-id="${esc(lsnRow.id)}">📖 ${T2("Lição do tema","Topic lesson")}</button>`:""}<button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><details class="qmore"><summary class="btn small ghost">⋯ ${T2("Mais opções","More")}</summary><div class="qmore-in"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div></details></div>
+    <div class="row">${lsnRow?`<button class="btn small qrow-lesson" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com esta questão","Opens the lesson at the passage closest to this question")}">🎯 ${T2("Ver na lição","See in lesson")}</button><button class="btn small ghost qrow-lesson" data-act="lesson" data-id="${esc(lsnRow.id)}">📖 ${T2("Lição do tema","Topic lesson")}</button>`:""}<button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><details class="qmore"><summary class="btn small ghost">⋯ ${T2("Mais opções","More")}</summary><div class="qmore-in"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div></details></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&LP_Q.matches&&lpOn();
@@ -3338,6 +3347,7 @@ document.addEventListener("click", async e=>{
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
+  if(act==="lspot") return lspotOpen(a.dataset.q);
   if(act==="lpane"){ lpSet(!lpOn()); S.lpRead=false; S.lpFull=false; return render(); }
   if(act==="lpRead"){ S.lpRead=!S.lpRead; return render(); }
   if(act==="lpFull"){ S.lpFull=!S.lpFull; return render(); }
@@ -3783,6 +3793,103 @@ function lposScan(skip){ const L=lposArts(), now=new Set(L.map(x=>x.kind));
   let t=null; document.addEventListener("scroll",()=>{ if(t) return; t=setTimeout(()=>{ t=null; lposSave(); },400); },{passive:true,capture:true});
   const flush=()=>{ lposHold=0; lposSave(); }; document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flush(); }); window.addEventListener("pagehide",flush);
   try{ lposPut(lposAll()); }catch(_){} })();
+
+/* ---------- VER NA LIÇÃO (automático, sem vínculo no conteúdo) ----------
+   Palavras do enunciado, da resposta certa, do comentário dela e da pegadinha (com sinônimos de sinonimos.js) são
+   comparadas com cada bloco da lição; vence o bloco com mais termos raros em comum (peso de idf). O "Na véspera"
+   pesa um pouco menos, para preferir a explicação em prosa. */
+const LS_STOP=new Set(("de da do das dos e a o as os em na no nas nos para por com um uma uns umas que se ao aos ou mais menos como qual quais "+
+ "e sao ser foi era pode podem deve sobre entre sem seu sua seus suas este esta esse essa isso nao sim muito pouco quando onde mas tambem ja "+
+ "paciente pacientes alternativa alternativas correta correto incorreta afirmativa afirmativas assinale caso anos ano exceto principal maior menor "+
+ "tipo the of and in to is are with for a an or at on by be this that which most following patient").split(" "));
+const lsStem=w=>w.length>6?w.slice(0,6):w;
+function lsToks(t){ return nz(t).split(" ").filter(w=>w.length>=3&&!LS_STOP.has(w)&&!/^\d+$/.test(w)); }
+function lspotTerms(q){ const c=q.i18n?.pt||content(q).c; if(!c) return [];
+  const co=c.opts?.[q.correct]||{}, F=[[c.stem,1],[co.t,2.2],[co.why,1.4],[c.peg,1]];
+  const syn=synIndex(), T=new Map(); // chave -> {w, alt:[stems], ph:[frases]}
+  for(const [txt,w] of F){ const ws=lsToks(plain(txt||"")); const used=new Set();
+    for(let i=0;i<ws.length;i++){ let hit=null; for(let n=Math.min(3,ws.length-i);n>=1&&!hit;n--){ const ph=ws.slice(i,i+n).join(" "); if(syn.has(ph)) hit={n,ph}; }
+      const key=hit?"s:"+hit.ph:lsStem(ws[i]); if(used.has(key)){ if(hit) i+=hit.n-1; continue; } used.add(key);
+      let e=T.get(key); if(!e){ e={w:0,alt:new Set(),ph:new Set()}; T.set(key,e);
+        if(hit){ syn.get(hit.ph).forEach(g=>g.forEach(x=>{ const p=x.n.trim(); if(!p) return; p.includes(" ")?e.ph.add(" "+p+" "):e.alt.add(lsStem(p)); })); } else e.alt.add(key); }
+      e.w=Math.min(4,e.w+w); if(hit) i+=hit.n-1; } }
+  return [...T.values()]; }
+function lspotBlocks(art){ const sel="p,li,tr,h2,h3,h4,dd,dt,figcaption,.tq,.tn,.tf,.chain,blockquote>div";
+  const all=[...art.querySelectorAll(sel)].filter(el=>!el.closest("svg,.ann-layer")&&!el.querySelector(sel));
+  const sw=art.querySelector(".lfull-sw"); let head="";
+  return all.map(el=>{ if(/^H[2-4]$/.test(el.tagName)) head=el.textContent;
+    const n=" "+nz(el.textContent)+" ", set=new Set(n.split(" ").filter(Boolean).map(lsStem));
+    const vesp=!!(sw&&(sw.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_PRECEDING));
+    return {el,n,set,len:set.size,vesp,head:" "+nz(head)+" ",hset:new Set(nz(head).split(" ").filter(Boolean).map(lsStem))}; }).filter(b=>b.len); }
+function lspotFind(art,q){ const terms=lspotTerms(q), B=lspotBlocks(art); if(!terms.length||!B.length) return null;
+  const has=(e,set,n)=>{ for(const a of e.alt) if(set.has(a)) return true; for(const p of e.ph) if(n.includes(p)) return true; return false; };
+  const idf=terms.map(e=>{ let df=0; for(const b of B) if(has(e,b.set,b.n)) df++; return df?Math.log(1+B.length/df):0; });
+  let best=null;
+  for(const b of B){ let sc=0, k=0; terms.forEach((e,i)=>{ if(!idf[i]) return; if(has(e,b.set,b.n)){ sc+=e.w*idf[i]; k++; } else if(has(e,b.hset,b.head)) sc+=.35*e.w*idf[i]; });
+    if(k<2) continue; sc=sc/(1+.12*Math.log(1+b.len))*(b.vesp?.75:1)*(/^H[2-4]$/.test(b.el.tagName)?.6:1);
+    if(!best||sc>best.sc) best={el:b.el,sc,k}; }
+  return best&&best.sc>=3?best.el:null; }
+function lspotShow(art,q){ if(!art||!art.isConnected) return false; const el=lspotFind(art,q); if(!el){ toast(T2("Não achei um trecho parecido; abri a lição do tema.","No close passage found; opened the topic lesson.")); return false; }
+  lfullReveal(el); lposHold=Date.now()+1500;
+  const go=()=>{ if(!el.isConnected) return; const sc=annScroller(el), doc=sc===document.scrollingElement||sc===document.documentElement;
+    const top=doc?0:sc.getBoundingClientRect().top, h=doc?innerHeight:sc.clientHeight, r=el.getBoundingClientRect();
+    const y=r.top-top-Math.max(60,Math.min(h*.28,(h-r.height)/2)); if(doc) window.scrollBy({top:y}); else sc.scrollTop+=y; };
+  go(); setTimeout(go,120);
+  art.querySelectorAll(".lspot").forEach(x=>x.classList.remove("lspot","lspot-out")); el.classList.add("lspot");
+  setTimeout(()=>el.classList.add("lspot-out"),2200); setTimeout(()=>el.classList.remove("lspot","lspot-out"),3800); return true; }
+function lspotOpen(qid){ const q=S.qs.get(qid); if(!q) return; const l=lessonOf(q.discipline,q.topic); if(!l) return;
+  S.prog.read=S.prog.read||{}; if(!S.prog.read[l.id]){ S.prog.read[l.id]=now(); saveProg(); }
+  const after=(find)=>requestAnimationFrame(()=>requestAnimationFrame(()=>lspotShow(find(),q)));
+  if(inQSession()&&LP_Q.matches&&!$("#layer").innerHTML){ lposSeen.panel=l.id; if(!lpOn()){ lpSet(true); render(); }
+    if(S.lpFull){ S.lpFull=false; render(); }
+    return after(()=>$("#view .qlbody article.lesson")); }
+  if(inQSession()){ lposSeen.sheet=l.id; lessonSheet(l.id); return after(()=>$("#layer .lsh-b article.lesson")); }
+  if($("#layer").innerHTML){ closeSheetRaw(); if(S.sheetPushed){ S.sheetPushed=false; try{ history.replaceState(Object.assign({},history.state||{},{sheet:undefined}),"",location.hash); }catch(_){} } document.body.style.overflow=""; }
+  lposSeen.view=l.id; S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=l.id; go("lesson"); after(()=>$("#view .lwrap article.lesson")); }
+
+/* ---------- BARRA DE PROGRESSO DA LIÇÃO ----------
+   2 px no topo: na página da lição (fixa no topo da tela, também no modo leitura), no painel do tablet e na folha
+   do celular (presa ao topo da área que rola). Mostra quanto da lição já passou pela tela; some se a lição cabe na tela. */
+let lprogRaf=0; const lprogRO="ResizeObserver" in window?new ResizeObserver(()=>lprogQ()):null, lprogObs=new WeakSet();
+function lprogQ(){ if(lprogRaf) return; lprogRaf=requestAnimationFrame(()=>{ lprogRaf=0; try{ lprogUpd(); }catch(_){} }); }
+function lprogUpd(){ let fixed=false;
+  for(const art of document.querySelectorAll("article.lesson")){ if(!art.getClientRects().length) continue;
+    if(lprogRO&&!lprogObs.has(art)){ lprogObs.add(art); lprogRO.observe(art); }
+    const sc=annScroller(art), doc=sc===document.scrollingElement||sc===document.documentElement, r=art.getBoundingClientRect();
+    const vt=doc?0:sc.getBoundingClientRect().top, vb=doc?innerHeight:vt+sc.clientHeight;
+    let bar;
+    if(doc){ if(S.view!=="lesson"||!art.closest(".lwrap")) continue; fixed=true; bar=document.getElementById("lprog");
+      if(!bar){ bar=document.createElement("div"); bar.id="lprog"; bar.setAttribute("aria-hidden","true"); document.body.appendChild(bar); } }
+    else { bar=sc.querySelector(":scope>.lprog"); if(!bar){ bar=document.createElement("div"); bar.className="lprog"; bar.setAttribute("aria-hidden","true"); sc.prepend(bar); } }
+    const fits=r.top>=vt-2&&r.bottom<=vb+2, p=Math.max(0,Math.min(1,(vb-r.top)/Math.max(1,r.height)));
+    bar.style.transform="scaleX("+p.toFixed(4)+")"; bar.classList.toggle("off",fits||r.bottom<vt); }
+  if(!fixed) document.getElementById("lprog")?.remove(); }
+(()=>{ const _r=render; render=function(){ _r.apply(this,arguments); lprogQ(); };
+  document.addEventListener("scroll",lprogQ,{passive:true,capture:true}); window.addEventListener("resize",lprogQ);
+  document.addEventListener("click",()=>setTimeout(lprogQ,60),true); })();
+
+/* ---------- DESLIZAR PARA TROCAR DE QUESTÃO ----------
+   Só dedo (S Pen e mouse não), só na coluna da questão. Ignora: lição ao lado, folha aberta, área com Anotar ligado,
+   tabelas/blocos que rolam de lado, imagens com zoom, divisórias, campos de texto, dois dedos e texto selecionado. */
+(()=>{ let st=null, lastPT="";
+  document.addEventListener("pointerdown",e=>{ lastPT=e.pointerType||""; },true);
+  const hScroll=el=>{ for(let n=el;n&&n!==document.body;n=n.parentElement){ if(n.scrollWidth>n.clientWidth+2){ const o=getComputedStyle(n).overflowX; if(o==="auto"||o==="scroll") return true; } } return false; };
+  document.addEventListener("touchstart",e=>{ st=null; if(e.touches.length!==1||!inQSession()) return; const t=e.touches[0], el=e.target;
+    if(t.touchType==="stylus"||lastPT==="pen"||lastPT==="mouse") return;
+    if(!el.closest||!el.closest("#view")||el.closest(".qlesson,.qdrag,.gdrag,.mpdrag,.gbox,input,textarea,select,[contenteditable],.ann-enabled,.annbar,#lpFullBtn")) return;
+    if($("#layer")?.innerHTML||document.body.classList.contains("mp-on")&&el.closest("#mpane")) return;
+    if(t.clientX<24||t.clientX>innerWidth-24) return; // gesto de voltar do sistema
+    if(hScroll(el)) return;
+    st={x:t.clientX,y:t.clientY,t:Date.now(),max:0}; },{passive:true});
+  document.addEventListener("touchmove",e=>{ if(!st) return; if(e.touches.length!==1){ st=null; return; } const t=e.touches[0]; st.max=Math.max(st.max,Math.abs(t.clientY-st.y)); },{passive:true});
+  document.addEventListener("touchcancel",()=>{ st=null; },{passive:true});
+  document.addEventListener("touchend",e=>{ const s0=st; st=null; if(!s0||!inQSession()) return; const t=e.changedTouches[0]; if(!t) return;
+    const dx=t.clientX-s0.x, dy=Math.max(s0.max,Math.abs(t.clientY-s0.y)), dt=Date.now()-s0.t;
+    if(Math.abs(dx)<Math.max(70,innerWidth*.12)||Math.abs(dx)<2.2*dy||dt>700) return;
+    if(String(window.getSelection?.()||"").trim()) return;
+    const b=$(dx<0?'#view [data-act="next"]':'#view [data-act="prev"]'); if(!b||b.disabled) return;
+    b.click(); requestAnimationFrame(()=>$("#view .qgrid")?.classList.add("qsw")); },{passive:true});
+})();
 
 async function boot(){
   await cacheLoad(); applyTheme(); posRestore();

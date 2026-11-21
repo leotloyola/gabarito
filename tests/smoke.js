@@ -445,6 +445,15 @@ function fixture(){
         document.querySelector('#lreadBar [data-act="lread"]').click(); await W(40); l.html=old; go("study"); return out; });
       await p.setViewportSize(vp);
       if(!r.lread||!r.toc||!r.hid||!r.reopen||!r.back) throw new Error(JSON.stringify(r)); });
+    await step("índice na lição em tela cheia", async()=>{ if(vp.width<1000) return;
+      await p.setViewportSize({width:1280,height:800});
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const l=S.lessons.get("lesson:da:t1"), old=l.html; document.documentElement.classList.remove("toc-off");
+        l.html=Array.from({length:5},(_,i)=>`<h2>${i+1}. Seção</h2><p>texto ${i}</p>`).join(""); lpSet(true); S.session=buildSession("study",[S.qs.get("da-t1-ufpr-0")],{mode:"study",count:0,order:"seq"}); S.lpFull=true; go("study"); await W(60);
+        const t=document.querySelector(".qlesson>.ltoc"), out={toc:!!t&&getComputedStyle(t).display!=="none"&&t.querySelectorAll("ol button").length===5};
+        t.querySelector(".tochide").click(); await W(30); out.hid=getComputedStyle(t).display==="none"; const b=document.querySelector(".qlh .lptocb"); out.btn=!!b&&getComputedStyle(b).display!=="none";
+        b.click(); await W(30); out.back=getComputedStyle(t).display!=="none"; S.lpFull=false; S.session=null; l.html=old; go("study"); return out; });
+      await p.setViewportSize(vp);
+      if(!r.toc||!r.hid||!r.btn||!r.back) throw new Error(JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

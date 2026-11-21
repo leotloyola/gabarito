@@ -530,8 +530,14 @@ nav.tabs button .tl{display:none}
 /* modo leitura da lição: só o texto (e a anotação) */
 body.lread #view>*:not(.lwrap){display:none!important}
 body.lread .lwrap{display:block!important}
-body.lread .ltoc,body.lread .lwrap>.gdrag{display:none!important}
+@media (max-width:1149.98px){ body.lread .ltoc,body.lread .lwrap>.gdrag{display:none!important} }
 body.lread .wrap:has(.lwrap){max-width:860px}
+/* modo leitura em tela larga (tablet deitado/PC): índice lateral continua, recolhível com » (21/11) */
+@media (min-width:1150px){
+  html body.lread .lwrap{display:grid!important}
+  html:not(.toc-off) body.lread .wrap:has(.lwrap){max-width:calc(884px + var(--tocw,230px))}
+  body.lread .ltoc{top:64px;max-height:calc(100vh - 80px)}
+}
 body.lread{--nav-h:0px}
 body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
 /* sem faixa escura dos lados: o fundo da tela vira o mesmo da lição */
@@ -2317,7 +2323,8 @@ function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn
   if(!b){ b=document.createElement("div"); b.id="lreadBar"; b.setAttribute("role","toolbar"); document.body.appendChild(b); }
   const o="L:"+S.lessonId, on=S.annId===o;
   b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
-  b.innerHTML=(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
+  const tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&$("#ltoc")&&!$("#ltoc").hidden?'<button type="button" class="btn small" data-act="tocTog">☰ '+T2("Índice","Contents")+'</button>':"";
+  b.innerHTML=tocB+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
 // troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
 function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
   if(sf){ for(const b of annBlocks(sf)){ const r=b.getBoundingClientRect(); if(r.bottom>70&&r.height){ ref=b; top=r.top; break; } } }
@@ -3325,7 +3332,7 @@ document.addEventListener("click", async e=>{
   if(act==="closeSheet") return closeSheet();
   if(act==="navMore") return openNavMore();
   if(act==="keys") return openKeys();
-  if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); return; }
+  if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); lreadBar(); return; }
   if(act==="lfull"){ const on=!a.classList.contains("open"); lfullOpen(a,on,true); if(!on) a.scrollIntoView({block:"center"}); return; }
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ lfullReveal(h); h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }

@@ -434,6 +434,17 @@ function fixture(){
         const t=askPrompt(q.id); out.leak=/GABARITO|COMENTÁRIO/.test(t); out.ok=/AINDA NÃO RESPONDI/.test(t);
         S.session.items[0].pick=q.correct; render(); out.after=!document.querySelector("#view .qpre")&&/GABARITO/.test(askPrompt(q.id)); S.session=null; go("study"); return out; });
       if(!r.spot||!r.cl||!r.ge||r.leak||!r.ok||!r.after) throw new Error(JSON.stringify(r)); });
+    await step("índice no modo leitura em tela larga", async()=>{ if(vp.width<1000) return;
+      await p.setViewportSize({width:1280,height:800});
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const l=S.lessons.get("lesson:da:t1"), old=l.html; document.documentElement.classList.remove("toc-off");
+        l.html=Array.from({length:5},(_,i)=>`<h2>${i+1}. Seção</h2><p>texto ${i}</p>`).join(""); S.session=null; S.lessonId=l.id; S.lessonBack="study"; go("lesson"); await W(50);
+        document.querySelector('[data-act="lread"]').click(); await W(80); const out={lread:document.body.classList.contains("lread")};
+        const t=document.getElementById("ltoc"); out.toc=!!t&&getComputedStyle(t).display!=="none"&&t.getBoundingClientRect().width>100;
+        t.querySelector(".tochide").click(); await W(40); out.hid=getComputedStyle(t).display==="none"; out.reopen=!!document.querySelector('#lreadBar [data-act="tocTog"]');
+        document.querySelector('#lreadBar [data-act="tocTog"]').click(); await W(40); out.back=getComputedStyle(t).display!=="none";
+        document.querySelector('#lreadBar [data-act="lread"]').click(); await W(40); l.html=old; go("study"); return out; });
+      await p.setViewportSize(vp);
+      if(!r.lread||!r.toc||!r.hid||!r.reopen||!r.back) throw new Error(JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

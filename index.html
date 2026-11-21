@@ -2206,7 +2206,7 @@ function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessons
   const miss=(d.topics||[]).filter(t=>!lessonOf(d.id,t.id));
   const missH=miss.length?`<div class="eyebrow" style="margin:16px 4px 8px">${T2("Temas sem lição","Topics without a lesson")} · ${miss.length}</div><div class="panel"><div class="list">${miss.map(t=>`<button type="button" class="li" data-act="askLesson" data-d="${esc(d.id)}" data-t="${esc(t.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(nm(t))}</b><br><small style="color:var(--subtle)">${esc(t.exam||"")}${t.exam?" · ":""}${T2("toque para pedir a lição ao Claude","tap to request the lesson from Claude")}</small></span><span class="st no">✉</span></button>`).join("")}</div></div>`:"";
   if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>${missH}`;
-  return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina inteira","Download whole discipline")} (${L.length} PDFs)</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>${missH}`; }
+  return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina em PDF","Download discipline as PDF")}</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${read[l.id]?` · ${T2("lida","read")}`:""}</small></span><span class="st ${read[l.id]?"ok":"no"}">${read[l.id]?"✓":"›"}</span></button>`; }).join("")}</div></div>${missH}`; }
 // "Ler a lição completa": a prosa abaixo do botão .lfull-sw fica recolhida; estado aberto lembrado por lição
 const LFULL_ON="Recolher a lição completa", LFULL_OFF="Ler a lição completa";
 function lfullSet(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.lfull")||"[]")); }catch(_){ return new Set(); } }
@@ -2230,7 +2230,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const practiceTop=nQ?`<button class="btn small primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">▶ ${T2("Praticar","Practice")} · ${lpN&&lpN<nQ?lpN:nQ}</button>`:"";
   v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}<button class="btn small" data-act="lessonRead" aria-pressed="${isRead}">${isRead?"✓ "+T2("Lida · desmarcar","Read · unmark"):T2("Marcar como lida","Mark as read")}</button></span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Gera um PDF da lição (com as questões no fim) para anotar no Samsung Notes","Creates a PDF of the lesson (questions at the end) to annotate")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
+   <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Baixa a lição em PDF: escolha o conteúdo, o gabarito, a coluna para anotar e as cores","Download the lesson as PDF: pick content, answer key, notes column and colors")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
    <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
@@ -2287,16 +2287,22 @@ function lessonToc(){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } cons
   S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ const r=h.getBoundingClientRect(); if(r.height&&r.top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
   hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
 function tocTogLbl(){ const b=$("#tocTog"); if(!b) return; const off=document.documentElement.classList.contains("toc-off"); b.hidden=false; b.setAttribute("aria-pressed",String(!off)); b.textContent="☰ "+T2("Índice","Contents"); b.title=off?T2("Mostrar índice","Show contents"):T2("Recolher índice","Hide contents"); }
-/* ---------- PDF PARA O TABLET ---------- */
-// Página A4 (px CSS) com coluna larga à direita para anotar; sem biblioteca: HTML → SVG/foreignObject → JPEG → PDF escrito à mão
-const PW=794, PH=1123, PCW=508, PCAP=PH-70-70-24;
-const PDF_CSS=`.pg,.pdfc{--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:#A1A1AA;--line:#E4E4E7;--pill:rgba(228,228,231,.5);--surface-2:#F4F4F5;--accent:#0F766E;--accent-soft:#F0FDFA;--warn:#B45309;--warn-soft:#FFFBEB;--warn-line:#FDE68A;--usmle:#4338CA;--usmle-soft:#EEF2FF;--usmle-line:#C7D2FE;--bad:#E11D48;--bad-soft:#FFF1F2;--bad-bar:#FDA4AF;--fs:1;font-family:sans-serif;font-feature-settings:normal;letter-spacing:0;text-wrap:wrap}
+/* ---------- PDF (download) ---------- */
+// Página A4 (px CSS); sem biblioteca: HTML → SVG/foreignObject → JPEG → PDF escrito à mão, com índice clicável e marcadores
+const PW=794, PH=1123, PCAP=PH-70-70-24, PSC=2.5;   // PSC: resolução do raster (2,5× ≈ 240 dpi)
+const PLAY={none:{cw:682,ln:0},normal:{cw:508,ln:584},wide:{cw:400,ln:476}};   // largura do texto e posição da coluna de notas
+let PCW=508;
+const PTHEME={
+  light:{bg:"#FFFFFF",v:""},
+  sepia:{bg:"#F4ECD8",v:"--surface:#F4ECD8;--surface-2:#EADFC6;--pill:rgba(214,198,164,.45);--ink:#2F2A24;--ink-2:#3D362E;--muted:#6B6153;--subtle:#8A7F6E;--line:#DCCDAE;--accent-soft:#DFE1CE;--accent-line:#A9CDB9;--usmle-soft:#E6DED7;--usmle-line:#C8BFD4;--bad-soft:#F2DBCC;--bad-bar:#EDA3A5;--warn-soft:#EEDEC5;--warn-line:#E1BE9A"},
+  dark:{bg:"#191E23",v:"--surface:#191E23;--surface-2:#22292F;--pill:rgba(63,63,70,.5);--ink:#E6EBEF;--ink-2:#CBD4DC;--muted:#A7B3BE;--subtle:#96A3AF;--line:#35404A;--accent:#83D8C8;--accent-soft:#193B35;--accent-line:#2F6F64;--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;--bad:#F1A0AA;--bad-soft:#362329;--bad-bar:#B66B78;--warn:#E6C580;--warn-soft:#302B20;--warn-line:#695A35"}};
+const PDF_CSS=`.pg,.pdfc{--surface:#FFFFFF;--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:#A1A1AA;--line:#E4E4E7;--pill:rgba(228,228,231,.5);--surface-2:#F4F4F5;--accent:#0F766E;--accent-soft:#F0FDFA;--accent-line:#99F6E4;--warn:#B45309;--warn-soft:#FFFBEB;--warn-line:#FDE68A;--usmle:#4338CA;--usmle-soft:#EEF2FF;--usmle-line:#C7D2FE;--bad:#E11D48;--bad-soft:#FFF1F2;--bad-bar:#FDA4AF;--fs:1;font-family:sans-serif;font-feature-settings:normal;letter-spacing:0;text-wrap:wrap}
 .pg *,.pdfc *{box-sizing:border-box}
-.pg{position:relative;width:794px;height:1123px;background:#fff;overflow:hidden;color:var(--ink-2)}
-.pg .hd{position:absolute;left:56px;top:36px;width:508px;font-size:11px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pg .ft{position:absolute;left:56px;bottom:36px;font-size:10px;color:var(--muted)}
-.pg .ln{position:absolute;left:584px;top:70px;bottom:70px;border-left:1px dotted var(--line)}
-.pg .nt{position:absolute;left:598px;top:70px;font-size:10px;color:var(--subtle)}
+.pg{position:relative;width:794px;height:1123px;background:var(--surface);overflow:hidden;color:var(--ink-2)}
+.pg .hd{position:absolute;left:56px;top:36px;font-size:11px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg .ft{position:absolute;left:56px;bottom:36px;display:flex;justify-content:space-between;font-size:10px;color:var(--muted)} .pg .ft b{font-weight:600;color:var(--ink-2)}
+.pg .ln{position:absolute;top:70px;bottom:70px;border-left:1px dotted var(--line)}
+.pg .nt{position:absolute;top:70px;font-size:10px;color:var(--subtle)}
 .pg .bd{position:absolute;left:56px;top:70px}
 .pdfc{display:flex;flex-direction:column;width:508px;font-size:14px;line-height:1.55;color:var(--ink-2)}
 .pdfc.pdfc>*{flex:none;margin-top:0;margin-bottom:18px}
@@ -2305,34 +2311,49 @@ const PDF_CSS=`.pg,.pdfc{--ink:#18181B;--ink-2:#27272A;--muted:#71717A;--subtle:
 .pdfc h2{font-size:17px;line-height:1.3;font-weight:600;color:var(--ink);margin:0} .pdfc h3{font-size:15px;line-height:1.3;font-weight:600;color:var(--ink);margin:0}
 .pdfc p{margin:8px 0} .pdfc ul,.pdfc ol{margin:8px 0;padding-left:20px} .pdfc li{margin:4px 0} .pdfc b{color:var(--ink)}
 .pdfc code{font-family:monospace;font-size:.9em;background:var(--pill);padding:1px 5px;border-radius:6px}
+.pdfc img{max-width:100%;height:auto;image-rendering:auto} .pdfc figure.lfig{margin:14px 0;text-align:center} .pdfc figure.lfig img{display:block;margin:0 auto;max-height:720px;width:auto;object-fit:contain} .pdfc figure figcaption{font-size:12px;color:var(--muted);margin-top:6px}
 .pdfc .tbl{overflow:visible} .pdfc table{border-collapse:collapse;width:100%;font-size:12px;line-height:1.45}
 .pdfc th{text-align:left;font-weight:600;color:var(--ink);background:var(--surface-2);padding:8px 10px;border-bottom:1px solid var(--line)}
 .pdfc td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 .pdfc figure.svg{margin:14px 0;text-align:center} .pdfc figure.svg svg{max-width:100%;height:auto;display:block;margin:0 auto;color:var(--ink-2)}
-.pdfc figure.svg figcaption{font-size:12px;color:var(--muted);margin-top:6px}
 .pdfc .call{border-radius:14px;padding:12px 14px;font-size:14px;background:var(--pill)}
 .pdfc .call .ct{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
-.pdfc .call.prova{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset} .pdfc .call.prova .ct{color:var(--accent)}
+.pdfc .call.prova{background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent-line) inset} .pdfc .call.prova .ct{color:var(--accent)}
 .pdfc .call.alerta{background:var(--warn-soft);box-shadow:0 0 0 1px var(--warn-line) inset} .pdfc .call.alerta .ct{color:var(--warn)}
 .pdfc .call.usmle{background:var(--usmle-soft);box-shadow:0 0 0 1px var(--usmle-line) inset} .pdfc .call.usmle .ct{color:var(--usmle)}
 .pdfc .call p:first-of-type{margin-top:0} .pdfc .call ul{margin:4px 0}
 .pdfc ol.flow{list-style:none;padding:0;counter-reset:f}
 .pdfc ol.flow li{counter-increment:f;position:relative;padding:10px 12px 10px 44px;margin:0 0 10px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset}
-.pdfc ol.flow li::before{content:counter(f);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.pdfc ol.flow li::before{content:counter(f);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
 .pdfc ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
 .pdfc ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc ol.flow li.stop::before{background:var(--bad)}
-.pdfc .call.vespera{background:#fff;box-shadow:0 0 0 2px var(--accent) inset} .pdfc .call.vespera .ct{color:var(--accent)} .pdfc .call.vespera ul{padding-left:18px}
-.pdfc .tree{font-size:13px;line-height:1.4} .pdfc .tree .tq{background:var(--ink);color:#fff;border-radius:12px;padding:8px 12px;font-weight:600;text-align:center}
+.pdfc .call.vespera{background:var(--surface);box-shadow:0 0 0 2px var(--accent) inset} .pdfc .call.vespera .ct{color:var(--accent)} .pdfc .call.vespera ul{padding-left:18px}
+.pdfc .tree{font-size:13px;line-height:1.4} .pdfc .tree .tq{background:var(--ink);color:var(--surface);border-radius:12px;padding:8px 12px;font-weight:600;text-align:center}
 .pdfc .tree .tb{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px} .pdfc .tree .tn{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-radius:12px;padding:8px 10px}
 .pdfc .tree .tl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--accent);margin-bottom:3px} .pdfc .tree .tn.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc .tree .tn.stop .tl{color:var(--bad)} .pdfc .tree .tf{margin-top:6px;font-size:12px;color:var(--muted)}
 .pdfc .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;line-height:1.3} .pdfc .chain>span{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-radius:10px;padding:5px 8px} .pdfc .chain>i{font-style:normal;color:var(--muted)}
 .pdfc .pq{padding-bottom:16px;font-size:13px;line-height:1.5} .pdfc .pq-h{font-size:11px;color:var(--muted);margin-bottom:4px} .pdfc .pq-h b{color:var(--ink);font-size:13px}
 .pdfc .pq-s{margin:0 0 6px;color:var(--ink)} .pdfc .pq-o{margin:2px 0 2px 18px;text-indent:-18px} .pdfc .pq-o i{font-style:normal;font-weight:600;color:var(--ink);display:inline-block;width:18px;text-indent:0}
-.pdfc .pq-img{margin:4px 0 8px} .pdfc .pq-img img{max-width:100%;max-height:320px;display:block} .pdfc .pq-img span{font-size:12px;color:var(--subtle)}
-.pdfc .pq-g{font-size:12px;line-height:1.45;padding-bottom:2px} .pdfc .pq-g b.n{color:var(--ink)} .pdfc .pq-g em{font-style:normal;color:var(--warn)}`;
-// rótulo padronizado: "5º · Disciplina · 03 Tema" (também nome do arquivo, cabeçalho e /Title)
+.pdfc .pq-img{margin:4px 0 8px} .pdfc .pq-img img{max-width:100%;max-height:360px;display:block} .pdfc .pq-img span{font-size:12px;color:var(--subtle)}
+.pdfc .pq-g{font-size:12px;line-height:1.45;padding-bottom:2px} .pdfc .pq-g b.n{color:var(--ink)} .pdfc .pq-g em{font-style:normal;color:var(--warn)}
+.pdfc .pq .pq-g{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent-line) inset}
+.pdfc.pdfc>a.te{margin:0;display:flex;gap:10px;align-items:baseline;color:var(--ink-2);text-decoration:none;font-size:14px;line-height:1.35;padding:7px 0;border-bottom:1px dotted var(--line)}
+.pdfc a.te span{flex:1} .pdfc a.te b{font-weight:600;color:var(--accent);min-width:28px;text-align:right} .pdfc.pdfc>a.te.sub{padding:4px 0 4px 18px;font-size:12.5px;color:var(--muted)}`;
+
+/* opções da exportação (ficam salvas nos Ajustes sincronizados) */
+const PDF_DEF={what:"lq",exam:"all",pri:1,key:"end",margin:"normal",theme:"app",one:false};
+function pdfOpt(){ return Object.assign({},PDF_DEF,set().pdfOpt||{}); }
+function pdfThemeKey(o){ let k=o.theme==="app"?lessonBg():o.theme;
+  if(k==="off"){ const r=document.documentElement.getAttribute("data-theme"); k=r==="dark"||(r!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"; }
+  return PTHEME[k]?k:"sepia"; }
+const fsafe=s=>String(s||"").replace(/[\/\\:*?"<>|]/g,"").replace(/\s+/g," ").trim();
+function topicExam(t){ const m=String(t?.exam||"").match(/^P\d/i); return m?m[0].toUpperCase():""; }
+// nome do arquivo: "Disciplina - P2 - 01 Tema" (+ sufixo)
+function pdfName(d,t,suf){ const i=(d?.topics||[]).findIndex(x=>x.id===t?.id), n=nm(t);
+  return fsafe([nm(d), topicExam(t), t?(i>=0&&!/^\d/.test(n)?String(i+1).padStart(2,"0")+" ":"")+n:"", suf].filter(Boolean).join(" - ")); }
+// cabeçalho de cada página
 function pdfLabel(l){ const d=discById(l.discipline), i=(d?.topics||[]).findIndex(t=>t.id===l.topic), t=d?.topics?.[i];
-  return `${d?.period!=null?d.period+"º · ":""}${nm(d)||l.discipline} · ${i>=0&&!/^\d/.test(t?nm(t):"")?String(i+1).padStart(2,"0")+" ":""}${t?nm(t):l.title}`.replace(/[\/\\:*?"<>|]/g,"").trim(); }
+  return `${d?.period!=null?d.period+"º · ":""}${nm(d)||l.discipline} · ${i>=0&&!/^\d/.test(t?nm(t):"")?String(i+1).padStart(2,"0")+" ":""}${t?nm(t):l.title}`.trim(); }
 // altura externa (com margens) e margem superior de um bloco
 function pdfM(el){ const c=getComputedStyle(el), mt=parseFloat(c.marginTop)||0; return {el, mt, h:el.getBoundingClientRect().height+mt+(parseFloat(c.marginBottom)||0)}; }
 // divide tabela/lista grande em fragmentos que cabem na página (repete thead; mantém numeração)
@@ -2353,68 +2374,103 @@ function pdfScale(box, el){ el.style.margin="0"; const h=el.getBoundingClientRec
   w.style.cssText=`height:${h*k}px;overflow:hidden`; const i=document.createElement("div"); i.style.cssText=`width:${PCW}px;transform:scale(${k});transform-origin:0 0`; i.appendChild(el); w.appendChild(i);
   box.appendChild(w); const m=pdfM(w); w.remove(); return m; }
 // pagina gulosamente os filhos diretos; devolve lista de páginas (arrays de nós)
+// Tabela, fluxo (.flow/.tree/.chain), figura e quadro não se partem: vão inteiros para a página seguinte. Só listas comuns
+// começam no espaço que sobrou; o que é maior que uma página inteira é dividido (tabela/lista) ou reduzido.
 function pdfPaginate(box){
   const items=[]; for(const el of [...box.children]){ const m=pdfM(el); const body=m.h-m.mt;
     if(body>PCAP){ const sp=/^(TABLE|UL|OL)$/.test(el.tagName)||el.classList.contains("tbl")?pdfSplit(box,el):null;
       if(sp) sp.forEach(x=>items.push(x.h>PCAP?pdfScale(box,x.el):x)); else items.push(pdfScale(box,el)); }
     else items.push(m); }
   const pages=[]; let pg=[], used=0; const eff=m=>m.h-(pg.length?0:m.mt), isH=m=>/^H[1-3]$/.test(m.el.tagName);
-  const canSplit=el=>/^(TABLE|UL|OL)$/.test(el.tagName)||el.classList.contains("tbl");
+  const canSplit=el=>/^(UL|OL)$/.test(el.tagName)&&!el.classList.contains("flow");
   for(let i=0;i<items.length;i++){ const m=items[i];
-    if(pg.length&&m.el.classList?.contains("pq-br")){ pages.push(pg); pg=[]; used=0; }   // seção que começa em página nova
+    if(pg.length&&m.el.classList?.contains("pq-br")&&!(pg.length===1&&pg[0].tagName==="H1")){ pages.push(pg); pg=[]; used=0; }   // seção que começa em página nova
     let need=eff(m); if(isH(m)){ let j=i; while(j<items.length-1&&isH(items[j])) { j++; need+=canSplit(items[j].el)?Math.min(items[j].h,140):items[j].h; } }   // título vai junto com o próximo bloco (ou o começo dele)
     if(pg.length&&used+need>PCAP){ const rem=PCAP-used;
-      if(!isH(m)&&rem>=140&&canSplit(m.el)){ const sp=pdfSplit(box,m.el,rem-m.mt); if(sp&&sp.length>1){ items.splice(i,1,...sp); i--; continue; } }   // lista/tabela começa no espaço que sobrou
+      if(!isH(m)&&rem>=140&&canSplit(m.el)){ const sp=pdfSplit(box,m.el,rem-m.mt); if(sp&&sp.length>1){ items.splice(i,1,...sp); i--; continue; } }   // lista começa no espaço que sobrou
       pages.push(pg); pg=[]; used=0; }
     used+=eff(m); pg.push(m.el); }
   if(pg.length) pages.push(pg); return pages;
 }
-// página → JPEG (via SVG foreignObject)
-async function pdfRaster(nodes, label, n, N, qual=.88){
-  const pg=document.createElement("div"); pg.className="pg"; const bd=document.createElement("div"); bd.className="bd"; const c=document.createElement("div"); c.className="pdfc"; nodes.forEach(x=>c.appendChild(x.cloneNode(true))); bd.appendChild(c);
-  const add=(cls,t)=>{ const e=document.createElement("div"); e.className=cls; if(t) e.textContent=t; pg.appendChild(e); };
-  add("hd",label); add("ln"); add("nt","Notas"); pg.appendChild(bd); add("ft",`Gabarito · p. ${n}/${N}`);
-  const root=document.createElement("div"); root.innerHTML=`<style>${PDF_CSS}</style>`; root.appendChild(pg);
+// página → JPEG (via SVG foreignObject); devolve também a posição dos links do índice
+async function pdfRaster(nodes, label, n, N, qual, cx){
+  const {lay,th,css}=cx;
+  const pg=document.createElement("div"); pg.className="pg"; const bd=document.createElement("div"); bd.className="bd"; const c=document.createElement("div"); c.className="pdfc"; c.style.width=lay.cw+"px"; nodes.forEach(x=>c.appendChild(x.cloneNode(true))); bd.appendChild(c);
+  const add=(cls,t,st)=>{ const e=document.createElement("div"); e.className=cls; if(t) e.textContent=t; if(st) e.style.cssText=st; pg.appendChild(e); return e; };
+  add("hd",label,`width:${lay.cw}px`); if(lay.ln){ add("ln","",`left:${lay.ln}px`); add("nt",T2("Notas","Notes"),`left:${lay.ln+14}px`); } pg.appendChild(bd);
+  const ft=add("ft","",`width:${lay.cw}px`); ft.innerHTML=`<span>Gabarito</span><b>${n} / ${N}</b>`;
+  const root=document.createElement("div"); root.innerHTML=`<style>${css}</style>`; root.appendChild(pg);
+  const host=document.createElement("div"); host.style.cssText="position:fixed;left:-10000px;top:0"; host.appendChild(root); document.body.appendChild(host);
+  let links=[]; try{ const pr=pg.getBoundingClientRect(); links=[...pg.querySelectorAll("[data-go]")].map(a=>{ const r=a.getBoundingClientRect(); return {go:+a.dataset.go, r:[r.left-pr.left, r.top-pr.top, r.right-pr.left, r.bottom-pr.top]}; }); } finally{ host.remove(); }
   const xml=new XMLSerializer().serializeToString(root);
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${PW}" height="${PH}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${xml}</div></foreignObject></svg>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${PW*PSC}" height="${PH*PSC}" viewBox="0 0 ${PW} ${PH}"><foreignObject width="${PW}" height="${PH}"><div xmlns="http://www.w3.org/1999/xhtml">${xml}</div></foreignObject></svg>`;
   const img=new Image(); await new Promise((ok,no)=>{ img.onload=ok; img.onerror=()=>no(new Error("falha ao desenhar a página")); img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); });
-  const cv=document.createElement("canvas"); cv.width=PW*2; cv.height=PH*2; const g=cv.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,cv.width,cv.height); g.drawImage(img,0,0,cv.width,cv.height);
+  const cv=document.createElement("canvas"); cv.width=Math.round(PW*PSC); cv.height=Math.round(PH*PSC); const g=cv.getContext("2d"); g.imageSmoothingQuality="high"; g.fillStyle=th.bg; g.fillRect(0,0,cv.width,cv.height); g.drawImage(img,0,0,cv.width,cv.height);
   const blob=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",qual)); if(!blob) throw new Error("falha ao gerar imagem");
-  return {b:new Uint8Array(await blob.arrayBuffer()), w:cv.width, h:cv.height};
+  return {b:new Uint8Array(await blob.arrayBuffer()), w:cv.width, h:cv.height, links};
 }
-// PDF 1.4 mínimo: uma página A4 por JPEG
-function jpegPdf(pages, title){
-  const enc=new TextEncoder(), parts=[], off=[]; let len=0;
+// PDF 1.4 mínimo: uma página A4 por JPEG + links do índice + marcadores (outline)
+function jpegPdf(pages, title, ex={}){
+  const enc=new TextEncoder(), parts=[], off=[]; let len=0, nobj=0;
   const put=x=>{ const u=typeof x==="string"?enc.encode(x):x; parts.push(u); len+=u.length; };
   const obj=(n,s,bin)=>{ off[n]=len; put(`${n} 0 obj\n${s}`); if(bin){ put("\nstream\n"); put(bin); put("\nendstream"); } put("\nendobj\n"); };
-  const N=3+pages.length*3, hex=[...title].map(ch=>ch.charCodeAt(0).toString(16).padStart(4,"0")).join("").toUpperCase();
+  const id=()=>++nobj, u16=s=>"<FEFF"+Array.from({length:s.length},(_,i)=>s.charCodeAt(i).toString(16).padStart(4,"0")).join("").toUpperCase()+">";
+  const k=595.28/PW, H=841.89, f2=x=>(+x).toFixed(2);
+  const cat=id(), pgs=id(), info=id(), P=pages.map(()=>({pg:id(),ct:id(),im:id(),an:[]}));
+  const links=(ex.links||[]).filter(L=>L.to!=null&&P[L.pg]&&P[L.to]).map(L=>({...L,id:id()})); links.forEach(L=>P[L.pg].an.push(L.id));
+  const ol=(ex.outline||[]).filter(x=>P[x.p]); const olRoot=ol.length?id():0, olIds=ol.map(()=>id());
   put("%PDF-1.4\n"); put(new Uint8Array([37,226,227,207,211,10]));
-  obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
-  obj(2,`<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_,i)=>`${4+i*3} 0 R`).join(" ")}] >>`);
-  obj(3,`<< /Title <FEFF${hex}> /Producer (Gabarito) >>`);
-  pages.forEach((p,i)=>{ const k=4+i*3, cs="q 595.28 0 0 841.89 0 0 cm /Im0 Do Q";
-    obj(k,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${k+2} 0 R >> >> /Contents ${k+1} 0 R >>`);
-    obj(k+1,`<< /Length ${cs.length} >>`,enc.encode(cs));
-    obj(k+2,`<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.b.length} >>`,p.b); });
-  const xr=len; put(`xref\n0 ${N+1}\n0000000000 65535 f \n`); for(let n=1;n<=N;n++) put(String(off[n]).padStart(10,"0")+" 00000 n \n");
-  put(`trailer\n<< /Size ${N+1} /Root 1 0 R /Info 3 0 R >>\nstartxref\n${xr}\n%%EOF\n`);
+  obj(cat,`<< /Type /Catalog /Pages ${pgs} 0 R${olRoot?` /Outlines ${olRoot} 0 R`:""} >>`);
+  obj(pgs,`<< /Type /Pages /Count ${pages.length} /Kids [${P.map(x=>`${x.pg} 0 R`).join(" ")}] >>`);
+  obj(info,`<< /Title ${u16(title)} /Producer (Gabarito) >>`);
+  pages.forEach((p,i)=>{ const o=P[i], cs="q 595.28 0 0 841.89 0 0 cm /Im0 Do Q";
+    obj(o.pg,`<< /Type /Page /Parent ${pgs} 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${o.im} 0 R >> >> /Contents ${o.ct} 0 R${o.an.length?` /Annots [${o.an.map(a=>a+" 0 R").join(" ")}]`:""} >>`);
+    obj(o.ct,`<< /Length ${cs.length} >>`,enc.encode(cs));
+    obj(o.im,`<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.b.length} >>`,p.b); });
+  links.forEach(L=>{ const [x1,y1,x2,y2]=L.r; obj(L.id,`<< /Type /Annot /Subtype /Link /Rect [${f2(x1*k)} ${f2(H-y2*k)} ${f2(x2*k)} ${f2(H-y1*k)}] /Border [0 0 0] /Dest [${P[L.to].pg} 0 R /Fit] >>`); });
+  if(olRoot){ obj(olRoot,`<< /Type /Outlines /First ${olIds[0]} 0 R /Last ${olIds[olIds.length-1]} 0 R /Count ${ol.length} >>`);
+    ol.forEach((x,i)=>obj(olIds[i],`<< /Title ${u16(x.t)} /Parent ${olRoot} 0 R${i?` /Prev ${olIds[i-1]} 0 R`:""}${i<ol.length-1?` /Next ${olIds[i+1]} 0 R`:""} /Dest [${P[x.p].pg} 0 R /Fit] >>`)); }
+  const xr=len; put(`xref\n0 ${nobj+1}\n0000000000 65535 f \n`); for(let n=1;n<=nobj;n++) put(String(off[n]).padStart(10,"0")+" 00000 n \n");
+  put(`trailer\n<< /Size ${nobj+1} /Root ${cat} 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF\n`);
   return new Blob(parts,{type:"application/pdf"});
 }
-// HTML → páginas → PDF (File)
-async function pdfFromHtml(label, html, qual){
+// HTML → páginas (+ índice clicável quando há 2 ou mais seções) → PDF (File)
+async function pdfFromHtml(label, html, op={}){
+  const o=op.o||pdfOpt(), lay=PLAY[o.margin]||PLAY.normal, th=PTHEME[pdfThemeKey(o)], css=`${PDF_CSS}\n.pg,.pdfc{${th.v}}`; PCW=lay.cw;
   const box=document.createElement("div"); box.style.cssText="position:fixed;left:-10000px;top:0";
-  box.innerHTML=`<style>${PDF_CSS}</style><div class="pdfc" style="width:${PCW}px">${html}</div>`; document.body.appendChild(box);
-  let pages; try{ pages=pdfPaginate(box.querySelector(".pdfc")); pages=pages.map(p=>p.map(x=>x.cloneNode(true))); } finally{ box.remove(); }
-  const jp=[]; for(let i=0;i<pages.length;i++) jp.push(await pdfRaster(pages[i],label,i+1,pages.length,qual));
-  return new File([jpegPdf(jp,label)], label+".pdf", {type:"application/pdf"});
+  box.innerHTML=`<style>${css}</style><div class="pdfc" style="width:${PCW}px">${html}</div>`; document.body.appendChild(box);
+  let pages, toc=[];
+  try{ const c=box.querySelector(".pdfc"), heads=op.toc?[...c.querySelectorAll(op.toc)]:[];
+    await Promise.all([...c.querySelectorAll("img")].map(i=>(i.complete&&i.naturalWidth?Promise.resolve():i.decode()).catch(()=>{})));   // figura sem altura medida sairia cortada no pé da página
+    pages=pdfPaginate(c);
+    toc=heads.map(h=>({t:h.textContent.replace(/\s+/g," ").trim(), sub:h.classList.contains("pq-grp"), p:pages.findIndex(pg=>pg.includes(h))})).filter(x=>x.p>=0&&x.t);
+    let tp=[]; if(toc.length>=2){
+      c.innerHTML=`<h1>${T2("Índice","Contents")}</h1>`+toc.map((x,i)=>`<a class="te${x.sub?" sub":""}" data-go="${i}"><span>${esc(x.t)}</span><b>000</b></a>`).join("");
+      tp=pdfPaginate(c); const T=tp.length; toc.forEach(x=>x.p+=T);
+      tp.forEach(pg=>pg.forEach(el=>{ if(el.dataset?.go!=null) el.querySelector("b").textContent=String(toc[+el.dataset.go].p+1); })); }
+    pages=[...tp,...pages].map(p=>p.map(x=>x.cloneNode(true)));
+  } finally{ box.remove(); }
+  const cx={lay,th,css}, jp=[], links=[];
+  for(let i=0;i<pages.length;i++){ const r=await pdfRaster(pages[i],label,i+1,pages.length,op.qual||.9,cx); r.links.forEach(L=>links.push({pg:i,r:L.r,to:toc[L.go]?.p})); jp.push(r); }
+  return new File([jpegPdf(jp,label,{links,outline:toc})], (fsafe(op.name)||fsafe(label)||"Gabarito")+".pdf", {type:"application/pdf"});
 }
-async function lessonPdf(l, withQ=true){
-  let html=`<h1>${esc(l.title)}</h1>${(l.html||"").replace(/<button[^>]*class="lfull-sw[^"]*"[^>]*>[^<]*<\/button>/g,`<h2 class="pq-br">Lição completa</h2>`)}`;
-  if(withQ){ const qs=pdfQs(l.discipline,l.topic); if(qs.length){ const x=await pqHtml([{qs}]); html+=`<h2 class="pq-br">${T2("Questões do tema","Topic questions")}</h2>${x.q}<h2 class="pq-br">${T2("Gabarito","Answer key")}</h2>${x.g}`; } }
-  return pdfFromHtml(pdfLabel(l), html);
+// partes da lição: "Na véspera" (antes do botão) e a lição completa
+function lessonParts(l){ const h=l.html||"", m=h.match(/<button[^>]*class="lfull-sw[^"]*"[^>]*>[^<]*<\/button>/); return m?{v:h.slice(0,m.index),f:h.slice(m.index+m[0].length),split:true}:{v:"",f:h,split:false}; }
+function lessonBody(l,o){ const p=lessonParts(l); if(!p.split) return p.f; return o.what==="vesp"?p.v:p.v+`<h2 class="pq-br">${T2("Lição completa","Full lesson")}</h2>`+p.f; }
+const pdfHasQ=o=>o.what==="lq"||o.what==="q"||o.what==="err";
+const pdfQOnly=o=>o.what==="q"||o.what==="err";
+const pdfSuf=o=>({vesp:T2("Na véspera","Night before"),q:T2("Questões","Questions"),err:T2("Erradas","Missed")})[o.what]||"";
+async function lessonPdf(l, withQ=true, o=pdfOpt()){
+  const d=discById(l.discipline), t=(d?.topics||[]).find(x=>x.id===l.topic);
+  let html=`<h1>${esc(l.title)}</h1>${pdfQOnly(o)?"":lessonBody(l,o)}`;
+  if(withQ&&pdfHasQ(o)){ const qs=pdfQsF(l.discipline,l.topic,o); if(qs.length) html+=await pqSection([{qs}],o); else if(pdfQOnly(o)) html+=`<p>${T2("Nenhuma questão com esses filtros.","No questions match these filters.")}</p>`; }
+  return pdfFromHtml(pdfLabel(l), html, {o, name:pdfName(d,t,pdfSuf(o))||l.title, toc:":scope>h2"});
 }
 // questões de um tema, na ordem do Banco
 function pdfQs(dId,tId){ return [...S.qs.values()].filter(q=>q.discipline===dId&&q.topic===tId&&stdOk(q)).sort((a,b)=>(a.order??999)-(b.order??999)||a.id.localeCompare(b.id)); }
+// com os filtros da exportação: prioridade mínima e "só as que errei"
+function pdfQsF(dId,tId,o){ return pdfQs(dId,tId).filter(q=>(q.pri||1)>=(o.pri||1)&&(o.what!=="err"||status(q.id)==="bad")); }
+function pdfTopics(d,o){ return (d?.topics||[]).filter(t=>o.exam==="all"||topicExam(t)===o.exam); }
 // figura → data URL (null se falhar)
 async function pqImgData(url){
   try{ const ac=new AbortController(), t=setTimeout(()=>ac.abort(),8000);
@@ -2423,54 +2479,78 @@ async function pqImgData(url){
     finally{ clearTimeout(t); }
   }catch(e){ return null; }
 }
-// grupos [{title?, qs}] → {q: blocos das questões, g: blocos do gabarito}; numeração contínua
-async function pqHtml(groups){
+// grupos [{title?, qs}] → {q: blocos das questões, g: blocos do gabarito}; numeração contínua. inline: gabarito logo abaixo de cada questão
+async function pqHtml(groups, inline=false){
   let n=0, q="", g=""; const lang=set().lang;
-  for(const gr of groups){ if(gr.title){ q+=`<h2>${esc(gr.title)}</h2>`; g+=`<h3>${esc(gr.title)}</h3>`; }
+  for(const gr of groups){ if(gr.title){ q+=`<h2 class="pq-grp">${esc(gr.title)}</h2>`; g+=`<h3>${esc(gr.title)}</h3>`; }
     for(const x of gr.qs){ n++; const c=x.i18n?.[lang]||x.i18n?.pt||x.i18n?.en; if(!c){ n--; continue; }
       let im=""; if(x.img?.url){ const d=await pqImgData(x.img.url); im=d?`<div class="pq-img"><img src="${d}" alt=""></div>`:`<div class="pq-img"><span>[${T2("figura: ver no app","figure: see in app")}]</span></div>`; }
-      q+=`<div class="pq"><div class="pq-h"><b>Q${n}</b> · ${"★".repeat(x.pri||1)}${x.exam?" · "+esc(x.exam):""}${x.exc?" · "+T2("EXCETO","EXCEPT"):""}</div><p class="pq-s">${safe(c.stem)}</p>${im}${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i> ${safe(o.t)}</div>`).join("")}</div>`;
-      const ok=c.opts[x.correct];
-      g+=`<div class="pq-g"><b class="n">Q${n} — ${L[x.correct]??"?"}</b> · ${safe(ok?.why||"")}${c.peg?` <em>${T2("Pegadinha","Trap")}:</em> ${safe(c.peg)}`:""}</div>`; } }
+      const ok=c.opts[x.correct], gb=`<div class="pq-g"><b class="n">Q${n} — ${L[x.correct]??"?"}</b> · ${safe(ok?.why||"")}${c.peg?` <em>${T2("Pegadinha","Trap")}:</em> ${safe(c.peg)}`:""}</div>`;
+      q+=`<div class="pq"><div class="pq-h"><b>Q${n}</b> · ${"★".repeat(x.pri||1)}${x.exam?" · "+esc(x.exam):""}${x.exc?" · "+T2("EXCETO","EXCEPT"):""}</div><p class="pq-s">${safe(c.stem)}</p>${im}${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i> ${safe(o.t)}</div>`).join("")}${inline?gb:""}</div>`;
+      if(!inline) g+=gb; } }
   return {q,g};
 }
-// PDF único com as questões de toda a disciplina, agrupadas por tema (null se não houver)
-async function questionsPdf(d){
-  const groups=(d.topics||[]).map(t=>({title:nm(t),qs:pdfQs(d.id,t.id)})).filter(x=>x.qs.length); if(!groups.length) return null;
-  const x=await pqHtml(groups), label=`${d.period!=null?d.period+"º · ":""}${nm(d)} · 99 Questões`.replace(/[\/\\:*?"<>|]/g,"").trim();
-  return pdfFromHtml(label, `<h1>${T2("Questões","Questions")} · ${esc(nm(d))}</h1>${x.q}<h2 class="pq-br">${T2("Gabarito","Answer key")}</h2>${x.g}`, .8);
+// seção de questões (+ gabarito separado em página nova, se escolhido)
+async function pqSection(groups,o){ const inl=o.key==="inline", x=await pqHtml(groups,inl);
+  return `<h2 class="pq-br pq-sec">${o.what==="err"?T2("Questões que errei","Missed questions"):T2("Questões","Questions")}</h2>${x.q}${inl?"":`<h2 class="pq-br pq-sec">${T2("Gabarito comentado","Answer key")}</h2>${x.g}`}`; }
+// disciplina: um PDF por tema (+ "99 Questões" por último) ou tudo num PDF só; respeita prova, prioridade e conteúdo
+async function discPdfFiles(dId, prog, o=pdfOpt()){
+  const d=discById(dId); if(!d) return [];
+  const tops=pdfTopics(d,o), tid=new Set(tops.map(t=>t.id)), ls=lessonsOf(dId).filter(l=>tid.has(l.topic));
+  const withL=!pdfQOnly(o), ex=o.exam!=="all"?o.exam:"", files=[];
+  const groups=pdfHasQ(o)?tops.map(t=>({title:nm(t),qs:pdfQsF(d.id,t.id,o)})).filter(x=>x.qs.length):[];
+  const qT=o.what==="err"?T2("99 Erradas","99 Missed"):T2("99 Questões","99 Questions"), head=`${d.period!=null?d.period+"º · ":""}${nm(d)}${ex?" · "+ex:""}`;
+  if(o.one){ prog&&prog(1,1); if(!(withL&&ls.length)&&!groups.length) return [];
+    let html=withL?ls.map(l=>`<h1 class="pq-br">${esc(l.title)}</h1>${lessonBody(l,o)}`).join(""):`<h1>${esc(nm(d))}</h1>`;
+    if(groups.length) html+=await pqSection(groups,o);
+    const name=fsafe([nm(d),ex,withL?(o.what==="vesp"?T2("Na véspera","Night before"):T2("Completo","Complete")):qT.replace(/^99 /,"")].filter(Boolean).join(" - "));
+    return [await pdfFromHtml(head, html, {o, name, toc:":scope>h1.pq-br, :scope>h2.pq-sec, :scope>h2.pq-grp", qual:.86})]; }
+  const N=(withL?ls.length:0)+(groups.length?1:0);
+  if(withL) for(let i=0;i<ls.length;i++){ prog&&prog(i+1,N); files.push(await lessonPdf(ls[i],false,o)); }
+  if(groups.length){ prog&&prog(N,N); files.push(await pdfFromHtml(head+" · "+qT.replace(/^99 /,""), `<h1>${o.what==="err"?T2("Erradas","Missed"):T2("Questões","Questions")} · ${esc(nm(d))}</h1>`+await pqSection(groups,o), {o, name:fsafe([nm(d),ex,qT].filter(Boolean).join(" - ")), toc:":scope>h2.pq-sec, :scope>h2.pq-grp", qual:.84})); }
+  return files;
 }
-// pacote da disciplina: um PDF de lição por tema (sem questões) + o das questões por último
-async function discPdfFiles(dId, prog){
-  const d=discById(dId), ls=lessonsOf(dId), files=[], N=ls.length+1;
-  for(let i=0;i<ls.length;i++){ prog&&prog(i+1,N); files.push(await lessonPdf(ls[i],false)); }
-  prog&&prog(N,N); const f=d&&await questionsPdf(d); if(f) files.push(f); return files;
+function pdfSave(f){ const a=document.createElement("a"); a.href=URL.createObjectURL(f); a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),30000); }
+// tela de opções antes de gerar
+function pdfOptSheet(){
+  const m=S.pdfMode; if(!m) return; const o=pdfOpt(), disc=m.kind==="disc", d=discById(disc?m.id:S.lessons.get(m.id)?.discipline), l=disc?null:S.lessons.get(m.id);
+  const ch=(k,list)=>`<div class="chips">${list.map(([v,t])=>`<button type="button" class="chip" data-pdfo="${k}" data-v="${v}" aria-pressed="${String(o[k])===String(v)}">${t}</button>`).join("")}</div>`;
+  const f=(t,b)=>`<div class="field"><span class="flabel">${t}</span>${b}</div>`;
+  // resumo: quantas questões e quantos arquivos
+  let nq=0, nf=1, hint="";
+  if(disc){ const tops=pdfTopics(d,o), tid=new Set(tops.map(t=>t.id)), nl=lessonsOf(d.id).filter(x=>tid.has(x.topic)).length;
+    if(pdfHasQ(o)) nq=tops.reduce((s,t)=>s+pdfQsF(d.id,t.id,o).length,0); nf=o.one?1:(pdfQOnly(o)?0:nl)+(nq?1:0); }
+  else { if(pdfHasQ(o)) nq=pdfQsF(l.discipline,l.topic,o).length; if(o.what==="vesp"&&!lessonParts(l).split) hint=T2("Esta lição não tem bloco “Na véspera”: sai a lição inteira.","This lesson has no night-before block: the full lesson is used."); }
+  const sum=[pdfHasQ(o)?`${nq} ${T2(nq===1?"questão":"questões",nq===1?"question":"questions")}`:"", `${nf} ${nf===1?T2("arquivo","file"):T2("arquivos","files")}`].filter(Boolean).join(" · ");
+  const nameEx=disc?(o.one?"":fsafe([nm(d),o.exam!=="all"?o.exam:""].filter(Boolean).join(" - "))+" - …"):pdfName(d,(d?.topics||[]).find(x=>x.id===l.topic),pdfSuf(o));
+  openSheet(`<div class="row" style="justify-content:space-between"><b>${disc?T2("Baixar disciplina em PDF","Download discipline as PDF"):T2("Exportar PDF","Export PDF")}</b><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <p style="color:var(--muted);font-size:13px;margin:4px 0 12px">${esc(disc?nm(d):l.title)}</p>
+   ${f(T2("Conteúdo","Content"),ch("what",[["vesp",T2("Na véspera","Night before")],["full",T2("Lição completa","Full lesson")],["lq",disc?T2("Lições + questões","Lessons + questions"):T2("Lição + questões","Lesson + questions")],["q",T2("Só questões","Questions only")],["err",T2("Só as que errei","Only missed")]]))}
+   ${disc?f(T2("Prova","Exam"),ch("exam",[["all",T2("Todas","All")],["P1","P1"],["P2","P2"]])):""}
+   ${pdfHasQ(o)?f(T2("Prioridade das questões","Question priority"),ch("pri",[[1,T2("Todas","All")],[2,"★★ "+T2("e","and")+" ★★★"],[3,T2("Só","Only")+" ★★★"]]))+f(T2("Gabarito","Answer key"),ch("key",[["end",T2("Separado, no fim","Separate, at the end")],["inline",T2("Logo após cada questão","Right after each question")]])):""}
+   ${f(T2("Coluna para anotar","Notes column"),ch("margin",[["none",T2("Sem coluna","None")],["normal","Normal"],["wide",T2("Larga (S Pen)","Wide (S Pen)")]]))}
+   ${f(T2("Cores do PDF","PDF colors"),ch("theme",[["app",T2("Igual à lição","Same as lesson")],["sepia",T2("Sépia","Sepia")],["light",T2("Claro","Light")],["dark",T2("Escuro","Dark")]]))}
+   ${disc?f(T2("Arquivos","Files"),ch("one",[["false",T2("Um PDF por tema","One PDF per topic")],["true",T2("Tudo num PDF só","All in one PDF")]])):""}
+   ${hint?`<p style="color:var(--warn);font-size:13px">${hint}</p>`:""}
+   <p style="color:var(--muted);font-size:12px;margin:10px 0">${sum}${nameEx?` · <span style="font-family:var(--f-ui)">${esc(nameEx)}.pdf</span>`:""}</p>
+   <button class="btn primary" data-act="pdfGo" style="width:100%"${nf?"":" disabled"}>⬇ ${T2("Baixar PDF","Download PDF")}</button>`);
 }
-function pdfSave(f){ const a=document.createElement("a"); a.href=URL.createObjectURL(f); a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),8000); }
-async function pdfShare(fs){ try{ await navigator.share({files:fs}); }catch(e){ if(e?.name!=="AbortError") toast(T2("Não foi possível compartilhar: baixe o PDF","Could not share: download the PDF")); } }
-// entrega: compartilhar (→ Samsung Notes); sem Web Share, baixa
-async function pdfDeliver(files){
-  S.pdfFiles=files; const can=!!navigator.canShare?.({files});
-  if(files.length===1&&!can){ pdfSave(files[0]); return toast(T2("PDF baixado: abra no Samsung Notes","PDF downloaded: open it in Samsung Notes")); }
-  if(files.length===1){ try{ await navigator.share({files}); return; }catch(e){ if(e?.name==="AbortError") return; } }   // gesto expirado ou erro → sheet
-  pdfSheet();
-}
-function pdfSheet(){
-  const fs=S.pdfFiles||[], one=fs.length===1, can=f=>!!navigator.canShare?.({files:f});
-  openSheet(`<div class="row" style="justify-content:space-between"><b>${T2("PDF pronto","PDF ready")}</b><button class="btn small ghost" data-act="closeSheet">✕</button></div>
-   <p style="color:var(--muted);font-size:13px">${T2("No menu, escolha Samsung Notes. Se não aparecer, baixe e abra o PDF pelo Notes.","In the menu, pick Samsung Notes. If it is not listed, download it and open the PDF from Notes.")}</p>
-   ${one?`<div class="row" style="gap:8px;flex-wrap:wrap">${can(fs)?`<button class="btn primary" data-act="pdfShare" data-i="0">${T2("Abrir no Samsung Notes","Open in Samsung Notes")}</button>`:""}<button class="btn" data-act="pdfDl" data-i="0">${T2("Baixar","Download")}</button></div>`
-   :`<div class="row" style="gap:8px;flex-wrap:wrap">${can(fs)?`<button class="btn primary" data-act="pdfShare" data-i="all">${T2("Compartilhar todos","Share all")} (${fs.length})</button>`:""}<button class="btn" data-act="pdfDlAll">${T2("Baixar todos","Download all")}</button></div>
-   <div class="list" style="margin-top:12px">${fs.map((f,i)=>`<div class="li" style="grid-template-columns:1fr auto auto;align-items:center"><span class="t" style="font-size:13px">${esc(f.name)}</span>${can([f])?`<button class="btn small" data-act="pdfShare" data-i="${i}">↗</button>`:"<span></span>"}<button class="btn small" data-act="pdfDl" data-i="${i}">⬇</button></div>`).join("")}</div>`}`);
-}
-// gera 1 ou vários PDFs com feedback no botão
-async function pdfRun(ls, btn, dId){
-  if(!(ls.length||dId)||btn?.disabled) return; const txt=btn?.textContent; if(btn){ btn.disabled=true; btn.textContent=T2("Gerando PDF…","Generating PDF…"); }
-  try{ let files=[]; if(dId) files=await discPdfFiles(dId,(i,N)=>toast(T2(`Gerando ${i}/${N}…`,`Generating ${i}/${N}…`))); else for(let i=0;i<ls.length;i++){ if(ls.length>1) toast(T2(`Gerando ${i+1}/${ls.length}…`,`Generating ${i+1}/${ls.length}…`)); files.push(await lessonPdf(ls[i])); }
-    if(!files.length) return;
-    await pdfDeliver(files);
+async function pdfGo(btn){
+  const m=S.pdfMode; if(!m||btn?.disabled) return; const o=pdfOpt(), txt=btn.textContent; btn.disabled=true;
+  const pr=(i,N)=>{ if(btn.isConnected) btn.textContent=N>1?T2(`Gerando ${i}/${N}…`,`Generating ${i}/${N}…`):T2("Gerando PDF…","Generating PDF…"); }; pr(1,1);
+  try{ const files=m.kind==="disc"?await discPdfFiles(m.id,pr,o):[await lessonPdf(S.lessons.get(m.id),true,o)];
+    if(!files.length) return toast(T2("Nada para exportar com esses filtros","Nothing to export with these filters"));
+    S.pdfFiles=files; if(files.length===1) pdfSave(files[0]); pdfSheet();
   }catch(e){ toast(T2("Erro ao gerar o PDF: ","PDF error: ")+(e?.message||e)); }
-  finally{ if(btn?.isConnected){ btn.disabled=false; btn.textContent=txt; } }
+  finally{ if(btn.isConnected){ btn.disabled=false; btn.textContent=txt; } }
+}
+// arquivos prontos: baixar (o envio ao Samsung Notes fica com o usuário)
+function pdfSheet(){
+  const fs=S.pdfFiles||[], one=fs.length===1, mb=f=>(f.size/1048576).toFixed(1).replace(".",",")+" MB";
+  openSheet(`<div class="row" style="justify-content:space-between"><b>${one?T2("PDF baixado","PDF downloaded"):T2("PDFs prontos","PDFs ready")}</b><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+   <p style="color:var(--muted);font-size:13px">${one?T2("Está na pasta Downloads. Se não aparecer, toque em Baixar de novo.","It is in your Downloads folder. If not, tap Download again."):T2("Toque em Baixar todos (o navegador pode pedir para permitir vários downloads) ou baixe um por um.","Tap Download all (the browser may ask to allow multiple downloads) or download one by one.")}</p>
+   <div class="row" style="gap:8px;flex-wrap:wrap">${one?`<button class="btn" data-act="pdfDl" data-i="0">⬇ ${T2("Baixar de novo","Download again")}</button>`:`<button class="btn primary" data-act="pdfDlAll">⬇ ${T2("Baixar todos","Download all")} (${fs.length})</button>`}<button class="btn ghost" data-act="pdfBack">${T2("Mudar opções","Change options")}</button></div>
+   <div class="list" style="margin-top:12px">${fs.map((f,i)=>`<div class="li" style="grid-template-columns:1fr auto;align-items:center"><span class="t" style="font-size:13px">${esc(f.name)} <small style="color:var(--subtle)">· ${mb(f)}</small></span><button class="btn small" data-act="pdfDl" data-i="${i}" aria-label="${T2("Baixar","Download")}">⬇</button></div>`).join("")}</div>`);
 }
 
 /* ---------- IMAGENS DAS QUESTÕES ---------- */
@@ -3156,6 +3236,7 @@ document.addEventListener("click", async e=>{
      return; }
   const sl=e.target.closest("[data-setl]"); if(sl){ set().lang=sl.dataset.setl; saveProg(); render(); openSettings(); return; }
   const stt=e.target.closest("[data-sett]"); if(stt){ set().theme=stt.dataset.sett; applyTheme(); saveProg(); openSettings(); return; }
+  const pdo=e.target.closest("[data-pdfo]"); if(pdo){ const k=pdo.dataset.pdfo; let v=pdo.dataset.v; if(k==="pri") v=Number(v); if(k==="one") v=v==="true"; set().pdfOpt=Object.assign(pdfOpt(),{[k]:v}); saveProg(); pdfOptSheet(); return; }
   const sll=e.target.closest("[data-setll]"); if(sll){ set().lessonLight=sll.dataset.setll; applyLessonLight(); saveProg(); openSettings(); return; }
   const sf=e.target.closest("[data-setf]"); if(sf){ set().fs=Number(sf.dataset.setf); applyTheme(); saveProg(); openSettings(); return; }
   const gb=e.target.closest("[data-g]"); if(gb&&S.gen){ const k=gb.dataset.g; S.gen[k]= k==="qty"?Number(gb.dataset.v):gb.dataset.v; openGen(); return; }
@@ -3215,9 +3296,10 @@ document.addEventListener("click", async e=>{
     if($("#layer").innerHTML){ closeSheetRaw(); if(S.sheetPushed){ S.sheetPushed=false; try{ history.replaceState(Object.assign({},history.state||{},{sheet:undefined}),"",location.hash); }catch(_){} } document.body.style.overflow=""; }
     if(S.view==="study"||S.view==="review") S.qY=Math.round(window.scrollY||0);
     S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; return go("lesson"); }
-  if(act==="lessonPdf"){ return pdfRun([S.lessons.get(S.lessonId)], a); }
-  if(act==="discPdf"){ const d=curDisc(); return d&&pdfRun(lessonsOf(d.id), a, d.id); }
-  if(act==="pdfShare"){ const fs=S.pdfFiles||[]; return pdfShare(a.dataset.i==="all"?fs:[fs[a.dataset.i]]); }
+  if(act==="lessonPdf"){ const l=S.lessons.get(S.lessonId); if(!l) return; S.pdfMode={kind:"lesson",id:l.id}; return pdfOptSheet(); }
+  if(act==="discPdf"){ const d=curDisc(); if(!d) return; S.pdfMode={kind:"disc",id:d.id}; return pdfOptSheet(); }
+  if(act==="pdfGo"){ return pdfGo(a); }
+  if(act==="pdfBack"){ return pdfOptSheet(); }
   if(act==="pdfDl"){ return pdfSave(S.pdfFiles[a.dataset.i]); }
   if(act==="pdfDlAll"){ return (S.pdfFiles||[]).forEach((f,i)=>setTimeout(()=>pdfSave(f),i*400)); }
   if(act==="lessonRead"){ S.prog.read=S.prog.read||{}; if(S.prog.read[S.lessonId]) delete S.prog.read[S.lessonId]; else S.prog.read[S.lessonId]=now(); saveProg(); return render(); }

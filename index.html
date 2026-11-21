@@ -1310,7 +1310,9 @@ function annInit(root=document){
 // a barra flutuante fica sempre visível; a original vira só o botão "Concluir"
 function annFloatPos(){ let host=document.getElementById("annHost"); if(!host){ host=document.createElement("div"); host.id="annHost"; document.body.appendChild(host); } const f=document.querySelector("[data-ann-bar] .ann-float"); if(f){ host.innerHTML=""; host.appendChild(f); } else if(!S.annId||!document.querySelector('[data-ann-bar="'+CSS.escape(S.annId)+'"]')) host.innerHTML=""; /* chamada repetida (vista + folha) não apaga a barra já movida */ document.body.classList.toggle("ann-on",!!host.firstElementChild); annLpPos(); }
 // lição ao lado da questão: a barra de anotação da lição fica dentro da coluna da lição
-function annLpPos(){ const pane=document.querySelector("#view .qgrid.l3 .qlesson"), on=!!(pane&&String(S.annId||"").startsWith("L:")&&!document.body.classList.contains("lpfull")&&typeof LP_Q!=="undefined"&&LP_Q.matches&&document.querySelector("#annHost")?.firstElementChild);
+// botão "lição em tela cheia" no canto inferior esquerdo da coluna da lição (não da questão)
+function lpFullPos(){ const b=document.getElementById("lpFullBtn"), pane=document.querySelector("#view .qgrid.l3 .qlesson"); if(!b) return; if(!pane){ b.style.removeProperty("left"); b.style.removeProperty("bottom"); return; } const r=(pane.querySelector(".qlbody")||pane).getBoundingClientRect(); b.style.left=Math.max(12,Math.round(r.left+12))+"px"; b.style.bottom=Math.max(12,Math.round((window.visualViewport?.height||innerHeight)-r.bottom+14))+"px"; }
+function annLpPos(){ lpFullPos(); const pane=document.querySelector("#view .qgrid.l3 .qlesson"), on=!!(pane&&String(S.annId||"").startsWith("L:")&&!document.body.classList.contains("lpfull")&&typeof LP_Q!=="undefined"&&LP_Q.matches&&document.querySelector("#annHost")?.firstElementChild);
   document.body.classList.toggle("ann-lp",on); if(!on) return; const r=(pane.querySelector(".qlbody")||pane).getBoundingClientRect(), b=document.body.style; b.setProperty("--alR",Math.max(8,Math.round(document.documentElement.clientWidth-r.right+8))+"px"); b.setProperty("--alW",Math.max(200,Math.round(r.width-16))+"px"); }
 function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
@@ -1878,7 +1880,7 @@ function vPlayer(v){
 // botão discreto no canto inferior esquerdo (espelha o da caneta): amplia a lição ao lado para a tela inteira e volta
 function lpFullBtn(){ let b=document.getElementById("lpFullBtn"); if(!(LP_Q.matches&&$("#view .qgrid.l3 .qlesson"))){ b?.remove(); return; }
   if(!b){ b=document.createElement("button"); b.type="button"; b.id="lpFullBtn"; b.dataset.act="lpFull"; document.body.appendChild(b); }
-  const t=S.lpFull?T2("Voltar à tela dividida","Back to split view"):T2("Lição em tela cheia","Lesson full screen"); b.textContent=S.lpFull?"⤡":"⤢"; b.title=t; b.setAttribute("aria-label",t); b.setAttribute("aria-pressed",String(!!S.lpFull)); }
+  const t=S.lpFull?T2("Voltar à tela dividida","Back to split view"):T2("Lição em tela cheia","Lesson full screen"); b.textContent=S.lpFull?"⤡":"⤢"; b.title=t; b.setAttribute("aria-label",t); b.setAttribute("aria-pressed",String(!!S.lpFull)); lpFullPos(); requestAnimationFrame(lpFullPos); }
 function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches){ g.style.removeProperty("--qh"); return; }
   const top=g.getBoundingClientRect().top+(window.scrollY||0), tb=$("nav.tabs"), tr0=tb&&getComputedStyle(tb).display!=="none"?tb.getBoundingClientRect():null, nh=(tr0&&tr0.top>innerHeight/2?tr0.height:0)+12;
   g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
@@ -2335,7 +2337,7 @@ function lpSet(on){ LP_S=!!on; try{ localStorage.setItem("gab.lpane",on?"1":"0")
 (()=>{ try{ const w=localStorage.getItem("gab.lpw"); if(w) document.documentElement.style.setProperty("--lpw",w+"px"); }catch(e){}
   let dr=null; const R=document.documentElement.style;
   document.addEventListener("pointerdown",e=>{ const h=e.target.closest&&e.target.closest(".qdrag"); if(!h) return; dr={g:h.closest(".qgrid"),h}; try{ h.setPointerCapture(e.pointerId); }catch(_){} document.body.style.userSelect="none"; e.preventDefault(); });
-  document.addEventListener("pointermove",e=>{ if(!dr) return; const r=dr.g.getBoundingClientRect(); dr.w=Math.round(Math.min(Math.max(r.right-e.clientX-18,320),Math.min(1400,r.width*.7))); R.setProperty("--lpw",dr.w+"px"); });
+  document.addEventListener("pointermove",e=>{ if(!dr) return; const r=dr.g.getBoundingClientRect(); dr.w=Math.round(Math.min(Math.max(r.right-e.clientX-18,320),Math.min(1400,r.width*.7))); R.setProperty("--lpw",dr.w+"px"); lpFullPos(); });
   const end=()=>{ if(!dr) return; document.body.style.userSelect=""; try{ if(dr.w) localStorage.setItem("gab.lpw",dr.w); }catch(_){} dr=null; annLpPos(); };
   document.addEventListener("pointerup",end); document.addEventListener("pointercancel",end);
   document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".qdrag")){ R.removeProperty("--lpw"); try{ localStorage.removeItem("gab.lpw"); }catch(_){} annLpPos(); } });

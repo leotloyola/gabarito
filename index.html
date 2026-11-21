@@ -2523,7 +2523,8 @@ function pdfOptSheet(){
   else { if(pdfHasQ(o)) nq=pdfQsF(l.discipline,l.topic,o).length; if(o.what==="vesp"&&!lessonParts(l).split) hint=T2("Esta lição não tem bloco “Na véspera”: sai a lição inteira.","This lesson has no night-before block: the full lesson is used."); }
   const sum=[pdfHasQ(o)?`${nq} ${T2(nq===1?"questão":"questões",nq===1?"question":"questions")}`:"", `${nf} ${nf===1?T2("arquivo","file"):T2("arquivos","files")}`].filter(Boolean).join(" · ");
   const nameEx=disc?(o.one?"":fsafe([nm(d),o.exam!=="all"?o.exam:""].filter(Boolean).join(" - "))+" - …"):pdfName(d,(d?.topics||[]).find(x=>x.id===l.topic),pdfSuf(o));
-  openSheet(`<div class="row" style="justify-content:space-between"><b>${disc?T2("Baixar disciplina em PDF","Download discipline as PDF"):T2("Exportar PDF","Export PDF")}</b><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+  const cur=$("#layer .sheet.pdfopt"), put=h=>{ if(cur){ const y=cur.scrollTop; cur.querySelector(".sheet-in").innerHTML=h; cur.scrollTop=y; } else openSheet(h,null,"pdfopt"); };   // trocar opção não rola a tela para o topo
+  put(`<div class="row" style="justify-content:space-between"><b>${disc?T2("Baixar disciplina em PDF","Download discipline as PDF"):T2("Exportar PDF","Export PDF")}</b><button class="btn small ghost" data-act="closeSheet">✕</button></div>
    <p style="color:var(--muted);font-size:13px;margin:4px 0 12px">${esc(disc?nm(d):l.title)}</p>
    ${f(T2("Conteúdo","Content"),ch("what",[["vesp",T2("Na véspera","Night before")],["full",T2("Lição completa","Full lesson")],["lq",disc?T2("Lições + questões","Lessons + questions"):T2("Lição + questões","Lesson + questions")],["q",T2("Só questões","Questions only")],["err",T2("Só as que errei","Only missed")]]))}
    ${disc?f(T2("Prova","Exam"),ch("exam",[["all",T2("Todas","All")],["P1","P1"],["P2","P2"]])):""}

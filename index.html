@@ -3892,9 +3892,11 @@ function lprogUpd(){ let fixed=false;
   document.addEventListener("touchmove",e=>{ if(!st) return; if(e.touches.length!==1){ st=null; return; } const t=e.touches[0]; st.max=Math.max(st.max,Math.abs(t.clientY-st.y)); },{passive:true});
   document.addEventListener("touchcancel",()=>{ st=null; },{passive:true});
   document.addEventListener("touchend",e=>{ const s0=st; st=null; if(!s0||!inQSession()) return; const t=e.changedTouches[0]; if(!t) return;
-    // tolerante (pedido do Léo, 21/11): 50 px ou 7% da largura, até ~45° de inclinação pelo deslocamento final, até 1 s
-    const dx=t.clientX-s0.x, dy=Math.abs(t.clientY-s0.y), dt=Date.now()-s0.t;
-    if(Math.abs(dx)<Math.max(50,innerWidth*.07)||Math.abs(dx)<1.1*dy||dt>1000) return;
+    // tolerante (pedido do Léo, 21/11): 35 px ou 4% da largura, ou um peteleco rápido (≥ 22 px a ≥ 0,3 px/ms);
+    // até ~45° de inclinação pelo deslocamento final; até 1 s
+    const dx=t.clientX-s0.x, ax=Math.abs(dx), dy=Math.abs(t.clientY-s0.y), dt=Math.max(1,Date.now()-s0.t);
+    const flick=ax>=22&&ax/dt>=.3;
+    if((!flick&&ax<Math.max(35,innerWidth*.04))||ax<1.1*dy||dt>1000) return;
     if(String(window.getSelection?.()||"").trim()) return;
     const b=$(dx<0?'#view [data-act="next"]':'#view [data-act="prev"]'); if(!b||b.disabled) return;
     b.click(); requestAnimationFrame(()=>$("#view .qgrid")?.classList.add("qsw")); },{passive:true});

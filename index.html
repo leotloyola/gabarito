@@ -1578,6 +1578,7 @@ window.addEventListener("popstate", e=>{
   if(v==="lesson" && !S.lessons.get(S.lessonId)) return;
   const backQ=S.view==="lesson"&&(v==="study"||v==="review")&&S.qY!=null&&S.session&&!S.session.done; const y=backQ?S.qY:0; S.qY=null;
   S.view=v; render(); window.scrollTo({top:y});
+  if(S.lTop){ S.lTop=false; const top=()=>{ if(S.view==="lesson"&&window.scrollY) window.scrollTo(0,0); }; requestAnimationFrame(()=>requestAnimationFrame(top)); setTimeout(top,300); }
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.remove("lpread"); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
@@ -2129,7 +2130,10 @@ function topicName(d,t){ return nm((discById(d)?.topics||[]).find(x=>x.id===t));
 function lessonFor(d,t){ for(const l of S.lessons.values()) if(l.discipline===d&&l.topic===t) return l; return null; }
 /* sai da lista para uma lição: se a lista foi aberta a partir da lição (entrada logo abaixo no histórico), volta nela; senão troca a tela */
 function endToLesson(id){ const l=S.lessons.get(id); if(!l) return; const s=S.session; S.session=null; S.lessonId=id; S.prog.read=S.prog.read||{}; if(!S.prog.read[id]){ S.prog.read[id]=now(); saveProg(); }
-  if(s&&s.from==="lesson"&&s.hl===history.length&&history.state?.v===S.view&&S.view!=="lesson"){ history.back(); return; }
+  if(s&&s.from==="lesson"&&s.hl===history.length&&history.state?.v===S.view&&S.view!=="lesson"){
+    // outra lição na mesma entrada do histórico: o navegador devolveria a rolagem da lição anterior; abre no topo
+    if(id!==s.lid) S.lTop=true;
+    history.back(); return; }
   if(!S.lessonBack||S.lessonBack==="lesson"||S.lessonBack==="study"||S.lessonBack==="review") S.lessonBack="study"; go("lesson",true); }
 function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }

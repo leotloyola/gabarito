@@ -325,6 +325,12 @@ function fixture(){
         const Rz=syncMerge({...A,settings:{lang:"pt",resetAt:t-4000}},B,true);
         return {keys:Object.keys(m.q).sort().join(),y:m.q.y.n,ev:m.ev.length,fc:!!m.fc.f,lp:m.settings.lpN,lp2:m2.settings.lpN===undefined?20:m2.settings.lpN,again:syncMerge(m,m).ev.length,rz:Object.keys(Rz.q).sort().join()}; });
       if(r.keys!=="x,y,z"||r.y!==2||r.ev!==2||!r.fc||r.lp!==20||r.again!==2||r.rz!=="y,z") throw new Error("merge: "+JSON.stringify(r)); });
+    await step("onde parou fica por aparelho (disciplina/tema não vêm de outro aparelho)", async()=>{
+      const r=await p.evaluate(()=>{ const base={q:{},fc:{},log:{},ev:[],sims:[],reports:[],marked:{},annotations:{}};
+        const tab={...base,settings:{lang:"pt",per:5,disc:"pneumo",topic:"asma",std:"ufpr"}}, pc={...base,settings:{lang:"en",per:5,disc:"cardio",topic:"ic",std:"ufpr",sub:"x"}};
+        const m=syncMerge(tab,pc,false), novo=syncMerge({...base,settings:{lang:"pt"}},pc,false);
+        return {d:m.settings.disc,t:m.settings.topic,sub:m.settings.sub,lang:m.settings.lang,nd:novo.settings.disc}; });
+      if(r.d!=="pneumo"||r.t!=="asma"||r.sub!==undefined||r.lang!=="en"||r.nd!=="cardio") throw new Error("posição por aparelho: "+JSON.stringify(r)); });
     await step("busca só o que mudou ao voltar ao app", async()=>{
       const r=await p.evaluate(async()=>{ const saved={SB,qs:S.qs,ls:S.lessons,tu:S.tutor,meta:S.qsMeta,uid:S.uid,prog:S.prog,cat:S.catalog,ft:S.qsFetchT}; const log=[];
         const rows=[{id:"zz-1",data:{discipline:"da",topic:"t1",i18n:{pt:{stem:"Q1",opts:[{t:"a",why:""}]}},correct:0},updated_at:"2026-01-01T00:00:00+00:00"},{id:"zz-2",data:{discipline:"da",topic:"t1",i18n:{pt:{stem:"Q2",opts:[{t:"a",why:""}]}},correct:0},updated_at:"2026-01-02T00:00:00+00:00"}];

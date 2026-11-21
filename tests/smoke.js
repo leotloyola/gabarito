@@ -428,6 +428,12 @@ function fixture(){
       if(!r.spot||!/Blumberg/.test(r.spot)||!r.vis) throw new Error("trecho errado: "+JSON.stringify(r));
       if(!r.bar) throw new Error("sem barra de progresso");
       if(r.iNext!==2||r.iPrev!==1) throw new Error("deslizar não trocou: "+JSON.stringify(r)); });
+    await step("botões antes de responder sem gabarito", async()=>{
+      const r=await p.evaluate(()=>{ const q=S.qs.get("da-t1-ufpr-1"); S.session=buildSession("study",[q],{mode:"study",count:0,order:"seq",shuffleO:false}); go("study");
+        const out={spot:!!document.querySelector('#view .qpre [data-act="lspot"]'),cl:!!document.querySelector('#view .qpre [data-act="askClaude"]'),ge:!!document.querySelector('#view .qpre [data-act="askGemini"]')};
+        const t=askPrompt(q.id); out.leak=/GABARITO|COMENTÁRIO/.test(t); out.ok=/AINDA NÃO RESPONDI/.test(t);
+        S.session.items[0].pick=q.correct; render(); out.after=!document.querySelector("#view .qpre")&&/GABARITO/.test(askPrompt(q.id)); S.session=null; go("study"); return out; });
+      if(!r.spot||!r.cl||!r.ge||r.leak||!r.ok||!r.after) throw new Error(JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

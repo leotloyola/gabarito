@@ -799,6 +799,15 @@ body:has(#layer .sheet) .ann-float{bottom:calc(12px + env(safe-area-inset-bottom
 /* minimizada: botão pequeno e translúcido no canto direito, longe do texto e das setas de tema */
 .ann-float.mini{left:auto;right:max(12px,env(safe-area-inset-right,0px));transform:none;padding:3px;border-radius:14px;opacity:.6;transition:opacity .2s;box-shadow:0 2px 10px rgba(0,0,0,.14),0 0 0 1px var(--line)}
 .ann-float.mini:hover,.ann-float.mini:focus-within{opacity:1}.ann-float.mini .btn{min-height:32px;padding:4px 8px;font-size:13px;gap:4px}.ann-float.mini [data-act="annMin"] .ann-ic{width:18px;height:18px}
+/* tela dividida, anotando a lição: barra só na coluna da lição, colada ao rodapé, à direita e compacta */
+body.ann-lp .ann-float{left:auto!important;right:var(--alR,12px)!important;transform:none!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;max-width:var(--alW,calc(100vw - 24px))}
+body.ann-lp .ann-float:not(.mini){gap:3px;padding:4px 6px;border-radius:14px}
+body.ann-lp .ann-float:not(.mini) .ann-lbl{display:none}
+body.ann-lp .ann-float:not(.mini) .btn{min-height:30px;padding:3px 7px;font-size:13px}
+body.ann-lp .ann-float .ann-ic{width:18px;height:18px}
+body.ann-lp .ann-float .ann-color{width:22px;height:22px;min-width:22px}
+body.ann-lp .ann-float .ann-size{width:26px;height:26px}
+body.ann-lp .ann-float .ann-sep{margin:2px 1px}
 @media (max-width:1100px){.ann-lbl{display:none}.ann-float .btn{padding:7px 9px;font-size:15px}}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ann-svg.mk{mix-blend-mode:normal;opacity:.4}}:root[data-theme="dark"] .ann-svg.mk{mix-blend-mode:normal;opacity:.4}
 :root.lsn-light .lesson .ann-svg.mk,:root.lsn-light .qlesson .ann-svg.mk,:root.lsn-light .lwrap .ann-svg.mk{mix-blend-mode:multiply;opacity:1}
@@ -1289,7 +1298,10 @@ function annInit(root=document){
   annFloatPos();
 }
 // a barra flutuante fica sempre visível; a original vira só o botão "Concluir"
-function annFloatPos(){ let host=document.getElementById("annHost"); if(!host){ host=document.createElement("div"); host.id="annHost"; document.body.appendChild(host); } const f=document.querySelector("[data-ann-bar] .ann-float"); if(f){ host.innerHTML=""; host.appendChild(f); } else if(!S.annId||!document.querySelector('[data-ann-bar="'+CSS.escape(S.annId)+'"]')) host.innerHTML=""; /* chamada repetida (vista + folha) não apaga a barra já movida */ document.body.classList.toggle("ann-on",!!host.firstElementChild); }
+function annFloatPos(){ let host=document.getElementById("annHost"); if(!host){ host=document.createElement("div"); host.id="annHost"; document.body.appendChild(host); } const f=document.querySelector("[data-ann-bar] .ann-float"); if(f){ host.innerHTML=""; host.appendChild(f); } else if(!S.annId||!document.querySelector('[data-ann-bar="'+CSS.escape(S.annId)+'"]')) host.innerHTML=""; /* chamada repetida (vista + folha) não apaga a barra já movida */ document.body.classList.toggle("ann-on",!!host.firstElementChild); annLpPos(); }
+// lição ao lado da questão: a barra de anotação da lição fica dentro da coluna da lição
+function annLpPos(){ const pane=document.querySelector("#view .qgrid.l3 .qlesson"), on=!!(pane&&String(S.annId||"").startsWith("L:")&&!document.body.classList.contains("lpfull")&&typeof LP_Q!=="undefined"&&LP_Q.matches&&document.querySelector("#annHost")?.firstElementChild);
+  document.body.classList.toggle("ann-lp",on); if(!on) return; const r=(pane.querySelector(".qlbody")||pane).getBoundingClientRect(), b=document.body.style; b.setProperty("--alR",Math.max(8,Math.round(document.documentElement.clientWidth-r.right+8))+"px"); b.setProperty("--alW",Math.max(200,Math.round(r.width-16))+"px"); }
 function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
@@ -1860,7 +1872,7 @@ function lpFullBtn(){ let b=document.getElementById("lpFullBtn"); if(!(LP_Q.matc
 function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches){ g.style.removeProperty("--qh"); return; }
   const top=g.getBoundingClientRect().top+(window.scrollY||0), tb=$("nav.tabs"), tr0=tb&&getComputedStyle(tb).display!=="none"?tb.getBoundingClientRect():null, nh=(tr0&&tr0.top>innerHeight/2?tr0.height:0)+12;
   g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
-window.addEventListener("resize",()=>{ if($("#view .qgrid.l3")) lpFit(); });
+window.addEventListener("resize",()=>{ if($("#view .qgrid.l3")) lpFit(); annLpPos(); });
 function questionHTML(q, it, reveal, simMode){
   const lsnRow=!simMode&&lessonOf(q.discipline,q.topic); // botão "Lição do tema" junto da explicação, sem precisar subir até as etiquetas
   const {c, lang, fallback} = content(q); if(!c) return "";
@@ -2310,9 +2322,9 @@ function lpSet(on){ LP_S=!!on; try{ localStorage.setItem("gab.lpane",on?"1":"0")
   let dr=null; const R=document.documentElement.style;
   document.addEventListener("pointerdown",e=>{ const h=e.target.closest&&e.target.closest(".qdrag"); if(!h) return; dr={g:h.closest(".qgrid"),h}; try{ h.setPointerCapture(e.pointerId); }catch(_){} document.body.style.userSelect="none"; e.preventDefault(); });
   document.addEventListener("pointermove",e=>{ if(!dr) return; const r=dr.g.getBoundingClientRect(); dr.w=Math.round(Math.min(Math.max(r.right-e.clientX-18,320),Math.min(1400,r.width*.7))); R.setProperty("--lpw",dr.w+"px"); });
-  const end=()=>{ if(!dr) return; document.body.style.userSelect=""; try{ if(dr.w) localStorage.setItem("gab.lpw",dr.w); }catch(_){} dr=null; };
+  const end=()=>{ if(!dr) return; document.body.style.userSelect=""; try{ if(dr.w) localStorage.setItem("gab.lpw",dr.w); }catch(_){} dr=null; annLpPos(); };
   document.addEventListener("pointerup",end); document.addEventListener("pointercancel",end);
-  document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".qdrag")){ R.removeProperty("--lpw"); try{ localStorage.removeItem("gab.lpw"); }catch(_){} } });
+  document.addEventListener("dblclick",e=>{ if(e.target.closest&&e.target.closest(".qdrag")){ R.removeProperty("--lpw"); try{ localStorage.removeItem("gab.lpw"); }catch(_){} annLpPos(); } });
 })();
 WIDE_Q.addEventListener&&WIDE_Q.addEventListener("change",()=>{ if(S.catalog) render(); });
 LP_Q.addEventListener&&LP_Q.addEventListener("change",()=>{ if(S.catalog&&inQSession()) render(); });

@@ -409,6 +409,25 @@ function fixture(){
       if(r.over>0) throw new Error("transborda "+r.over+"px");
       if(r.dup||!r.ids.length||r.ids.includes("nao-existe")||!r.ids.some(id=>id.startsWith("db-"))) throw new Error("treino sem a raiz ou com questão inexistente: "+JSON.stringify(r.ids));
       if(r.v!=="study"||r.from!=="cx"||r.n!==r.ids.length||!r.crumb||!r.qchips) throw new Error("sessão: "+JSON.stringify(r)); });
+    await step("ver na lição + barra de progresso + deslizar", async()=>{
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const l=S.lessons.get("lesson:da:t1"), old=l.html, q=S.qs.get("da-t1-ufpr-1"), oq=JSON.stringify(q.i18n.pt);
+        const fill=n=>Array.from({length:n},(_,i)=>`<p>Parágrafo genérico ${i} sobre outro assunto de cirurgia geral e anestesia, sem relação direta com a questão.</p>`).join("");
+        l.html='<aside class="call vespera"><p>Resumo curto.</p></aside><button type="button" class="lfull-sw" aria-expanded="false">Ler a lição completa</button><h2>1. Geral</h2>'+fill(25)+'<h2>2. Apendicite</h2><p>Na apendicite aguda a dor migra para a fossa ilíaca direita e o sinal de Blumberg indica peritonite localizada.</p>'+fill(25);
+        Object.assign(q.i18n.pt,{stem:"Paciente com dor migratória para fossa ilíaca direita e sinal de Blumberg positivo. Qual o diagnóstico?"}); q.i18n.pt.opts=q.i18n.pt.opts.map((o,j)=>j===q.correct?{t:"Apendicite aguda",why:"Dor migratória e Blumberg."}:o);
+        S.session=buildSession("study",[S.qs.get("da-t1-ufpr-0"),q,S.qs.get("da-t1-ufpr-2")],{mode:"study",count:0,order:"seq",shuffleO:false}); S.session.i=1; S.session.items[1].pick=q.correct; go("study"); await W(60);
+        const out={}; const b=document.querySelector('#view [data-act="lspot"]'); out.btn=!!b; b.click(); await W(400);
+        const sp=document.querySelector("article.lesson .lspot"); out.spot=sp?sp.textContent.slice(0,200):null; out.vis=sp?sp.getClientRects().length>0:false;
+        out.bar=!!document.querySelector(".lprog,#lprog");
+        if(document.querySelector("#layer").innerHTML){ closeSheetRaw(); document.body.style.overflow=""; }
+        let stem=document.querySelector("#view .stem"); const R=stem.getBoundingClientRect(), x0=R.left+R.width*.8, y0=R.top+5;
+        const T=(type,x)=>{ if(type==="touchstart") stem=document.querySelector("#view .stem"); const tc=new Touch({identifier:7,target:stem,clientX:x,clientY:y0}); stem.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,touches:type==="touchend"?[]:[tc],changedTouches:[tc],targetTouches:type==="touchend"?[]:[tc]})); };
+        document.dispatchEvent(new PointerEvent("pointerdown",{pointerType:"touch"})); T("touchstart",x0); T("touchmove",x0-150); T("touchend",x0-160); await W(40); out.iNext=S.session.i;
+        T("touchstart",R.left+R.width*.2); T("touchmove",R.left+R.width*.2+160); T("touchend",R.left+R.width*.2+170); await W(40); out.iPrev=S.session.i;
+        l.html=old; q.i18n.pt=JSON.parse(oq); S.session=null; go("study"); return out; });
+      if(!r.btn) throw new Error("sem botão Ver na lição");
+      if(!r.spot||!/Blumberg/.test(r.spot)||!r.vis) throw new Error("trecho errado: "+JSON.stringify(r));
+      if(!r.bar) throw new Error("sem barra de progresso");
+      if(r.iNext!==2||r.iPrev!==1) throw new Error("deslizar não trocou: "+JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

@@ -636,13 +636,23 @@ html.toc-off .lwrap>.gdrag{display:none!important}
   .lptn-b span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .lptn-b:hover,.lptn-b:focus-visible{opacity:1}
   html body #view .qgrid.l3 .qlbody{padding-bottom:56px}
-  /* modo leitura da lição ao lado: só a lição, sem a questão nem os menus */
-  body.lpread #view>*:not(.qgrid),body.lpread .top,body.lpread nav.tabs,body.lpread #side{display:none!important}
-  body.lpread{--nav-h:0px}
-  html body.lpread #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
-  html body.lpread #view .qgrid.l3>.qcol,body.lpread .qdrag{display:none!important}
-  html body.lpread .wrap:has(.qgrid.l3){max-width:900px}
-  :root.lsn-sepia body.lpread{background:#F4ECD8}:root.lsn-light:not(.lsn-sepia) body.lpread{background:#FFFFFF}:root.lsn-dark body.lpread{background:#191e23}
+  /* modo leitura na metade direita: some o cabeçalho e as setas de tema da coluna da lição; a questão continua à esquerda */
+  html body.lpread #view .qgrid.l3 .qlh,html body.lpread #view .qgrid.l3 .lptn{display:none!important}
+  html body.lpread #view .qgrid.l3 .qlbody{padding-bottom:12px}
+  .lprBar{position:absolute;top:8px;right:10px;z-index:8;display:flex;gap:4px;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--surface) 80%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);opacity:.55;transition:opacity .2s}
+  .lprBar:hover,.lprBar:focus-within{opacity:1}.lprBar .btn{min-height:30px;padding:3px 9px;font-size:12.5px}
+  /* lição em tela cheia (botão no canto inferior esquerdo): só a lição, sem a questão nem os menus */
+  body.lpfull #view>*:not(.qgrid),body.lpfull .top,body.lpfull nav.tabs,body.lpfull #side{display:none!important}
+  body.lpfull{--nav-h:0px}
+  html body.lpfull #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
+  html body.lpfull #view .qgrid.l3>.qcol,body.lpfull .qdrag,body.lpfull #view .qgrid.l3 .lptn{display:none!important}
+  html body.lpfull .wrap:has(.qgrid.l3){max-width:900px}
+  :root.lsn-sepia body.lpfull{background:#F4ECD8}:root.lsn-light:not(.lsn-sepia) body.lpfull{background:#FFFFFF}:root.lsn-dark body.lpfull{background:#191e23}
+  #lpFullBtn{position:fixed;z-index:60;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom,0px));min-height:32px;padding:4px 10px;border-radius:14px;border:0;background:var(--surface);color:var(--ink-2);font-size:16px;line-height:1;cursor:pointer;opacity:.6;transition:opacity .2s;box-shadow:0 2px 10px rgba(0,0,0,.14),0 0 0 1px var(--line)}
+  #lpFullBtn:hover,#lpFullBtn:focus-visible{opacity:1}
+  body.qnav-on #lpFullBtn{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 86px)}
+  body.focus #lpFullBtn{bottom:calc(14px + env(safe-area-inset-bottom,0px))}body.focus.qnav-on #lpFullBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 86px)}
+  body.lpfull #lpFullBtn{bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 @media (min-width:1500px){
   html body .wrap:has(.qgrid.l3){max-width:2300px}
   html body #view .qgrid.l3{grid-template-columns:minmax(0,1.8fr) var(--lpw,minmax(0,1.5fr));gap:0 36px}
@@ -650,7 +660,7 @@ html.toc-off .lwrap>.gdrag{display:none!important}
   html body #view .qgrid.l3>.qcol>.qtop,html body #view .qgrid.l3>.qcol>.qnav{grid-column:1/-1}
   html body #view .qgrid.l3>.qcol>.qnav{align-self:end}
   html body #view .qgrid.l3 .qright>.gdrag[data-g="q"]{display:block!important}
-  html body.lpread #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
+  html body.lpfull #view .qgrid.l3{grid-template-columns:minmax(0,1fr)}
 }
 }
 /* ---- ultrawide (>=1500px): lição ao lado da questão, temas fixos à esquerda, plano em colunas ---- */
@@ -1586,7 +1596,7 @@ window.addEventListener("popstate", e=>{
   if(S.lTop){ S.lTop=false; const top=()=>{ if(S.view==="lesson"&&window.scrollY) window.scrollTo(0,0); }; requestAnimationFrame(()=>requestAnimationFrame(top)); setTimeout(top,300); }
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
-function render(){ document.body.classList.remove("lpread"); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
+function render(){ document.body.classList.remove("lpread","lpfull"); document.getElementById("lpFullBtn")?.remove(); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
   ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v); lreadBar();
 }
@@ -1838,11 +1848,15 @@ function vPlayer(v){
    </div><div class="qnav-space" aria-hidden="true"></div>`;
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
   const qc=$("#view .qgrid.l3>.qcol"); if(qc){ const t=$("#view>.qtop"), n=$("#view>.qnav"); if(t) qc.prepend(t); if(n) qc.append(n); }
-  document.body.classList.toggle("lpread",!!(S.lpRead&&$("#view .qgrid.l3")));
+  document.body.classList.toggle("lpread",!!(S.lpRead&&$("#view .qgrid.l3"))); document.body.classList.toggle("lpfull",!!(S.lpFull&&$("#view .qgrid.l3"))); lpFullBtn();
   const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
   hydrateAI(q); lpFit();
 }
 // tablet com a lição ao lado: a grade ocupa só a altura visível (do topo da questão até a barra ←/→), e cada coluna rola sozinha
+// botão discreto no canto inferior esquerdo (espelha o da caneta): amplia a lição ao lado para a tela inteira e volta
+function lpFullBtn(){ let b=document.getElementById("lpFullBtn"); if(!(LP_Q.matches&&$("#view .qgrid.l3 .qlesson"))){ b?.remove(); return; }
+  if(!b){ b=document.createElement("button"); b.type="button"; b.id="lpFullBtn"; b.dataset.act="lpFull"; document.body.appendChild(b); }
+  const t=S.lpFull?T2("Voltar à tela dividida","Back to split view"):T2("Lição em tela cheia","Lesson full screen"); b.textContent=S.lpFull?"⤡":"⤢"; b.title=t; b.setAttribute("aria-label",t); b.setAttribute("aria-pressed",String(!!S.lpFull)); }
 function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches){ g.style.removeProperty("--qh"); return; }
   const top=g.getBoundingClientRect().top+(window.scrollY||0), tb=$("nav.tabs"), tr0=tb&&getComputedStyle(tb).display!=="none"?tb.getBoundingClientRect():null, nh=(tr0&&tr0.top>innerHeight/2?tr0.height:0)+12;
   g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
@@ -1895,7 +1909,7 @@ function questionHTML(q, it, reveal, simMode){
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&LP_Q.matches&&lpOn();
-  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row">${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Modo leitura","Reading mode")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button>${S.lpRead?"":`<button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button>`}<button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${lpTopicNav(lsn)}</aside>`:"";
+  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row">${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button>${S.lpRead||S.lpFull?"":`<button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(lsn.id)}">${T2("Abrir","Open")}</button>`}<button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar">${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}</div>${lp?"</div>":""}${pane}</div>`;
 }
@@ -2128,7 +2142,7 @@ function revSeg(){ const fc=S.view==="cards"; return `<div class="seg" role="gro
 /* ---------- LIÇÕES ---------- */
 function lessonOf(dId,tId){ return S.lessons.get(`lesson:${dId}:${tId}`)||null; }
 /* tela dividida: tema anterior/próximo (ordem das aulas) troca juntos a lição e as questões */
-function lpTopicNav(lsn){ if(S.lpRead) return ""; const L=lessonsOf(lsn.discipline), k=L.findIndex(l=>l.id===lsn.id); if(k<0||L.length<2) return "";
+function lpTopicNav(lsn){ if(S.lpRead||S.lpFull) return ""; const L=lessonsOf(lsn.discipline), k=L.findIndex(l=>l.id===lsn.id); if(k<0||L.length<2) return "";
   const b=(l,dir)=>l?`<button type="button" class="lptn-b" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" title="${esc(l.title||"")}">${dir<0?"← ":""}<span>${esc(topicName(l.discipline,l.topic)||l.title||"")}</span>${dir>0?" →":""}</button>`:"<i></i>";
   return `<nav class="lptn" aria-label="${T2("Tema anterior e próximo","Previous and next topic")}">${b(L[k-1],-1)}${b(L[k+1],1)}</nav>`; }
 function topicName(d,t){ return nm((discById(d)?.topics||[]).find(x=>x.id===t)); }
@@ -3312,8 +3326,9 @@ document.addEventListener("click", async e=>{
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
-  if(act==="lpane"){ lpSet(!lpOn()); S.lpRead=false; return render(); }
+  if(act==="lpane"){ lpSet(!lpOn()); S.lpRead=false; S.lpFull=false; return render(); }
   if(act==="lpRead"){ S.lpRead=!S.lpRead; return render(); }
+  if(act==="lpFull"){ S.lpFull=!S.lpFull; return render(); }
   if(act==="lesson"){ S.prog.read=S.prog.read||{}; if(!S.prog.read[a.dataset.id]){ S.prog.read[a.dataset.id]=now(); saveProg(); }
     // durante uma sessão de questões a lição abre por cima (folha), sem desmontar a questão; "Abrir página" leva à lição inteira
     // tablet/computador: abre (ou mantém) o painel ao lado, que acompanha a questão; celular: folha por cima
@@ -3437,6 +3452,7 @@ document.addEventListener("change", e=>{
 document.addEventListener("keydown", e=>{
   if(e.target.closest("input,textarea,select,[contenteditable='true']")||e.ctrlKey||e.metaKey||e.altKey) return;
   if(e.key==="Escape" && $("#layer").innerHTML){ closeSheet(); return; }
+  if(e.key==="Escape" && document.body.classList.contains("lpfull")){ S.lpFull=false; render(); return; }
   if(e.key==="Escape" && document.body.classList.contains("lpread")){ S.lpRead=false; render(); return; }
   if($("#layer").innerHTML) return;
   if(e.target.closest("summary")) return; // Enter/Space operate disclosure controls, not session navigation.

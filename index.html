@@ -2777,7 +2777,7 @@ function lessonSheet(id){ const l=S.lessons.get(id); if(!l) return;
     <div class="lsh-h"><div class="eyebrow">${esc(nm(discById(l.discipline)))} · ${T2("Lição","Lesson")}${l.minutes?` · ~${l.minutes} min`:""}</div><h2 style="margin:2px 0 0">${esc(l.title)}</h2></div>
     <div class="row">${annBar("L:"+l.id,false)}</div>
     <div class="lsh-b">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}</div>`,
-    sh=>{ sh.scrollTop=0; requestAnimationFrame(()=>annInit(sh)); }, "lsheet"); }
+    sh=>{ sh.scrollTop=0; requestAnimationFrame(()=>annInit(sh)); try{ lposScan(false); }catch(_){} }, "lsheet"); }
 function bankPreview(id){
   const q=S.qs.get(id); if(!q) return;
   const it={id, perm:[...Array(content(q).c.opts.length).keys()], pick:q.correct};
@@ -3723,6 +3723,37 @@ render=function(){ _renderOrig.apply(this,arguments); posSave(); if(S.posY){ con
   /* respostas/avanço mudam S.session sem render completo em alguns caminhos: grava também ao tocar/teclar */
   document.addEventListener("click",()=>setTimeout(posSave,60),true);
 })();
+
+/* ---------- PONTO DE LEITURA DE CADA LIÇÃO ----------
+   Cada lição guarda onde parou, neste aparelho, em localStorage "gab.lpos" = {id:{b,f,t}}: b = bloco do topo da tela
+   (filho de article.lesson), f = fração dentro dele, t = data. Por bloco e não por pixel, para valer na página, na folha
+   por cima da questão e no painel do tablet (larguras diferentes). Registros com mais de 14 dias são apagados.
+   Abre no começo: "Próxima lição" ao fim dos exercícios (S.lTop) e lição aberta pela busca (vai ao trecho). */
+const LPOS_K="gab.lpos", LPOS_TTL=14*864e5;
+let lposHold=0, lposSeen={};
+function lposAll(){ try{ const o=JSON.parse(localStorage.getItem(LPOS_K)||"{}"); return o&&typeof o==="object"?o:{}; }catch(_){ return {}; } }
+function lposPut(o){ const lim=Date.now()-LPOS_TTL; for(const k of Object.keys(o)) if(!(+o[k]?.t>lim)) delete o[k]; try{ localStorage.setItem(LPOS_K,JSON.stringify(o)); }catch(_){} }
+function lposArts(){ return [...document.querySelectorAll("article.lesson")].map(art=>{ const id=(art.closest("[data-owner]")?.dataset.owner||"").replace(/^L:/,"");
+  const kind=art.closest(".qlbody")?"panel":art.closest(".sheet")?"sheet":"view"; return id&&art.getClientRects().length?{art,id,kind}:null; }).filter(Boolean); }
+function lposRef(sc){ const doc=sc===document.scrollingElement||sc===document.documentElement; const top=doc?0:sc.getBoundingClientRect().top, h=doc?innerHeight:sc.clientHeight; return top+Math.min(90,h*.15); }
+function lposRead(art){ const sc=annScroller(art), ref=lposRef(sc), kids=[...art.children];
+  for(let i=0;i<kids.length;i++){ const r=kids[i].getBoundingClientRect(); if(!r.height) continue; if(r.bottom>ref) return {b:i,f:Math.max(0,Math.min(1,(ref-r.top)/r.height))}; }
+  return kids.length?{b:kids.length-1,f:1}:null; }
+function lposSave(){ if(Date.now()<lposHold) return; const L=lposArts(); if(!L.length) return; const o=lposAll(), t=Date.now();
+  for(const x of L){ const p=lposRead(x.art); if(p) o[x.id]={b:p.b,f:Math.round(p.f*1000)/1000,t}; } lposPut(o); }
+function lposGo(art,p){ const el=art.children[p.b]; if(!el) return; lfullReveal(el); const sc=annScroller(art), r=el.getBoundingClientRect();
+  sc.scrollTop+=r.top+p.f*r.height-lposRef(sc); }
+function lposScan(skip){ const L=lposArts(), now=new Set(L.map(x=>x.kind));
+  for(const k of Object.keys(lposSeen)) if(!now.has(k)) delete lposSeen[k];
+  for(const x of L){ if(lposSeen[x.kind]===x.id) continue; lposSeen[x.kind]=x.id; if(skip&&x.kind==="view") continue;
+    const p=lposAll()[x.id]; if(!p||(+p.t||0)<Date.now()-LPOS_TTL||(!p.b&&!p.f)) continue; lposHold=Date.now()+900;
+    const art=x.art; let y=null; const sc=()=>annScroller(art);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(!art.isConnected) return; lposGo(art,p); y=sc().scrollTop; }));
+    setTimeout(()=>{ if(art.isConnected&&y!=null&&Math.abs(sc().scrollTop-y)<2){ lposGo(art,p); } },350); } }
+(()=>{ const _r=render; render=function(){ const skip=!!S.lessonHl||!!S.lTop; _r.apply(this,arguments); try{ lposScan(skip); }catch(_){} };
+  let t=null; document.addEventListener("scroll",()=>{ if(t) return; t=setTimeout(()=>{ t=null; lposSave(); },400); },{passive:true,capture:true});
+  const flush=()=>{ lposHold=0; lposSave(); }; document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flush(); }); window.addEventListener("pagehide",flush);
+  try{ lposPut(lposAll()); }catch(_){} })();
 
 async function boot(){
   await cacheLoad(); applyTheme(); posRestore();

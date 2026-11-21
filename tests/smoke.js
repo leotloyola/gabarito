@@ -265,6 +265,18 @@ function fixture(){
       await p.waitForTimeout(120);
       const free=await p.evaluate(t0=>{ const ok=document.scrollingElement.scrollTop>t0+200; S.annId=null; delete (S.prog.annotations||{})["L:lesson:da:t1"]; go("home"); return ok; },t0);
       if(!r.kept||!free) throw new Error("rolagem: "+JSON.stringify({...r,free})); });
+    await step("lição reabre onde parou (por lição, 14 dias)", async()=>{
+      await p.evaluate(()=>{ localStorage.removeItem("gab.lpos"); const base=S.lessons.get("lesson:da:t1"); S.lessons.set("lesson:da:big",Object.assign({},base,{id:"lesson:da:big",title:"Lição longa",html:Array.from({length:80},(_,i)=>`<p id="lp${i}">Parágrafo ${i} `+"texto ".repeat(40)+"</p>").join("")}));
+        S.annId=null; S.lessonId="lesson:da:big"; go("lesson"); });
+      await p.waitForTimeout(1000);
+      await p.evaluate(()=>{ const el=document.getElementById("lp40"); window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-lposRef(document.scrollingElement)); });
+      await p.waitForTimeout(700);
+      const saved=await p.evaluate(()=>lposAll()["lesson:da:big"]);
+      await p.evaluate(()=>{ go("home"); S.lessonId="lesson:da:t1"; go("lesson"); go("home"); S.lessonId="lesson:da:big"; go("lesson"); });
+      await p.waitForTimeout(600);
+      const r=await p.evaluate(()=>{ const el=document.getElementById("lp40"), d=el.getBoundingClientRect().top-lposRef(document.scrollingElement);
+        const o=lposAll(); o.velha={b:3,f:.5,t:Date.now()-15*864e5}; lposPut(o); const gone=!lposAll().velha; S.lessons.delete("lesson:da:big"); go("home"); return {d:Math.round(d),gone}; });
+      if(!saved||saved.b!==40||Math.abs(r.d)>30||!r.gone) throw new Error("ponto da lição: "+JSON.stringify({saved,r})); });
     await step("full exam sim", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="full"; go("study"); }); await p.click('[data-act="fullExam"][data-mode="sim"]'); await p.click('[data-pick="1"]'); });
     await step("review session", ()=>p.evaluate(()=>{ S.session=null; go("review"); document.querySelector('[data-act="startReview"]')?.click(); }));
     await step("flashcards", ()=>p.evaluate(()=>{ S.session=null; S.fcDeck=null; go("cards"); document.querySelector('[data-act="fcStart"]')?.click(); }));

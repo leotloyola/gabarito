@@ -351,6 +351,13 @@ ol.tbq{list-style:none;margin:6px 0 0;padding:0;counter-reset:tq} ol.tbq li{disp
 .srx{grid-column:1/-1;font-size:12.5px;line-height:1.45;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0}
 mark.srh{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px;box-shadow:0 0 0 1px var(--accent-soft)}
 .lesson>h2,mark.srh{scroll-margin-top:96px}
+mark.lfh{background:color-mix(in srgb,#FACC15 55%,transparent);color:inherit;border-radius:2px;padding:0;scroll-margin:96px 0}
+mark.lfh.cur{background:#F59E0B;color:#1a1a1a;box-shadow:0 0 0 2px #F59E0B}
+#lfBar{position:fixed;z-index:75;transform:translateX(-50%);display:flex;align-items:center;gap:4px;width:min(440px,calc(100vw - 16px));padding:4px 4px 4px 10px;border-radius:999px;background:var(--surface);box-shadow:0 4px 18px rgba(0,0,0,.18),0 0 0 1px var(--hair)}
+#lfBar input{flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-size:16px;padding:6px 2px;outline:none}
+#lfBar input::-webkit-search-cancel-button{display:none}
+#lfBar .lfc{font-size:12px;color:var(--muted);white-space:nowrap}#lfBar .lfc.bad{color:var(--bad)}
+#lfBar .btn{min-height:32px;padding:3px 9px}
 details.srt{border-top:1px solid var(--hair)} details.srt:first-child{border-top:0}
 details.srt>summary{text-transform:none;letter-spacing:0;font-size:14.5px;font-weight:600;color:var(--ink);padding:12px 4px}
 details.srt>summary small{font-size:12px;color:var(--muted);text-align:right}
@@ -1359,7 +1366,7 @@ function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
   document.querySelectorAll("[data-ann-surface]").forEach(s=>{ annAuto(s.dataset.owner); s.classList.toggle("ann-auto",annIsAuto(s.dataset.owner)); s.classList.toggle("ann-enabled",s.dataset.owner===S.annId); });
-  annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer")); lreadBar();
+  annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer")); lreadBar(); lfSync();
 }
 function annPt(e,g){ return [e.clientX-g.sr.left,e.clientY-g.sr.top,e.pointerType==="pen"||e.pressure>0&&e.pressure!==.5?Math.max(.05,Math.min(1,e.pressure||.5)):.5]; }
 function annSegDist(p,a,b){ const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy; let t=l?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l:0; t=Math.max(0,Math.min(1,t)); return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy); }
@@ -1675,7 +1682,7 @@ window.addEventListener("popstate", e=>{
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
 function render(){ document.body.classList.remove("lpread","lpfull"); document.getElementById("lpFullBtn")?.remove(); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
-  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v); lreadBar();
+  ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v); lreadBar(); lfSync();
 }
 
 /* ---------- MODO: Provas UFPR × Steps USMLE ----------
@@ -1991,7 +1998,7 @@ function questionHTML(q, it, reveal, simMode){
   const pre = !reveal && !simMode ? `<div class="row qpre">${lsnRow?`<button class="btn small ghost" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com o enunciado (sem usar a resposta)","Opens the lesson at the passage closest to the stem (without using the answer)")}">🎯 ${T2("Ver na lição","See in lesson")}</button>`:""}<button class="btn small ghost" data-act="askClaude" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small ghost" data-act="askGemini" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button></div>` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&LP_Q.matches&&lpOn();
-  const pane=lp?`<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(S.annId==="L:"+lsn.id?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`:"";
+  const pane=lp?`<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(S.annId==="L:"+lsn.id?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}${pre}</div>${lp?"</div>":""}${pane}</div>`;
 }
@@ -2358,7 +2365,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const practiceTop=nQ?`<button class="btn small primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">▶ ${T2("Praticar","Practice")} · ${lpN&&lpN<nQ?lpN:nQ}</button>`:"";
   v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}${cvL?`<span class="lcovh">${T2(cvL.hi?"★★+ feitas":"Feitas",cvL.hi?"★★+ done":"Done")} ${cvL.n}/${cvL.of} ${lsnCovTag(cvL)}${cvL.acc!=null?`<span class="lacc ${cvL.acc>=70?"ok":cvL.acc<50?"bad":""}">${lsnAccTxt(cvL)}</span>`:""}</span>`:""}</span></div>
    <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
-   <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Baixa a lição em PDF: escolha o conteúdo, o gabarito, a coluna para anotar e as cores","Download the lesson as PDF: pick content, answer key, notes column and colors")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
+   <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Baixa a lição em PDF: escolha o conteúdo, o gabarito, a coluna para anotar e as cores","Download the lesson as PDF: pick content, answer key, notes column and colors")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lfind" title="${T2("Buscar um termo nesta lição (Ctrl+F)","Find a term in this lesson (Ctrl+F)")}">🔍 ${T2("Buscar","Find")}</button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
    ${topicLinksHTML(t)}
    <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
@@ -2379,14 +2386,14 @@ function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn
   const o="L:"+S.lessonId, on=S.annId===o;
   b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
   const tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&$("#ltoc")&&!$("#ltoc").hidden?'<button type="button" class="btn small" data-act="tocTog">☰ '+T2("Índice","Contents")+'</button>':"";
-  b.innerHTML=tocB+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
+  b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
 // troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
 function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
   if(sf){ for(const b of annBlocks(sf)){ const r=b.getBoundingClientRect(); if(r.bottom>70&&r.height){ ref=b; top=r.top; break; } } }
   S.lread=on; try{ localStorage.setItem("gab.lread",on?"1":"0"); }catch(_){}
   document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); lreadBar();
   if(ref){ const sc=annScroller(ref); sc.scrollTop+=ref.getBoundingClientRect().top-top; }
-  annInit($("#view")); }
+  annInit($("#view")); lfSync(); }
 try{ S.lread=localStorage.getItem("gab.lread")==="1"; }catch(_){}
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&lreadOn()&&!$("#layer").innerHTML&&!document.body.classList.contains("mp-on")){ e.preventDefault(); e.stopImmediatePropagation(); lreadSet(false); } },true);
 const WIDE_L=matchMedia("(min-width:1150px)");
@@ -2880,7 +2887,7 @@ function openSheet(html, onMount, cls){
   if(S.sheetY==null) S.sheetY=Math.round(window.scrollY||0);
   document.body.style.overflow="hidden"; onMount && onMount($("#layer .sheet"));
 }
-function closeSheetRaw(){ $("#layer").innerHTML=""; document.body.style.overflow=""; S.gen=null;
+function closeSheetRaw(){ $("#layer").innerHTML=""; if(document.getElementById("lfBar")&&LF.where==="sheet") lfClose(); document.body.style.overflow=""; S.gen=null;
   // devolve a tela exatamente onde estava antes da folha (o navegador às vezes zera a rolagem ao travar o fundo)
   const y=S.sheetY; S.sheetY=null; if(y!=null&&Math.abs((window.scrollY||0)-y)>1){ window.scrollTo(0,y); requestAnimationFrame(()=>{ if(Math.abs((window.scrollY||0)-y)>1) window.scrollTo(0,y); }); } }
 function closeSheet(){ closeSheetRaw(); if(S.sheetPushed){ S.sheetPushed=false; try{ history.back(); }catch(e){} } }
@@ -2891,7 +2898,7 @@ function inQSession(){ const s=S.session; return !!(s&&!s.done&&(S.view==="study
 function lessonSheet(id){ const l=S.lessons.get(id); if(!l) return;
   openSheet(`<div class="lsh-top"><button type="button" class="btn small primary" data-act="closeSheet">← ${T2("Voltar à questão","Back to question")}</button><button type="button" class="btn small ghost" data-act="lesson" data-id="${esc(l.id)}" data-full="1">${T2("Abrir página","Open page")}</button></div>
     <div class="lsh-h"><div class="eyebrow">${esc(nm(discById(l.discipline)))} · ${T2("Lição","Lesson")}${l.minutes?` · ~${l.minutes} min`:""}</div><h2 style="margin:2px 0 0">${esc(l.title)}</h2></div>
-    <div class="row">${annBar("L:"+l.id,false)}</div>
+    <div class="row"><button class="btn small" data-act="lfind" title="${T2("Buscar um termo nesta lição (Ctrl+F)","Find a term in this lesson (Ctrl+F)")}">🔍 ${T2("Buscar","Find")}</button>${annBar("L:"+l.id,false)}</div>
     <div class="lsh-b">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}</div>`,
     sh=>{ sh.scrollTop=0; requestAnimationFrame(()=>annInit(sh)); try{ lposScan(false); }catch(_){} }, "lsheet"); }
 function bankPreview(id){
@@ -3192,6 +3199,65 @@ function srLessonHl(){ // destaca o termo na lição aberta pela busca e rola at
   if(tgt) requestAnimationFrame(()=>tgt.scrollIntoView({block:"start"}));
 }
 
+/* ---------- BUSCAR NA LIÇÃO ABERTA (🔍) ----------
+   Destaca as ocorrências do termo só no texto da lição (ignora acentos, aceita plural/sufixo e sinônimos de sinonimos.js;
+   frase com várias palavras procura a frase; sem achar, procura as palavras soltas). Inclui a prosa recolhida em
+   "Ler a lição completa", que abre sozinha ao chegar numa ocorrência dela. Os <mark> não mudam o texto dos blocos,
+   então as anotações (âncora por letra) continuam no lugar. */
+const LF={q:"",marks:[],i:-1,where:null,loose:false,t:0};
+function lfTarget(){ if(LF.where==="sheet") return $("#layer .lsh-b .lesson"); if(LF.where==="pane") return $("#view .qgrid.l3 .qlesson .lesson"); if(LF.where==="page") return S.view==="lesson"?$("#view .lwrap .lesson"):null;
+  return $("#layer .lsh-b .lesson")||(S.view==="lesson"?$("#view .lwrap .lesson"):null)||$("#view .qgrid.l3 .qlesson .lesson"); }
+function lfWhere(el){ return el?.closest?.("#layer")?"sheet":el?.closest?.(".qlesson,#lpFullBtn")?"pane":S.view==="lesson"?"page":($("#view .qgrid.l3 .qlesson")?"pane":null); }
+const LF_BLK="p,li,td,th,h1,h2,h3,h4,h5,h6,figcaption,aside,blockquote,dt,dd,summary,pre,div";
+function lfNodes(art){ const w=document.createTreeWalker(art,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement?.closest("svg,script,style,button,.lfull-sw")?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT}), out=[]; let n; while((n=w.nextNode())) out.push(n); return out; }
+function lfClear(art){ (art||document).querySelectorAll("mark.lfh").forEach(m=>{ const p=m.parentNode; if(!p) return; while(m.firstChild) p.insertBefore(m.firstChild,m); p.removeChild(m); p.normalize(); }); LF.marks=[]; LF.i=-1; }
+function lfRes(raw,text){ const toks=nz(raw).trim().split(" ").filter(Boolean); if(!toks.length) return null;
+  const vocab=new Map(); for(const w of nz(text).split(" ")) if(w.length>=3) vocab.set(w,(vocab.get(w)||0)+1);
+  const P=parseQuery(raw,{vocab}); const syn=synIndex(), ph=toks.join(" ");
+  if(toks.length>1&&!(P&&P.units.length===1)){ const vars=new Set([ph]); if(syn.has(ph)) syn.get(ph).forEach(g=>g.forEach(t=>vars.add(t.n)));
+    return {phrase:[...vars].map(v=>termRe(v,true)), loose:P?P.hres:[]}; }
+  return P?{phrase:P.hres,loose:[]}:null; }
+function lfSpans(n,hres){ const sp=[]; for(const r of hres){ r.lastIndex=0; let m; while((m=r.exec(n))){ const s=m.index+m[1].length, e=m.index+m[0].length; if(e>s) sp.push([s,e]); if(!m[0].length) r.lastIndex++; } }
+  sp.sort((a,b)=>a[0]-b[0]); const mg=[]; for(const x of sp){ const l=mg[mg.length-1]; if(l&&x[0]<=l[1]) l[1]=Math.max(l[1],x[1]); else mg.push(x.slice()); } return mg; }
+function lfApply(go){ const art=lfTarget(); if(!art){ lfClose(); return; } lfClear(art); LF.loose=false; const raw=LF.q.trim();
+  if(raw){ const nodes=lfNodes(art); let full="", pos=[], lastB=null;
+    for(const nd of nodes){ const b=nd.parentElement.closest(LF_BLK); if(full&&b!==lastB) full+=" "; lastB=b; pos.push(full.length); full+=nd.data; }
+    const R=lfRes(raw,full); let sp=[];
+    if(R){ const al=nzAlign(full); sp=lfSpans(al,R.phrase); if(!sp.length&&R.loose.length){ sp=lfSpans(al,R.loose); LF.loose=!!sp.length; } }
+    // cada ocorrência vira um ou mais <mark> (um por nó de texto que ela atravessa); de trás para frente para não mexer nos índices
+    const groups=sp.map(()=>[]);
+    for(let k=nodes.length-1;k>=0;k--){ const nd=nodes[k], a0=pos[k], a1=a0+nd.data.length;
+      for(let j=sp.length-1;j>=0;j--){ const [s,e]=sp[j]; if(e<=a0||s>=a1) continue; const x=Math.max(s,a0)-a0, y=Math.min(e,a1)-a0; if(!nd.data.slice(x,y).trim()) continue;
+        const rg=document.createRange(); rg.setStart(nd,x); rg.setEnd(nd,y); const m=document.createElement("mark"); m.className="lfh"; m.dataset.lf=j; try{ rg.surroundContents(m); groups[j].unshift(m); }catch(_){} } }
+    LF.marks=groups.filter(g=>g.length); }
+  lfBar(); if(go&&LF.marks.length){ const top=lfScrollTop(art); let i=LF.marks.findIndex(g=>g[0].getClientRects().length&&g[0].getBoundingClientRect().top>=top-4); if(i<0) i=LF.marks.findIndex(g=>g[0].getClientRects().length); lfGo(i<0?0:i); } }
+function lfScrollTop(art){ const sc=annScroller(art); return sc===document.scrollingElement||sc===document.documentElement?Math.round(document.querySelector("header.top")?.getBoundingClientRect().bottom||0):sc.getBoundingClientRect().top; }
+function lfGo(i){ const n=LF.marks.length; if(!n) return; LF.i=((i%n)+n)%n; LF.marks.forEach((g,k)=>g.forEach(m=>m.classList.toggle("cur",k===LF.i))); const m=LF.marks[LF.i][0];
+  const d=m.closest("details:not([open])"); if(d) d.open=true; lfullReveal(m);
+  requestAnimationFrame(()=>m.scrollIntoView({block:"center",behavior:"smooth"})); lfBar(); }
+function lfBar(){ const b=document.getElementById("lfBar"); if(!b) return; const c=b.querySelector(".lfc"), n=LF.marks.length;
+  c.textContent=!LF.q.trim()?"":n?(LF.i>=0?LF.i+1:0)+"/"+n+(LF.loose?" · "+T2("palavras soltas","separate words"):""):T2("nada","none"); c.classList.toggle("bad",!!LF.q.trim()&&!n);
+  b.querySelectorAll("[data-act=lfPrev],[data-act=lfNext]").forEach(x=>x.disabled=!n); lfPos(); }
+function lfPos(){ const b=document.getElementById("lfBar"), art=lfTarget(); if(!b||!art) return; const box=(art.closest(".qlbody,.lsh-b,.lwrap")||art).getBoundingClientRect();
+  const hb=LF.where==="page"?Math.round(document.querySelector("header.top")?.getBoundingClientRect().bottom||0):0, vw=document.documentElement.clientWidth, w=b.offsetWidth||320;
+  const cx=Math.min(Math.max(box.left+box.width/2,w/2+8),vw-w/2-8); b.style.left=Math.round(cx)+"px";
+  const pill=LF.where==="page"?document.getElementById("lreadBar"):LF.where==="pane"?art.closest(".qlesson")?.querySelector(".lprBar"):null, pb=pill?Math.round(pill.getBoundingClientRect().bottom)+6:0;
+  b.style.top=Math.round(Math.max(8+(window.visualViewport?.offsetTop||0),hb+8,pb,LF.where==="page"?0:Math.min(box.top+8,innerHeight-80)))+"px"; }
+function lfOpen(el){ LF.where=lfWhere(el); const art=lfTarget(); if(!art) return toast(T2("Abra uma lição para buscar","Open a lesson to search"));
+  let b=document.getElementById("lfBar");
+  if(!b){ b=document.createElement("div"); b.id="lfBar"; b.setAttribute("role","search");
+    b.innerHTML=`<span class="lfi" aria-hidden="true">🔍</span><input type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${T2("Buscar na lição","Find in lesson")}" aria-label="${T2("Buscar na lição","Find in lesson")}"><span class="lfc mono" aria-live="polite"></span><button type="button" class="btn small ghost" data-act="lfPrev" title="${T2("Anterior (Shift+Enter)","Previous (Shift+Enter)")}" aria-label="${T2("Anterior","Previous")}">▲</button><button type="button" class="btn small ghost" data-act="lfNext" title="${T2("Próxima (Enter)","Next (Enter)")}" aria-label="${T2("Próxima","Next")}">▼</button><button type="button" class="btn small ghost" data-act="lfClose" title="${T2("Fechar (Esc)","Close (Esc)")}" aria-label="${T2("Fechar busca","Close search")}">✕</button>`;
+    document.body.appendChild(b); const inp=b.querySelector("input");
+    inp.addEventListener("input",()=>{ LF.q=inp.value; clearTimeout(LF.t); LF.t=setTimeout(()=>lfApply(true),160); });
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); clearTimeout(LF.t); if(LF.q!==inp.value||!LF.marks.length){ LF.q=inp.value; lfApply(true); } else lfGo(LF.i+(e.shiftKey?-1:1)); } }); }
+  const inp=b.querySelector("input"); if(LF.q&&!art.querySelector("mark.lfh")) lfApply(false); lfBar(); requestAnimationFrame(lfPos); inp.focus(); inp.select(); }
+function lfClose(){ clearTimeout(LF.t); document.getElementById("lfBar")?.remove(); lfClear(document); LF.where=null; }
+// depois de redesenhar a tela: reaplica na lição nova (mesmo modo) ou fecha se não houver mais lição
+function lfSync(){ if(!document.getElementById("lfBar")) return; const art=lfTarget(); if(!art){ lfClose(); return; } if(LF.q.trim()&&!art.querySelector("mark.lfh")) lfApply(false); else lfPos(); }
+addEventListener("keydown",e=>{ const b=document.getElementById("lfBar");
+  if(e.key==="Escape"&&b){ e.preventDefault(); e.stopImmediatePropagation(); lfClose(); return; }
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==="f"||e.key==="F")){ const sh=$("#layer .lsh-b .lesson"), w=sh?"sheet":lfWhere(null); if(!w) return; const save=LF.where; LF.where=w; if(!lfTarget()){ LF.where=save; return; } e.preventDefault(); e.stopImmediatePropagation(); lfOpen(sh); } },true);
+addEventListener("resize",()=>lfPos()); window.visualViewport?.addEventListener("resize",()=>lfPos());
 /* ---------- PLANO (grade de estudos até as provas) ---------- */
 // Tudo calculado na hora a partir do catálogo (datas das provas), das questões (★) e do progresso; só as preferências ficam em settings.plan.
 const PLAN_COV=.85; // tema "coberto" quando 85% das questões foram vistas
@@ -3393,6 +3459,7 @@ document.addEventListener("click", async e=>{
   if(act==="srLesson"){ S.lessonBack="search"; S.lessonId=a.dataset.id; S.lessonHl={i:Number(a.dataset.i), hres:S.srRes?.P.hres||[]}; return go("lesson"); }
   if(act==="settings") return openSettings();
   if(act==="lread"){ lreadSet(!lreadOn()); return; }
+  if(act==="lfind"){ lfOpen(a); return; } if(act==="lfNext"){ lfGo(LF.i+1); return; } if(act==="lfPrev"){ lfGo(LF.i-1); return; } if(act==="lfClose"){ lfClose(); return; }
   if(act==="toggleFocus"){ set().focus = set().focus===false; saveProg(); render(); return openSettings(); }
   if(act==="fs"){ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI:"hide"}); }catch(err){ toast(set().lang==="en"?"Full screen is not available here":"Tela cheia não disponível aqui"); } setTimeout(render,150); return; }
   if(act==="signOut") return signOut();

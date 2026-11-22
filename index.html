@@ -578,6 +578,15 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 .ltoc button:hover{background:var(--pill);color:var(--ink)}
 .ltoc button.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
 .lesson h2,.lesson h3{scroll-margin-top:84px}
+/* temas da disciplina abaixo do índice */
+.ltoc .ltemas{margin-top:10px}
+.ltoc .ltemas summary{pointer-events:auto!important;cursor:pointer}
+.ltoc .ltemas button{display:flex;gap:6px;align-items:baseline;font-size:12.5px;padding:5px 10px}
+.ltoc .ltemas .tn{min-width:1.4em;font-variant-numeric:tabular-nums;opacity:.7}
+.ltoc .ltemas .tr{margin-left:auto;padding-left:4px;opacity:.55;font-size:11px}
+.ltoc .ltemas button.on{cursor:default}
+.ltoc .ltemas button[disabled]{opacity:.45;cursor:default}
+@media (min-width:1150px){ .ltoc .ltemas{border-top:1px solid var(--hair);border-radius:0;padding-top:10px} .ltoc .ltemas summary::after{content:" ▾";font-size:10px} .ltoc .ltemas:not([open]) summary::after{content:" ▸"} }
 /* índice recolhido (gab.tocoff): some a caixa/coluna e o texto ocupa a largura toda */
 html.toc-off .ltoc{display:none}
 html.toc-off .lwrap>.gdrag{display:none!important}
@@ -2367,14 +2376,25 @@ function lpSet(on){ LP_S=!!on; try{ localStorage.setItem("gab.lpane",on?"1":"0")
 WIDE_Q.addEventListener&&WIDE_Q.addEventListener("change",()=>{ if(S.catalog) render(); });
 LP_Q.addEventListener&&LP_Q.addEventListener("change",()=>{ if(S.catalog&&inQSession()) render(); });
 function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=art0||$("#view .lesson"), nav=nav0||$("#ltoc"); if(!art||!nav) return;
-  let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return;
+  let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) hs=[];
+  const temas=lessonTemasHTML(art); if(!hs.length&&!temas) return;
   hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
   const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${i}" class="${h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h.textContent)}</button></li>`).join("");
-  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button><details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`; nav.hidden=false; tocTogLbl();
-  const btns=nav.querySelectorAll("ol button"); let cur=-1;
+  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button>${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`:""}${temas}`; nav.hidden=false; tocTogLbl();
+  nav.querySelector(".ltemas")?.addEventListener("toggle",e=>{ try{ localStorage.setItem("gab.temas",e.target.open?"1":"0"); }catch(_){} });
+  if(!hs.length) return;
+  const btns=nav.querySelectorAll("details:not(.ltemas) ol button"); let cur=-1;
   const mark=i=>{ if(i===cur) return; cur=i; btns.forEach((b,k)=>b.classList.toggle("on",k===i)); };
   S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ const r=h.getBoundingClientRect(); if(r.height&&r.top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
   hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
+// temas da disciplina abaixo do índice (ordem do cronograma), o atual destacado; abre a lição no ponto salvo
+function lessonTemasHTML(art){ if(S.tuB!=null&&S.view==="lesson") return ""; const id=(art.closest("[data-owner]")?.dataset.owner||"").replace(/^L:/,""), cur=S.lessons.get(id); if(!cur) return "";
+  const L=lessonsOf(cur.discipline); if(L.length<2) return ""; const pane=!!art.closest(".qlesson"), read=S.prog.read||{}, en=set().lang==="en";
+  let open=WIDE_L.matches; try{ const v=localStorage.getItem("gab.temas"); if(v!=null) open=v==="1"; }catch(_){}
+  const items=L.map((l,i)=>{ const on=l.id===cur.id, nm=topicName(l.discipline,l.topic)||l.title||"", no=pane&&!on&&!lpQs(l.discipline,l.topic).all.length;
+    const at=on?`aria-current="true"`:pane?`data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}"`:`data-act="lessonGo" data-id="${esc(l.id)}"`;
+    return `<li><button type="button" ${at} class="${on?"on":""}"${no?" disabled":""} title="${esc(l.title||nm)}"><span class="tn">${i+1}</span><span>${esc(nm)}</span>${read[l.id]&&!on?'<span class="tr" aria-label="'+(en?"read":"lida")+'">✓</span>':""}</button></li>`; }).join("");
+  return `<details class="ltemas"${open?" open":""}><summary>${en?"Topics":"Temas"} · ${L.length}</summary><ol>${items}</ol></details>`; }
 function tocTogLbl(){ const b=$("#tocTog"); if(!b) return; const off=document.documentElement.classList.contains("toc-off"); b.hidden=false; b.setAttribute("aria-pressed",String(!off)); b.textContent="☰ "+T2("Índice","Contents"); b.title=off?T2("Mostrar índice","Show contents"):T2("Recolher índice","Hide contents"); }
 /* ---------- PDF (download) ---------- */
 // Página A4 (px CSS); sem biblioteca: HTML → SVG/foreignObject → JPEG → PDF escrito à mão, com índice clicável e marcadores

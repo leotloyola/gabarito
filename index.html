@@ -994,7 +994,7 @@ en:{stats:"Stats",home:"Home",tutor:"Tutor",mapa:"Map",plan:"Plan",study:"Study"
  aiUnavailable:"Claude is not available in this view.",aiDenied:"Claude use was not allowed in this view.",aiRate:"Too many requests. Try again shortly.",aiErr:"That did not work. Try again.",
  min:"min",qs:"questions",step:"Step",days:"d",today:"today",tomorrow:"tomorrow",fMarked:"Marked for review",markedReview:"Marked for review",markedCount:"marked questions",markQuestion:"Mark for review",unmarkQuestion:"Remove from review",annotate:"Annotate",annotationOn:"Finish annotations",pen:"Pen",highlighter:"Highlighter",eraser:"Eraser",undo:"Undo",clearNotes:"Clear annotations",annotations:"Annotations",startMarked:"Review marked",noMarked:"No questions marked in this topic."}
 };
-const L = "ABCDE";
+const L = "ABCDEFGHIJ"; // questões do UWorld chegam a ter 6+ alternativas
 const ICONS = {
  home:'<svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>',
  study:'<svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>',
@@ -2001,7 +2001,7 @@ function questionHTML(q, it, reveal, simMode){
 function askPrompt(id){
   const q=S.qs.get(id); if(!q) return null; const {c}=content(q); if(!c) return null;
   const it=S.session?.items?.find(x=>x.id===id); const perm=it?.perm||c.opts.map((_,i)=>i); const pick=it?.pick;
-  const Ls="ABCDE", pos=o=>Ls[perm.indexOf(o)];
+  const Ls=L, pos=o=>Ls[perm.indexOf(o)];
   const ord=perm.map(o=>({o,t:c.opts[o]}));
   if(it&&it.pick==null) return [ // ainda não respondida: pede ajuda para raciocinar, sem gabarito nem comentário
     "Estou resolvendo esta questão e AINDA NÃO RESPONDI. Não me diga o gabarito nem qual alternativa está certa. Responda em português, de forma direta e técnica: me ajude a raciocinar (o que o enunciado pede, quais conceitos entram, como eliminar alternativas). Comece perguntando qual é a minha dúvida (se eu não a tiver escrito abaixo).",
@@ -2935,8 +2935,8 @@ async function explain(id, btn){
   const prompt = (lang==="en"
    ? "You are a tutor for a Brazilian medical student (also a federal highway police officer with little time) preparing for UFPR exams and USMLE Step 1/2 CK. Be direct, technical, dense, no greetings. Use US guidelines (AHA, ADA, IDSA etc.) when relevant. Reply in ENGLISH using exactly these sections as short bullet lists:\n**Flashcard** (Anki-style question + 1-3 line answer)\n**Don't confuse with** (the commonly confused drug/condition and the key difference)\n**Best next step** (diagnostic/therapeutic, guideline-based)\n**Source** (ONE reference: First Aid, Pathoma, Harrison, Robbins, Costanzo, UWorld/Amboss or Katzung)\n**Recall** (one question answerable in 1 line)\nIf Brazilian and USMLE nomenclature or guidelines differ, flag it in one line.\n\n"
    : "Você é tutor de um estudante de Medicina da UFPR (também policial rodoviário federal, com pouco tempo) que estuda para a prova da UFPR e para o USMLE Step 1/2 CK. Seja direto, técnico, denso, sem saudações. Use guidelines americanos (AHA, ADA, IDSA etc.) quando pertinente. Responda em PORTUGUÊS usando exatamente estas seções, em tópicos curtos:\n**Flashcard** (pergunta estilo Anki + resposta em 1-3 linhas)\n**Não confundir com** (fármaco/condição confundida e a diferença-chave)\n**Best Next Step** (diagnóstico/terapêutico, baseado em guideline)\n**Fonte** (UMA referência: First Aid, Pathoma, Harrison, Robbins, Costanzo, UWorld/Amboss ou Katzung)\n**Recall** (uma pergunta respondível em 1 linha)\nSe nomenclatura ou guideline do Brasil e do USMLE divergirem, sinalize em uma linha.\n\n")
-   + "QUESTION:\n" + plain(c.stem) + "\n\nOPTIONS:\n" + c.opts.map((o,i)=>`${"ABCDE"[i]}) ${plain(o.t)}${i===q.correct?"  [CORRECT]":""}`).join("\n")
-   + (pick!==null && pick!==q.correct ? `\n\nThe student chose ${"ABCDE"[pick]} (wrong). Address that misconception first.` : "")
+   + "QUESTION:\n" + plain(c.stem) + "\n\nOPTIONS:\n" + c.opts.map((o,i)=>`${L[i]}) ${plain(o.t)}${i===q.correct?"  [CORRECT]":""}`).join("\n")
+   + (pick!==null && pick!==q.correct ? `\n\nThe student chose ${L[pick]} (wrong). Address that misconception first.` : "")
    + "\n\nEXISTING EXPLANATION (do not repeat it, go deeper):\n" + plain(c.opts[q.correct].why);
   try{
     const r=await S.sample(prompt,{signal:ctl.signal,onText:({text})=>{ const t=document.getElementById("aiT-"+id); if(t) t.innerHTML=md(text); }});
@@ -2972,7 +2972,7 @@ function openGen(){
    <div id="genOut">${g.items?genPreview(g):""}</div>`, ()=>{
      const ss=$("#gSub"); if(!g.sub && ss) g.sub=ss.value; ss.onchange=e=>g.sub=e.target.value; $("#gFocus").oninput=e=>g.focus=e.target.value; });
 }
-function genPreview(g){ return `<div style="display:flex;flex-direction:column;gap:14px">${g.items.map((q,i)=>`<div class="panel">${questionHTML(q,{perm:[0,1,2,3,4],pick:q.correct},true,false).replace(/<div class="row"><button class="btn" data-act="explain"[\s\S]*$/,"")}</div>`).join("")}
+function genPreview(g){ return `<div style="display:flex;flex-direction:column;gap:14px">${g.items.map((q,i)=>`<div class="panel">${questionHTML(q,{perm:[...Array((q.i18n.pt||q.i18n.en).opts.length).keys()],pick:q.correct},true,false).replace(/<div class="row"><button class="btn" data-act="explain"[\s\S]*$/,"")}</div>`).join("")}
   <div class="row"><button class="btn primary" data-act="genSave">${tr("genSave")} (${g.items.length})</button><button class="btn" data-act="genDiscard">${tr("genDiscard")}</button></div></div>`; }
 async function genRun(){
   const g=S.gen; const d=curDisc(), t=curTopic(); if(!g||!S.sample) return; g.sub=g.sub||t.subs[0].id; g.busy=true; openGen();
@@ -3574,7 +3574,7 @@ document.addEventListener("keydown", e=>{
   if(k==="escape"&&S.tuB!=null&&(S.view==="study"||S.view==="review")){ e.preventDefault(); return tuUp(); }
   if(S.view==="tutor"&&S.tuB!=null){ if(k==="escape"||k==="backspace"){ e.preventDefault(); tuUp(); } else if(k==="arrowright") click('[data-act="tuOpen"][data-nx]'); else if(k==="arrowleft") click('[data-act="tuOpen"][data-pv]'); else if(k==="enter") click('.tbmain [data-act="tutorBlock"],.tbmain [data-act="tutorLesson"]'); return; }
   const s=S.session; if(!s||s.done||!(S.view==="study"||S.view==="review")) return;
-  const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"12345".indexOf(k);
+  const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"123456789".indexOf(k); // F, G, I… são atalhos: da 6ª em diante, pelos números
   if(idx>=0){ const b=document.querySelectorAll("#view .opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
   if(k==="arrowright"||(k==="enter"&&!e.target.closest("button"))||(k===" "&&!e.target.closest("button"))){ if(!click('#view [data-act="next"]') && k!==" ") click('#view [data-act="finish"]'); return; }
   if(k==="arrowleft"){ click('#view [data-act="prev"]'); return; }
@@ -3675,7 +3675,7 @@ function vMapa(v){ const X=cxState();
 
 function openKeys(){ const en=set().lang==="en"; const r=(k,t)=>`<div class="krow"><span>${k.split(" ").map(x=>`<kbd>${x}</kbd>`).join(" ")}</span><span>${t}</span></div>`;
   openSheet(`<div class="row" style="justify-content:space-between"><h2>⌨ ${en?"Keyboard shortcuts":"Atalhos de teclado"}</h2><button class="btn small ghost" data-act="closeSheet">✕</button></div>
-   <div class="kgrp"><div class="eyebrow">${en?"Questions":"Questões"}</div>${r("A–E 1–5",en?"Pick option":"Marcar alternativa")}${r("Enter →",en?"Next (finish on the last)":"Próxima (no fim, finalizar)")}${r("←",en?"Previous":"Anterior")}${r("M",en?"More / less detail":"Mais / menos detalhe")}${r("L",en?"Open topic lesson":"Abrir a lição do tema")}${r("I",en?"Switch question language (PT/EN)":"Trocar idioma da questão (PT/EN)")}${r("F",en?"Full screen":"Tela cheia")}</div>
+   <div class="kgrp"><div class="eyebrow">${en?"Questions":"Questões"}</div>${r("A–E 1–9",en?"Pick option":"Marcar alternativa")}${r("Enter →",en?"Next (finish on the last)":"Próxima (no fim, finalizar)")}${r("←",en?"Previous":"Anterior")}${r("M",en?"More / less detail":"Mais / menos detalhe")}${r("L",en?"Open topic lesson":"Abrir a lição do tema")}${r("I",en?"Switch question language (PT/EN)":"Trocar idioma da questão (PT/EN)")}${r("F",en?"Full screen":"Tela cheia")}</div>
    <div class="kgrp"><div class="eyebrow">Flashcards</div>${r("Espaço Enter",en?"Show answer":"Mostrar resposta")}${r("1 2 3",en?"Missed · Hard · Got it":"Errei · Difícil · Acertei")}</div>
    <div class="kgrp"><div class="eyebrow">${en?"General":"Geral"}</div>${r("Esc",en?"Close / go back":"Fechar / voltar")}${r("?",en?"This list":"Esta lista")}</div>`); }
 

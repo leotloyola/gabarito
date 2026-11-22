@@ -294,10 +294,17 @@ function fixture(){
         document.querySelector('[data-act="lread"]').click(); out.lread=!document.querySelector('#lreadBar [data-act="annToggle"]')&&S.annId==="L:lesson:da:t1"; document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); localStorage.setItem("gab.lread","0"); S.lread=false;
         localStorage.setItem("gab.ann.auto","0"); S.annId=null; go("lesson"); out.off=!!document.querySelector('#view .row [data-act="annToggle"]')&&!document.querySelector(".lwrap .ann-enabled"); localStorage.setItem("gab.ann.auto","1");
         if(LP_Q.matches){ localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; S.setup=null; S.tuB=null; set().topic="t1"; go("study"); document.querySelector('[data-act="startSession"]').click(); const s=S.session; s.items[s.i].pick=0; render(); document.querySelector('#view .qrow-lesson[data-act="lesson"]')?.click(); await W(50);
-          out.split=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled")&&!document.querySelector('#view .qlesson [data-act="annToggle"]');
-          const qb=document.querySelector('#view .qleft [data-act="annToggle"]'); qb?.click(); out.qPrio=S.annId===s.items[s.i].id; await W(30);
-          { const f=document.querySelector("#annHost .ann-float")?.getBoundingClientRect(), L=document.querySelector("#view .qgrid.l3 .qleft")?.getBoundingClientRect(); out.qBar=document.body.classList.contains("ann-lp")&&!!f&&!!L&&f.right<=L.right+1&&f.left>=L.left-1; }
-          document.querySelector('#annHost [data-act="annToggle"]')?.click(); out.back=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled");
+          // 22/11/2026: as duas colunas ficam anotáveis ao mesmo tempo, sem botão ✍; a caneta escolhe a coluna
+          const lsf=document.querySelector("#view .qlesson .ann-surface"), qsf=document.querySelector("#view .qleft .ann-surface");
+          out.split=!!lsf&&!!qsf&&lsf.classList.contains("ann-enabled")&&qsf.classList.contains("ann-enabled")&&!document.querySelector('#view .qlesson [data-act="annToggle"]')&&!document.querySelector('#view .qleft [data-act="annToggle"]');
+          const penAt=(sf,id)=>{ const i=sf.querySelector(".ann-input"), R=i.getBoundingClientRect(), x=R.left+20, y=R.top+Math.min(30,R.height/2); const e=(t,xx)=>i.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,pointerId:id,pointerType:"pen",clientX:xx,clientY:y,pressure:.6,buttons:t==="pointerup"?0:1})); e("pointerdown",x); for(let k=1;k<8;k++) e("pointermove",x+k*12); e("pointerup",x+96); };
+          const qid=s.items[s.i].id, qk=qsf.dataset.key, n0=annotationStrokes(qk).length;
+          penAt(qsf,41); await W(30); out.qPrio=S.annId===qid&&annotationStrokes(qk).length===n0+1;
+          { const f=document.querySelector("#annHost .ann-float")?.getBoundingClientRect(), L=document.querySelector("#view .qgrid.l3 .qleft")?.getBoundingClientRect(); out.qBar=document.body.classList.contains("ann-lp")&&!!f&&!!L&&f.right<=L.right+1&&f.left>=L.left-1&&document.querySelector("#annHost .ann-float").dataset.o===qid; }
+          document.querySelector('#annHost [data-act="annTool"][data-v="marker"]').click(); out.qTool=S.annTool==="marker";
+          penAt(document.querySelector("#view .qlesson .ann-surface"),42); await W(30); out.back=String(S.annId).startsWith("L:")&&S.annTool==="pen"&&document.querySelector("#annHost .ann-float")?.dataset.o===S.annId;
+          penAt(document.querySelector("#view .qleft .ann-surface"),43); await W(30); out.qKeep=S.annId===qid&&S.annTool==="marker";
+          delete S.prog.annotations[qk]; localStorage.removeItem("gab.ann.tool.Q"); localStorage.removeItem("gab.ann.tool.L");
           localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; }
         S.annId=null; delete S.prog.annotations["L:lesson:da:t1"]; localStorage.setItem("gab.ann.auto","0"); go("home"); return out; });
       const bad=Object.entries(r).filter(([k,v])=>!v); if(bad.length) throw new Error("sempre anotável: "+JSON.stringify(r)); });
@@ -470,6 +477,18 @@ function fixture(){
       if(!r.spot||!/Blumberg/.test(r.spot)||!r.vis) throw new Error("trecho errado: "+JSON.stringify(r));
       if(!r.bar) throw new Error("sem barra de progresso");
       if(r.iNext!==2||r.iPrev!==1) throw new Error("deslizar não trocou: "+JSON.stringify(r)); });
+    await step("questão sempre anotável: dedo marca e desliza", async()=>{
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); localStorage.setItem("gab.ann.auto","1"); localStorage.setItem("gab.ann.pen","1"); const keep=LP_S; LP_S=false; S.annId=null;
+        S.session=buildSession("study",[S.qs.get("da-t1-ufpr-0"),S.qs.get("da-t1-ufpr-1"),S.qs.get("da-t1-ufpr-2")],{mode:"study",count:0,order:"seq",shuffleO:false}); S.session.i=0; go("study"); await W(60);
+        const out={}; const sf=[...document.querySelectorAll("#view .ann-surface")]; out.auto=sf.length>0&&sf.every(x=>x.classList.contains("ann-auto")&&x.classList.contains("ann-enabled")); out.noBtn=!document.querySelector('#view [data-act="annToggle"]');
+        const opt=document.querySelector('#view .opts>*'), R=opt.getBoundingClientRect(), x=R.left+R.width/2, y=R.top+R.height/2, top=document.elementFromPoint(x,y); out.cover=!!top?.classList.contains("ann-input");
+        const ev=(t,xx,yy)=>top.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,pointerId:51,pointerType:"touch",clientX:xx,clientY:yy,buttons:t==="pointerup"?0:1}));
+        ev("pointerdown",x,y); ev("pointerup",x,y); await W(40); out.picked=S.session.items[0].pick!=null;
+        const st=document.querySelector("#view .stem"), SR=st.getBoundingClientRect(), y0=SR.top+5, x0=SR.left+SR.width*.8, tg=document.elementFromPoint(x0,y0);
+        const T=(type,xx)=>{ const tc=new Touch({identifier:9,target:tg,clientX:xx,clientY:y0}); tg.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,touches:type==="touchend"?[]:[tc],changedTouches:[tc],targetTouches:type==="touchend"?[]:[tc]})); };
+        document.dispatchEvent(new PointerEvent("pointerdown",{pointerType:"touch"})); T("touchstart",x0); T("touchmove",x0-150); T("touchend",x0-160); await W(40); out.swipe=S.session.i===1;
+        localStorage.setItem("gab.ann.auto","0"); localStorage.removeItem("gab.ann.pen"); ANN.pen=false; LP_S=keep; S.annId=null; S.session=null; go("study"); return out; });
+      const bad=Object.entries(r).filter(([k,v])=>!v); if(bad.length) throw new Error("questão anotável: "+JSON.stringify(r)); });
     await step("botões antes de responder sem gabarito", async()=>{
       const r=await p.evaluate(()=>{ const q=S.qs.get("da-t1-ufpr-1"); S.session=buildSession("study",[q],{mode:"study",count:0,order:"seq",shuffleO:false}); go("study");
         const out={spot:!!document.querySelector('#view .qpre [data-act="lspot"]'),cl:!!document.querySelector('#view .qpre [data-act="askClaude"]'),ge:!!document.querySelector('#view .qpre [data-act="askGemini"]')};

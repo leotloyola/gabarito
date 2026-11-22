@@ -475,6 +475,13 @@ function fixture(){
         b.click(); await W(30); out.back=getComputedStyle(t).display!=="none"; S.lpFull=false; S.session=null; l.html=old; go("study"); return out; });
       await p.setViewportSize(vp);
       if(!r.toc||!r.hid||!r.btn||!r.back) throw new Error(JSON.stringify(r)); });
+    await step("lição ao lado não redesenha ao trocar de questão", async()=>{ if(vp.width<1000) return;
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); lpSet(true); S.lpFull=false; S.lpRead=false;
+        S.session=buildSession("study",[S.qs.get("da-t1-ufpr-0"),S.qs.get("da-t1-ufpr-1")],{mode:"study",count:0,order:"seq"}); go("study"); await W(40);
+        const a=document.querySelector("#view .qlesson"); if(!a) return {skip:true}; a.__marca=1; document.querySelector('#view [data-act="next"]').click(); await W(40);
+        const b=document.querySelector("#view .qlesson"); const out={same:b===a, i:S.session.i, conn:a.isConnected};
+        document.querySelector('[data-act="lpRead"]').click(); await W(30); out.readNew=document.querySelector("#view .qlesson")!==a; S.lpRead=false; S.session=null; go("study"); return out; });
+      if(r.skip) throw new Error("sem painel"); if(!r.same||!r.conn||r.i!==1||!r.readNew) throw new Error(JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

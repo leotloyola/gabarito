@@ -551,7 +551,7 @@ body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-righ
 .lprog{position:sticky;top:0;height:2px;margin-bottom:-2px;z-index:6;pointer-events:none;transform-origin:0 50%;background:var(--accent);opacity:.55;transition:opacity .25s}
 #lprog.off,.lprog.off{opacity:0}
 @keyframes qswIn{from{opacity:.35}to{opacity:1}}
-#view .qgrid.qsw{animation:qswIn .18s ease-out}
+#view .qgrid.qsw,#view .qcol.qsw{animation:qswIn .18s ease-out}
 #view .qpre{margin-top:12px;gap:8px;flex-wrap:wrap}
 body.lread main{padding-top:max(14px,env(safe-area-inset-top,0px))}
 #lreadBar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;display:flex;gap:6px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.12),0 0 0 1px var(--hair);backdrop-filter:blur(8px);opacity:.55;transition:opacity .2s}
@@ -1910,7 +1910,7 @@ function vPlayer(v){
   if(!q){ s.items.splice(s.i,1); s.i=Math.min(s.i,s.items.length-1); return vPlayer(v); }
   const reveal = s.mode==="study" && it.pick!==null;
   if(it.t0==null && it.pick===null) it.t0=now();
-  const pb0=$("#view .qlbody"), keep=pb0?{id:pb0.dataset.l,top:pb0.scrollTop}:null;
+  const pb0=$("#view .qlbody"), keep=pb0?{id:pb0.dataset.l,top:pb0.scrollTop}:null, oldPane=$("#view .qgrid.l3 .qlesson");
   v.innerHTML = `${s.from==="tutor"&&S.tuB!=null?tuCrumb(`${tr("q")} ${s.i+1}/${s.items.length}`):s.from==="cx"?cxCrumb(s):""}
    <div class="qtop"><span class="qnum">${tr("q")} ${s.i+1} ${tr("of")} ${s.items.length}</span>
      <div class="progress"><i style="width:${100*(s.items.filter(x=>x.pick!==null).length)/s.items.length}%"></i></div>
@@ -1924,6 +1924,8 @@ function vPlayer(v){
        : (s.mode==="sim" ? `<button class="btn primary" data-act="finish">${tr("finish")}</button>` : `<button class="btn primary" data-act="finish">${tr("finish")}</button>`)}
    </div><div class="qnav-space" aria-hidden="true"></div>`;
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
+  // lição ao lado igual (mesma lição e mesmo modo): reaproveita o painel antigo, sem redesenhar (não pisca, mantém rolagem/anotação)
+  { const np=$("#view .qgrid.l3 .qlesson"); S.lpKept=false; if(oldPane&&np&&oldPane.dataset.k&&oldPane.dataset.k===np.dataset.k){ np.replaceWith(oldPane); S.lpKept=true; } }
   const qc=$("#view .qgrid.l3>.qcol"); if(qc){ const t=$("#view>.qtop"), n=$("#view>.qnav"); if(t) qc.prepend(t); if(n) qc.append(n); }
   document.body.classList.toggle("lpread",!!(S.lpRead&&$("#view .qgrid.l3"))); document.body.classList.toggle("lpfull",!!(S.lpFull&&$("#view .qgrid.l3"))); lpFullBtn(); lpToc();
   const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
@@ -1932,7 +1934,7 @@ function vPlayer(v){
 // tablet com a lição ao lado: a grade ocupa só a altura visível (do topo da questão até a barra ←/→), e cada coluna rola sozinha
 // botão discreto no canto inferior esquerdo (espelha o da caneta): amplia a lição ao lado para a tela inteira e volta
 // lição em tela cheia (⤢) no tablet deitado/PC: índice lateral como na página, recolhível com » (☰ reabre)
-function lpToc(){ const pane=$("#view .qgrid.l3 .qlesson"); if(!pane||!S.lpFull||!WIDE_L.matches) return; const art=pane.querySelector(".qlbody article.lesson"); if(!art) return;
+function lpToc(){ const pane=$("#view .qgrid.l3 .qlesson"); if(!pane||!S.lpFull||!WIDE_L.matches) return; if(S.lpKept&&pane.querySelector(":scope>.ltoc")) return; const art=pane.querySelector(".qlbody article.lesson"); if(!art) return;
   let nav=pane.querySelector(":scope>.ltoc"); if(!nav){ nav=document.createElement("nav"); nav.className="ltoc"; nav.hidden=true; pane.querySelector(".qlbody").after(nav); }
   lessonToc(art,nav); if(!nav.hidden) pane.classList.add("lp-toc"); }
 function lpFullBtn(){ let b=document.getElementById("lpFullBtn"); if(!(LP_Q.matches&&$("#view .qgrid.l3 .qlesson"))){ b?.remove(); return; }
@@ -1991,7 +1993,7 @@ function questionHTML(q, it, reveal, simMode){
   const pre = !reveal && !simMode ? `<div class="row qpre">${lsnRow?`<button class="btn small ghost" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com o enunciado (sem usar a resposta)","Opens the lesson at the passage closest to the stem (without using the answer)")}">🎯 ${T2("Ver na lição","See in lesson")}</button>`:""}<button class="btn small ghost" data-act="askClaude" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small ghost" data-act="askGemini" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button></div>` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
   const lp=!!lsn&&LP_Q.matches&&lpOn();
-  const pane=lp?`<aside class="qlesson" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`:"";
+  const pane=lp?`<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(S.annId==="L:"+lsn.id?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`:"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
   return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}${pre}</div>${lp?"</div>":""}${pane}</div>`;
 }
@@ -3973,7 +3975,7 @@ function lprogUpd(){ let fixed=false;
     if((!flick&&ax<Math.max(35,innerWidth*.04))||ax<1.1*dy||dt>1000) return;
     if(String(window.getSelection?.()||"").trim()) return;
     const b=$(dx<0?'#view [data-act="next"]':'#view [data-act="prev"]'); if(!b||b.disabled) return;
-    b.click(); requestAnimationFrame(()=>$("#view .qgrid")?.classList.add("qsw")); },{passive:true});
+    b.click(); requestAnimationFrame(()=>($("#view .qgrid.l3>.qcol")||$("#view .qgrid"))?.classList.add("qsw")); },{passive:true});
 })();
 
 async function boot(){

@@ -427,6 +427,14 @@ body.g-drag iframe{pointer-events:none}
 .lesson p{margin:8px 0} .lesson ul,.lesson ol{margin:8px 0;padding-left:20px} .lesson li{margin:4px 0} .lesson b{color:var(--ink)}
 .lesson code{font-family:var(--f-mono,ui-monospace,monospace);font-size:.9em;background:var(--pill);padding:1px 5px;border-radius:6px}
 .lesson .tbl{overflow-x:auto;margin:10px -4px;-webkit-overflow-scrolling:touch}
+/* revisão final por prova: diferença UFPR × diretriz e modo esconder colunas */
+.lesson .dif{display:block;margin-top:3px;font-size:.92em;color:var(--usmle)} .lesson .dif::before{content:"≠ "}
+.rvbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 2px} .rvbar .flabel{font-size:12px;color:var(--muted);margin-right:2px}
+.lesson.review table.stack td:first-child{font-weight:600;color:var(--ink)}
+.lesson td.rvx:not(.peek){color:transparent!important;cursor:pointer;background:repeating-linear-gradient(135deg,var(--line) 0 6px,transparent 6px 14px);border-radius:4px;min-height:2.2em}
+.lesson td.rvx:not(.peek) *{color:transparent!important;background:none!important}
+.lesson td.rvx:not(.peek)::before{color:var(--subtle)!important}
+.lesson td.rvx.peek{background:var(--accent-soft)}
 .lesson table{border-collapse:collapse;width:100%;font-size:calc(13px * var(--fs));line-height:1.45}
 .lesson th{text-align:left;font-weight:600;color:var(--ink);background:var(--surface-2,var(--pill));padding:8px 10px;border-bottom:1px solid var(--line)}
 .lesson td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;min-width:96px}
@@ -2250,7 +2258,16 @@ function endToLesson(id){ const l=S.lessons.get(id); if(!l) return; const s=S.se
     if(id!==s.lid) S.lTop=true;
     history.back(); return; }
   if(!S.lessonBack||S.lessonBack==="lesson"||S.lessonBack==="study"||S.lessonBack==="review") S.lessonBack="study"; go("lesson",true); }
-function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
+// revisão final (tabela de memorização) por prova: lição com review = "P1"/"P2"…; "all" = visão da disciplina inteira (montada no app)
+function reviewsOf(dId){ const d=discById(dId), ex=(d?.exams||[]).map(e=>e.id); const L=[...S.lessons.values()].filter(l=>l.discipline===dId&&l.review&&l.review!=="all").sort((a,b)=>(ex.indexOf(a.review)+99)%99-(ex.indexOf(b.review)+99)%99||a.review.localeCompare(b.review));
+  if(L.length<2){ S.lessons.delete(`lesson:${dId}:revisao-all`); return L; }
+  const id=`lesson:${dId}:revisao-all`, key=L.map(l=>l.id+l.updated).join("|"), old=S.lessons.get(id);
+  if(!old||old.key!==key) S.lessons.set(id,{id, kind:"lesson", discipline:dId, topic:"revisao-all", review:"all", synth:true, key, title:T2("Revisão final · disciplina inteira","Final review · whole course"), minutes:L.reduce((s,l)=>s+(l.minutes||0),0)||null, sources:[...new Set(L.flatMap(l=>l.sources||[]))], updated:L.map(l=>l.updated||"").sort().pop(),
+    html:L.map(l=>`<h2>${esc(l.review)}</h2>`+(l.html||"").replace(/<aside class="call dica">[\s\S]*?<\/aside>/,"").replace(/<(\/?)h2>/g,"<$1h3>")).join("\n")});
+  return [...L,S.lessons.get(id)]; }
+function isReview(l){ return !!l?.review; }
+function reviewExamName(l){ if(l.review==="all") return T2("Todas as provas","All exams"); const e=(discById(l.discipline)?.exams||[]).find(x=>x.id===l.review); return e?nm(e):l.review; }
+function lessonsOf(dId){ const d=discById(dId); const order=(d?.topics||[]).map(t=>t.id); return [...S.lessons.values()].filter(l=>l.discipline===dId&&!l.review).sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic)); }
 function lessonBtn(dId,tId,small){ const l=lessonOf(dId,tId); if(!l) return ""; return `<button class="btn ${small?"small":""}" data-act="lesson" data-id="${esc(l.id)}">📖 ${T2("Ler a lição","Read the lesson")}${l.minutes?` · ${l.minutes} min`:""}</button>`; }
 function lessonReqBtn(dId,tId,small){ if(!dId||!tId||lessonOf(dId,tId)) return ""; return `<button class="btn ${small?"small ":""}ghost" data-act="askLesson" data-d="${esc(dId)}" data-t="${esc(tId)}">✉ ${T2("Pedir lição ao Claude","Request lesson from Claude")}</button>`; }
 /* ---------- PEDIR LIÇÃO (monta o pedido e leva ao chat do projeto Claude; nada é enviado a servidor do app) ---------- */
@@ -2337,11 +2354,13 @@ document.addEventListener("click",e=>{ if(e.target.closest("[data-mpclose]")){ e
   let ext=false; try{ ext=localStorage.getItem("gab.mpext")==="1"; }catch(_){}
   const a=e.target.closest("a[data-mp]"); if(!a||ext||!WIDE_M.matches||e.ctrlKey||e.metaKey||e.shiftKey) return; e.preventDefault(); e.stopPropagation(); mpOpen(a.dataset.mp,a.dataset.n,a.dataset.p,a.href); },true);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.body.classList.contains("mp-on")){ e.preventDefault(); e.stopImmediatePropagation(); mpClose(); } },true);
-function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id);
+function reviewListHTML(d){ const R=reviewsOf(d.id); if(!R.length) return "";
+  return `<div class="eyebrow" style="margin:0 4px 8px">${T2("Revisão final · tabelas para decorar","Final review · tables to memorize")}</div><div class="panel" style="margin-bottom:14px"><div class="list">${R.map(l=>`<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(reviewExamName(l))}${l.minutes?` · ${l.minutes} min`:""} · ${T2("esconda colunas para treinar","hide columns to drill")}</small></span><span class="st no">▦</span></button>`).join("")}</div></div>`; }
+function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id), rvH=reviewListHTML(d);
   const miss=(d.topics||[]).filter(t=>!lessonOf(d.id,t.id));
   const missH=miss.length?`<div class="eyebrow" style="margin:16px 4px 8px">${T2("Temas sem lição","Topics without a lesson")} · ${miss.length}</div><div class="panel"><div class="list">${miss.map(t=>`<button type="button" class="li" data-act="askLesson" data-d="${esc(d.id)}" data-t="${esc(t.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(nm(t))}</b><br><small style="color:var(--subtle)">${esc(t.exam||"")}${t.exam?" · ":""}${T2("toque para pedir a lição ao Claude","tap to request the lesson from Claude")}</small></span><span class="st no">✉</span></button>`).join("")}</div></div>`:"";
-  if(!L.length) return `<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>${missH}`;
-  return `<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina em PDF","Download discipline as PDF")}</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic), cv=lsnCov(l.discipline,l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${cv?` · ${cv.n}/${cv.of} ${T2(cv.hi?"questões ★★+ feitas":"questões feitas",cv.hi?"★★+ questions done":"questions done")}${cv.acc!=null?" · "+lsnAccTxt(cv):""}`:""}</small></span>${cv?lsnCovTag(cv,"st"):`<span class="st no">›</span>`}</button>`; }).join("")}</div></div>${missH}`; }
+  if(!L.length) return `${rvH}<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>${missH}`;
+  return `${rvH}<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina em PDF","Download discipline as PDF")}</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic), cv=lsnCov(l.discipline,l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${cv?` · ${cv.n}/${cv.of} ${T2(cv.hi?"questões ★★+ feitas":"questões feitas",cv.hi?"★★+ questions done":"questions done")}${cv.acc!=null?" · "+lsnAccTxt(cv):""}`:""}</small></span>${cv?lsnCovTag(cv,"st"):`<span class="st no">›</span>`}</button>`; }).join("")}</div></div>${missH}`; }
 // "Ler a lição completa": a prosa abaixo do botão .lfull-sw fica recolhida; estado aberto lembrado por lição
 const LFULL_ON="Recolher a lição completa", LFULL_OFF="Ler a lição completa";
 function lfullSet(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.lfull")||"[]")); }catch(_){ return new Set(); } }
@@ -2352,7 +2371,16 @@ function lfullReveal(el){ if(el&&!el.getClientRects().length){ const b=el.closes
 // "Praticar este tema" no fim da lição: quantidade escolhida (10/20/todas = 0) fica salva em settings.lpN
 function lpCount(){ const n=set().lpN; return n===0||n===20||n===10?n:10; }
 function lpQs(d,t){ const all=[...S.qs.values()].filter(q=>q.discipline===d&&q.topic===t&&stdOk(q)&&!q.off); return {all, open:all.filter(q=>status(q.id)==="no")}; }
-function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; return vStudy(v); }
+// modo treino da revisão: colunas escondidas (índice da coluna; 0 = coluna "Número" das tabelas de 2 colunas), por aparelho
+function rvHide(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.rvh")||"[]")); }catch(_){ return new Set(); } }
+function rvCols(html){ const m=String(html||"").match(/<table class="stack"><thead><tr>([\s\S]*?)<\/tr>/); if(!m) return []; return [...m[1].matchAll(/<th>([\s\S]*?)<\/th>/g)].map(x=>x[1].replace(/<[^>]+>/g,"").trim()); }
+function rvMarkCells(root,H){ root.querySelectorAll("table").forEach(tb=>{ const st=tb.classList.contains("stack"); tb.querySelectorAll("tbody tr").forEach(tr=>[...tr.children].forEach((td,k)=>{ const on=st?k>0&&H.has(k):k===0&&H.has(0); td.classList.toggle("rvx",on); td.classList.remove("peek"); })); }); }
+function rvBarHTML(l){ const cols=rvCols(l.html); if(!cols.length) return ""; const H=rvHide(), hasN=/<table class=""/.test(l.html||"");
+  const c=(k,t)=>`<button type="button" class="chip" data-act="rvCol" data-k="${k}" aria-pressed="${H.has(k)}">${esc(t)}</button>`;
+  return `<div class="rvbar" role="group" aria-label="${T2("Esconder colunas","Hide columns")}"><span class="flabel">🙈 ${T2("Esconder para treinar:","Hide to drill:")}</span>${cols.slice(1).map((t,i)=>c(i+1,t)).join("")}${hasN?c(0,T2("Números","Numbers")):""}${H.size?`<button type="button" class="chip" data-act="rvCol" data-k="none">${T2("Mostrar tudo","Show all")}</button>`:""}</div>`; }
+function rvApply(){ const a=$("#view article.lesson.review"); if(a) rvMarkCells(a,rvHide()); const b=$("#view .rvbar"), l=S.lessons.get(S.lessonId); if(b&&l) b.outerHTML=rvBarHTML(l); }
+function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-all$/.test(S.lessonId)?(reviewsOf(S.lessonId.split(":")[1]),S.lessons.get(S.lessonId)):null); if(!l){ S.view="study"; return vStudy(v); }
+  const rv=isReview(l);
   const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const cvL=lsnCov(l.discipline,l.topic);
   const lq=lpQs(l.discipline,l.topic); const nQ=lq.all.length, nOpen=lq.open.length; const lpN=lpCount();
@@ -2364,15 +2392,15 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId); if(!l){ S.view="study"; 
   const navL=(x,dir)=>x?`<button type="button" class="btn small ${dir>0?"":"ghost"} lnav" data-act="lessonGo" data-id="${esc(x.id)}">${dir<0?"← ":""}<span>${dir<0?T2("Anterior","Previous"):T2("Próxima","Next")}: ${esc(x.title)}</span>${dir>0?" →":""}</button>`:"";
   const practiceTop=nQ?`<button class="btn small primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">▶ ${T2("Praticar","Practice")} · ${lpN&&lpN<nQ?lpN:nQ}</button>`:"";
   v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}${cvL?`<span class="lcovh">${T2(cvL.hi?"★★+ feitas":"Feitas",cvL.hi?"★★+ done":"Done")} ${cvL.n}/${cvL.of} ${lsnCovTag(cvL)}${cvL.acc!=null?`<span class="lacc ${cvL.acc>=70?"ok":cvL.acc<50?"bad":""}">${lsnAccTxt(cvL)}</span>`:""}</span>`:""}</span></div>
-   <div><div class="eyebrow">${esc(nm(d))} · ${T2("Lição","Lesson")}${t?.exam?" · "+esc(t.exam):""}</div><h1>${esc(l.title)}</h1></div>
+   <div><div class="eyebrow">${esc(nm(d))} · ${rv?T2("Revisão final","Final review")+" · "+esc(reviewExamName(l)):T2("Lição","Lesson")+(t?.exam?" · "+esc(t.exam):"")}</div><h1>${esc(l.title)}</h1></div>
    <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Baixa a lição em PDF: escolha o conteúdo, o gabarito, a coluna para anotar e as cores","Download the lesson as PDF: pick content, answer key, notes column and colors")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lfind" title="${T2("Buscar um termo nesta lição (Ctrl+F)","Find a term in this lesson (Ctrl+F)")}">🔍 ${T2("Buscar","Find")}</button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
-   ${topicLinksHTML(t)}
-   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
-   <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
+   ${rv?rvBarHTML(l):topicLinksHTML(t)}
+   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson${rv?" review":""}" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
+   ${rv?"":`<div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
      ${lpChips}
-     ${curMode()==="steps"?"":`<div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div>`}</div>
+     ${curMode()==="steps"?"":`<div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div>`}</div>`}
    ${prevL||nextL?`<div class="lnavrow">${navL(prevL,-1)||"<span></span>"}${navL(nextL,1)}</div>`:""}
-   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; lessonToc(); srLessonHl(); lbtnsWatch(); }
+   ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; if(rv) rvApply(); lessonToc(); srLessonHl(); lbtnsWatch(); }
 /* ---------- MODO LEITURA DA LIÇÃO ---------- */
 function lreadOn(){ return S.view==="lesson"&&!!S.lread; }
 // fora do modo leitura, a mesma pílula aparece quando os botões do topo da lição saem da tela
@@ -2462,6 +2490,7 @@ const PDF_CSS=`.pg,.pdfc{--surface:#FFFFFF;--ink:#18181B;--ink-2:#27272A;--muted
 .pdfc .tbl{overflow:visible} .pdfc table{border-collapse:collapse;width:100%;font-size:12px;line-height:1.45}
 .pdfc th{text-align:left;font-weight:600;color:var(--ink);background:var(--surface-2);padding:8px 10px;border-bottom:1px solid var(--line)}
 .pdfc td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.pdfc .dif{display:block;margin-top:3px;font-size:.92em;color:var(--usmle)} .pdfc .dif::before{content:"≠ "} .pdfc td.rvx,.pdfc td.rvx *{color:transparent!important}
 .pdfc figure.svg{margin:14px 0;text-align:center} .pdfc figure.svg svg{max-width:100%;height:auto;display:block;margin:0 auto;color:var(--ink-2)}
 .pdfc .call{border-radius:14px;padding:12px 14px;font-size:14px;background:var(--pill)}
 .pdfc .call .ct{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
@@ -2488,7 +2517,7 @@ const PDF_CSS=`.pg,.pdfc{--surface:#FFFFFF;--ink:#18181B;--ink-2:#27272A;--muted
 .pdfc a.te span{flex:1} .pdfc a.te b{font-weight:600;color:var(--accent);min-width:28px;text-align:right} .pdfc.pdfc>a.te.sub{padding:4px 0 4px 18px;font-size:12.5px;color:var(--muted)}`;
 
 /* opções da exportação (ficam salvas nos Ajustes sincronizados) */
-const PDF_DEF={what:"lq",exam:"all",pri:1,key:"end",margin:"normal",theme:"app",one:false};
+const PDF_DEF={what:"lq",exam:"all",pri:1,key:"end",margin:"normal",theme:"app",one:false,rvh:"show"};
 function pdfOpt(){ return Object.assign({},PDF_DEF,set().pdfOpt||{}); }
 function pdfThemeKey(o){ let k=o.theme==="app"?lessonBg():o.theme;
   if(k==="off"){ const r=document.documentElement.getAttribute("data-theme"); k=r==="dark"||(r!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"; }
@@ -2607,7 +2636,12 @@ function lessonBody(l,o){ const p=lessonParts(l); if(!p.split) return p.f; retur
 const pdfHasQ=o=>o.what==="lq"||o.what==="q"||o.what==="err";
 const pdfQOnly=o=>o.what==="q"||o.what==="err";
 const pdfSuf=o=>({vesp:T2("Na véspera","Night before"),q:T2("Questões","Questions"),err:T2("Erradas","Missed")})[o.what]||"";
+// revisão: colunas escondidas no app saem em branco no PDF (para preencher com a caneta), se escolhido
+function rvPdfHtml(l,o){ if(o.rvh!=="hide") return l.html||""; const H=rvHide(); if(!H.size) return l.html||""; const b=document.createElement("div"); b.innerHTML=l.html||""; rvMarkCells(b,H); return b.innerHTML; }
+async function reviewPdf(l,o){ const d=discById(l.discipline);
+  return pdfFromHtml(`${d?.period!=null?d.period+"º · ":""}${nm(d)} · ${l.title}`, `<h1>${esc(l.title)}</h1>${rvPdfHtml(l,o)}`, {o, name:fsafe([nm(d), l.review==="all"?"":l.review, T2("Revisão final","Final review")].filter(Boolean).join(" - ")), toc:":scope>h2, :scope>h3"}); }
 async function lessonPdf(l, withQ=true, o=pdfOpt()){
+  if(isReview(l)) return reviewPdf(l,o);
   const d=discById(l.discipline), t=(d?.topics||[]).find(x=>x.id===l.topic);
   let html=`<h1>${esc(l.title)}</h1>${pdfQOnly(o)?"":lessonBody(l,o)}`;
   if(withQ&&pdfHasQ(o)){ const qs=pdfQsF(l.discipline,l.topic,o); if(qs.length) html+=await pqSection([{qs}],o); else if(pdfQOnly(o)) html+=`<p>${T2("Nenhuma questão com esses filtros.","No questions match these filters.")}</p>`; }
@@ -2641,19 +2675,22 @@ async function pqHtml(groups, inline=false){
 async function pqSection(groups,o){ const inl=o.key==="inline", x=await pqHtml(groups,inl);
   return `<h2 class="pq-br pq-sec">${o.what==="err"?T2("Questões que errei","Missed questions"):T2("Questões","Questions")}</h2>${x.q}${inl?"":`<h2 class="pq-br pq-sec">${T2("Gabarito comentado","Answer key")}</h2>${x.g}`}`; }
 // disciplina: um PDF por tema (+ "99 Questões" por último) ou tudo num PDF só; respeita prova, prioridade e conteúdo
+// revisões que entram no PDF da disciplina: a da prova escolhida; em "Todas", cada prova (sem a visão montada)
+function pdfReviews(dId,o){ return reviewsOf(dId).filter(l=>l.review!=="all"&&(o.exam==="all"||l.review===o.exam)); }
 async function discPdfFiles(dId, prog, o=pdfOpt()){
   const d=discById(dId); if(!d) return [];
   const tops=pdfTopics(d,o), tid=new Set(tops.map(t=>t.id)), ls=lessonsOf(dId).filter(l=>tid.has(l.topic));
-  const withL=!pdfQOnly(o), ex=o.exam!=="all"?o.exam:"", files=[];
+  const withL=!pdfQOnly(o), ex=o.exam!=="all"?o.exam:"", files=[], rvs=withL?pdfReviews(dId,o):[];
   const groups=pdfHasQ(o)?tops.map(t=>({title:nm(t),qs:pdfQsF(d.id,t.id,o)})).filter(x=>x.qs.length):[];
   const qT=o.what==="err"?T2("99 Erradas","99 Missed"):T2("99 Questões","99 Questions"), head=`${d.period!=null?d.period+"º · ":""}${nm(d)}${ex?" · "+ex:""}`;
   if(o.one){ prog&&prog(1,1); if(!(withL&&ls.length)&&!groups.length) return [];
-    let html=withL?ls.map(l=>`<h1 class="pq-br">${esc(l.title)}</h1>${lessonBody(l,o)}`).join(""):`<h1>${esc(nm(d))}</h1>`;
+    let html=withL?ls.map(l=>`<h1 class="pq-br">${esc(l.title)}</h1>${lessonBody(l,o)}`).join("")+rvs.map(l=>`<h1 class="pq-br">${esc(l.title)}</h1>${rvPdfHtml(l,o)}`).join(""):`<h1>${esc(nm(d))}</h1>`;
     if(groups.length) html+=await pqSection(groups,o);
     const name=fsafe([nm(d),ex,withL?(o.what==="vesp"?T2("Na véspera","Night before"):T2("Completo","Complete")):qT.replace(/^99 /,"")].filter(Boolean).join(" - "));
     return [await pdfFromHtml(head, html, {o, name, toc:":scope>h1.pq-br, :scope>h2.pq-sec, :scope>h2.pq-grp", qual:.86})]; }
-  const N=(withL?ls.length:0)+(groups.length?1:0);
+  const N=(withL?ls.length:0)+rvs.length+(groups.length?1:0);
   if(withL) for(let i=0;i<ls.length;i++){ prog&&prog(i+1,N); files.push(await lessonPdf(ls[i],false,o)); }
+  for(let i=0;i<rvs.length;i++){ prog&&prog(ls.length+i+1,N); files.push(await reviewPdf(rvs[i],o)); }
   if(groups.length){ prog&&prog(N,N); files.push(await pdfFromHtml(head+" · "+qT.replace(/^99 /,""), `<h1>${o.what==="err"?T2("Erradas","Missed"):T2("Questões","Questions")} · ${esc(nm(d))}</h1>`+await pqSection(groups,o), {o, name:fsafe([nm(d),ex,qT].filter(Boolean).join(" - ")), toc:":scope>h2.pq-sec, :scope>h2.pq-grp", qual:.84})); }
   return files;
 }
@@ -2665,17 +2702,20 @@ function pdfOptSheet(){
   const f=(t,b)=>`<div class="field"><span class="flabel">${t}</span>${b}</div>`;
   // resumo: quantas questões e quantos arquivos
   let nq=0, nf=1, hint="";
-  if(disc){ const tops=pdfTopics(d,o), tid=new Set(tops.map(t=>t.id)), nl=lessonsOf(d.id).filter(x=>tid.has(x.topic)).length;
+  const rvL=!disc&&isReview(l), rvAny=rvL||(disc&&!pdfQOnly(o)&&pdfReviews(d.id,o).length);
+  if(disc){ const tops=pdfTopics(d,o), tid=new Set(tops.map(t=>t.id)), nl=lessonsOf(d.id).filter(x=>tid.has(x.topic)).length+(pdfQOnly(o)?0:pdfReviews(d.id,o).length);
     if(pdfHasQ(o)) nq=tops.reduce((s,t)=>s+pdfQsF(d.id,t.id,o).length,0); nf=o.one?1:(pdfQOnly(o)?0:nl)+(nq?1:0); }
+  else if(rvL){}
   else { if(pdfHasQ(o)) nq=pdfQsF(l.discipline,l.topic,o).length; if(o.what==="vesp"&&!lessonParts(l).split) hint=T2("Esta lição não tem bloco “Na véspera”: sai a lição inteira.","This lesson has no night-before block: the full lesson is used."); }
   const sum=[pdfHasQ(o)?`${nq} ${T2(nq===1?"questão":"questões",nq===1?"question":"questions")}`:"", `${nf} ${nf===1?T2("arquivo","file"):T2("arquivos","files")}`].filter(Boolean).join(" · ");
-  const nameEx=disc?(o.one?"":fsafe([nm(d),o.exam!=="all"?o.exam:""].filter(Boolean).join(" - "))+" - …"):pdfName(d,(d?.topics||[]).find(x=>x.id===l.topic),pdfSuf(o));
+  const nameEx=disc?(o.one?"":fsafe([nm(d),o.exam!=="all"?o.exam:""].filter(Boolean).join(" - "))+" - …"):rvL?fsafe([nm(d),l.review==="all"?"":l.review,T2("Revisão final","Final review")].filter(Boolean).join(" - ")):pdfName(d,(d?.topics||[]).find(x=>x.id===l.topic),pdfSuf(o));
   const cur=$("#layer .sheet.pdfopt"), put=h=>{ if(cur){ const y=cur.scrollTop; cur.querySelector(".sheet-in").innerHTML=h; cur.scrollTop=y; } else openSheet(h,null,"pdfopt"); };   // trocar opção não rola a tela para o topo
   put(`<div class="row" style="justify-content:space-between"><b>${disc?T2("Baixar disciplina em PDF","Download discipline as PDF"):T2("Exportar PDF","Export PDF")}</b><button class="btn small ghost" data-act="closeSheet">✕</button></div>
    <p style="color:var(--muted);font-size:13px;margin:4px 0 12px">${esc(disc?nm(d):l.title)}</p>
-   ${f(T2("Conteúdo","Content"),ch("what",[["vesp",T2("Na véspera","Night before")],["full",T2("Lição completa","Full lesson")],["lq",disc?T2("Lições + questões","Lessons + questions"):T2("Lição + questões","Lesson + questions")],["q",T2("Só questões","Questions only")],["err",T2("Só as que errei","Only missed")]]))}
+   ${rvAny?f(T2("Revisão final: colunas","Final review: columns"),ch("rvh",[["show",T2("Todas preenchidas","All filled in")],["hide",T2("Escondidas no app saem em branco","Hidden in app print blank")]])):""}
+   ${rvL?"":f(T2("Conteúdo","Content"),ch("what",[["vesp",T2("Na véspera","Night before")],["full",T2("Lição completa","Full lesson")],["lq",disc?T2("Lições + questões","Lessons + questions"):T2("Lição + questões","Lesson + questions")],["q",T2("Só questões","Questions only")],["err",T2("Só as que errei","Only missed")]]))}
    ${disc?f(T2("Prova","Exam"),ch("exam",[["all",T2("Todas","All")],["P1","P1"],["P2","P2"]])):""}
-   ${pdfHasQ(o)?f(T2("Prioridade das questões","Question priority"),ch("pri",[[1,T2("Todas","All")],[2,"★★ "+T2("e","and")+" ★★★"],[3,T2("Só","Only")+" ★★★"]]))+f(T2("Gabarito","Answer key"),ch("key",[["end",T2("Separado, no fim","Separate, at the end")],["inline",T2("Logo após cada questão","Right after each question")]])):""}
+   ${pdfHasQ(o)&&!rvL?f(T2("Prioridade das questões","Question priority"),ch("pri",[[1,T2("Todas","All")],[2,"★★ "+T2("e","and")+" ★★★"],[3,T2("Só","Only")+" ★★★"]]))+f(T2("Gabarito","Answer key"),ch("key",[["end",T2("Separado, no fim","Separate, at the end")],["inline",T2("Logo após cada questão","Right after each question")]])):""}
    ${f(T2("Coluna para anotar","Notes column"),ch("margin",[["none",T2("Sem coluna","None")],["normal","Normal"],["wide",T2("Larga (S Pen)","Wide (S Pen)")]]))}
    ${f(T2("Cores do PDF","PDF colors"),ch("theme",[["app",T2("Igual à lição","Same as lesson")],["sepia",T2("Sépia","Sepia")],["light",T2("Claro","Light")],["dark",T2("Escuro","Dark")]]))}
    ${disc?f(T2("Arquivos","Files"),ch("one",[["false",T2("Um PDF por tema","One PDF per topic")],["true",T2("Tudo num PDF só","All in one PDF")]])):""}
@@ -3040,7 +3080,7 @@ function buildIndex(){
   }
   const ls=[]; const dp=new DOMParser();
   for(const l of S.lessons.values()){
-    if(!l.html) continue;
+    if(!l.html||l.synth) continue;
     const root=dp.parseFromString("<div>"+l.html+"</div>","text/html").body.firstChild; let cur={title:l.title,i:-1,text:""}; const secs=[cur]; let h=0;
     for(const el of root.children){ if(el.tagName==="H2") secs.push(cur={title:el.textContent.trim(),i:h++,text:""}); cur.text+=" "+el.textContent; }
     const p=discById(l.discipline)?.period??null;
@@ -3444,6 +3484,7 @@ document.addEventListener("click", async e=>{
      return; }
   const sl=e.target.closest("[data-setl]"); if(sl){ set().lang=sl.dataset.setl; saveProg(); render(); openSettings(); return; }
   const stt=e.target.closest("[data-sett]"); if(stt){ set().theme=stt.dataset.sett; applyTheme(); saveProg(); openSettings(); return; }
+  const rvc=e.target.closest("article.lesson.review td.rvx"); if(rvc&&!e.target.closest("a")){ rvc.classList.toggle("peek"); return; }
   const pdo=e.target.closest("[data-pdfo]"); if(pdo){ const k=pdo.dataset.pdfo; let v=pdo.dataset.v; if(k==="pri") v=Number(v); if(k==="one") v=v==="true"; set().pdfOpt=Object.assign(pdfOpt(),{[k]:v}); saveProg(); pdfOptSheet(); return; }
   const sll=e.target.closest("[data-setll]"); if(sll){ set().lessonLight=sll.dataset.setll; applyLessonLight(); saveProg(); openSettings(); return; }
   const sf=e.target.closest("[data-setf]"); if(sf){ set().fs=Number(sf.dataset.setf); applyTheme(); saveProg(); openSettings(); return; }
@@ -3508,6 +3549,7 @@ document.addEventListener("click", async e=>{
     if(S.view==="study"||S.view==="review") S.qY=Math.round(window.scrollY||0);
     S.lessonBack=S.view==="lesson"?S.lessonBack:S.view; S.lessonId=a.dataset.id; return go("lesson"); }
   if(act==="lessonPdf"){ const l=S.lessons.get(S.lessonId); if(!l) return; S.pdfMode={kind:"lesson",id:l.id}; return pdfOptSheet(); }
+  if(act==="rvCol"){ const k=a.dataset.k, H=rvHide(); if(k==="none") H.clear(); else { const n=Number(k); H.has(n)?H.delete(n):H.add(n); } try{ localStorage.setItem("gab.rvh",JSON.stringify([...H])); }catch(_){} return rvApply(); }
   if(act==="discPdf"){ const d=curDisc(); if(!d) return; S.pdfMode={kind:"disc",id:d.id}; return pdfOptSheet(); }
   if(act==="pdfGo"){ return pdfGo(a); }
   if(act==="pdfBack"){ return pdfOptSheet(); }

@@ -485,6 +485,23 @@ function fixture(){
         const b=document.querySelector("#view .qlesson"); const out={same:b===a, i:S.session.i, conn:a.isConnected};
         document.querySelector('[data-act="lpRead"]').click(); await W(30); out.readNew=document.querySelector("#view .qlesson")!==a; S.lpRead=false; S.session=null; go("study"); return out; });
       if(r.skip) throw new Error("sem painel"); if(!r.same||!r.conn||r.i!==1||!r.readNew) throw new Error(JSON.stringify(r)); });
+    await step("buscar na lição", async()=>{
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const id="lesson:da:t3";
+        S.lessons.set(id,{id,kind:"lesson",discipline:"da",topic:"t3",title:"Busca",html:'<aside class="call vespera"><p>Resumo: <b>bloqueador</b> neuromuscular.</p></aside><button type="button" class="lfull-sw" aria-expanded="false">Ler a lição completa</button><h2>1. A</h2><p>A intubação orotraqueal exige <i>relaxante</i> muscular.</p><h2>2. B</h2><p>Hipotensão arterial.</p><h2>3. C</h2><p>Sem termo.</p>'});
+        try{ localStorage.removeItem("gab.lfull"); }catch(_){} S.lread=false; S.lessonId=id; go("lesson"); const out={};
+        out.btn=!!document.querySelector('#lbtns [data-act="lfind"]'); document.querySelector('#lbtns [data-act="lfind"]').click(); const inp=document.querySelector("#lfBar input"); out.bar=!!inp;
+        const q=async t=>{ inp.value=t; inp.dispatchEvent(new Event("input")); await W(250); return document.querySelector("#lfBar .lfc").textContent; };
+        out.acento=await q("hipotensao"); out.abriu=document.querySelector(".lesson .lfull-sw").classList.contains("open");
+        out.sin=await q("bnm"); // sinônimo: bloqueador neuromuscular + relaxante muscular (atravessa <b>/<i>)
+        out.cross=document.querySelectorAll(".lesson mark.lfh").length; out.txt=document.querySelector(".lesson").textContent.includes("relaxante muscular");
+        inp.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true})); out.cur=LF.i;
+        out.nada=await q("xyzw"); go("lesson"); out.reap=document.querySelectorAll(".lesson mark.lfh").length===0&&!!document.getElementById("lfBar");
+        await q("hipotensao"); go("lesson"); out.reap2=document.querySelectorAll(".lesson mark.lfh").length;
+        document.querySelector('#lfBar [data-act="lfClose"]').click(); out.closed=!document.getElementById("lfBar")&&!document.querySelector("mark.lfh"); out.texto=document.querySelector(".lesson").innerHTML.includes("<b>bloqueador</b> neuromuscular");
+        go("home"); out.gone=!document.getElementById("lfBar"); S.lessons.delete(id); return out; });
+      if(!r.btn||!r.bar) throw new Error("botão/barra "+JSON.stringify(r)); if(r.acento!=="1/1"||!r.abriu) throw new Error("acento/recolhida "+JSON.stringify(r));
+      if(!/^1\/2/.test(r.sin)||r.cross<3||!r.txt||r.cur!==1) throw new Error("sinônimos "+JSON.stringify(r)); if(r.nada!=="nada") throw new Error("nada "+r.nada);
+      if(!r.reap||r.reap2!==1||!r.closed||!r.texto||!r.gone) throw new Error("ciclo "+JSON.stringify(r)); });
     await step("alternativas F e G têm letra", async()=>{
       const r=await p.evaluate(()=>{ const L7={stem:"Seis+",opts:[0,1,2,3,4,5,6].map(j=>({t:"Op "+j,why:"x"}))}; const q={id:"u7",discipline:"da",topic:"t1",standard:"usmle",origin:"real",correct:5,pri:1,i18n:{en:L7}};
         const h=questionHTML(q,{perm:[0,1,2,3,4,5,6],pick:5},true,false); return {f:/class="letter">F</.test(h),g:/class="letter">G</.test(h),und:/undefined/.test(h)}; });

@@ -279,7 +279,9 @@ function fixture(){
         localStorage.setItem("gab.ann.auto","0"); S.annId=null; go("lesson"); out.off=!!document.querySelector('#view .row [data-act="annToggle"]')&&!document.querySelector(".lwrap .ann-enabled"); localStorage.setItem("gab.ann.auto","1");
         if(LP_Q.matches){ localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; S.setup=null; S.tuB=null; set().topic="t1"; go("study"); document.querySelector('[data-act="startSession"]').click(); const s=S.session; s.items[s.i].pick=0; render(); document.querySelector('#view .qrow-lesson[data-act="lesson"]')?.click(); await W(50);
           out.split=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled")&&!document.querySelector('#view .qlesson [data-act="annToggle"]');
-          const qb=document.querySelector('#view .qleft [data-act="annToggle"]'); qb?.click(); out.qPrio=S.annId===s.items[s.i].id; document.querySelector('#annHost [data-act="annToggle"]')?.click(); out.back=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled");
+          const qb=document.querySelector('#view .qleft [data-act="annToggle"]'); qb?.click(); out.qPrio=S.annId===s.items[s.i].id; await W(30);
+          { const f=document.querySelector("#annHost .ann-float")?.getBoundingClientRect(), L=document.querySelector("#view .qgrid.l3 .qleft")?.getBoundingClientRect(); out.qBar=document.body.classList.contains("ann-lp")&&!!f&&!!L&&f.right<=L.right+1&&f.left>=L.left-1; }
+          document.querySelector('#annHost [data-act="annToggle"]')?.click(); out.back=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled");
           localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; }
         S.annId=null; delete S.prog.annotations["L:lesson:da:t1"]; localStorage.setItem("gab.ann.auto","0"); go("home"); return out; });
       const bad=Object.entries(r).filter(([k,v])=>!v); if(bad.length) throw new Error("sempre anotável: "+JSON.stringify(r)); });

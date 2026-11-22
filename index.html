@@ -829,7 +829,7 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 .ann-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.qlh .ann-toolbar{margin:0;flex-wrap:nowrap}.ann-surface{position:relative;display:flow-root;isolation:isolate}.ann-content{position:relative;z-index:0}
 .ann-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.ann-svg.mk{z-index:3;mix-blend-mode:multiply}.ann-svg.ink{z-index:4}
 .ann-input{position:absolute;inset:0;z-index:5;display:none;touch-action:none;cursor:crosshair}.ann-enabled .ann-input{display:block}.ann-enabled{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.ann-enabled{outline:2px dashed color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:4px;border-radius:6px}
+.ann-enabled{outline:2px dashed color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:4px;border-radius:6px}.ann-auto.ann-enabled{outline:none}
 .ann-float{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;justify-content:flex-start;width:max-content;max-width:calc(100vw - 24px);overflow-x:auto;scrollbar-width:none;padding:8px 10px;border-radius:18px;background:var(--surface);box-shadow:0 6px 28px rgba(0,0,0,.18),0 0 0 1px var(--line)}
 .ann-float .btn{font-size:12.5px;padding:7px 10px;min-height:38px;white-space:nowrap;flex:none}.ann-float .ann-ic{width:22px;height:22px;display:block}.ann-float.mini{padding:6px}.ann-float.mini .btn{font-size:15px;gap:6px}.ann-float [data-act="annMin"] .ann-ic{width:24px;height:24px}.ann-sep{width:1px;align-self:stretch;background:var(--line);margin:2px 2px}
 .ann-sizes{display:flex;gap:4px}.ann-size{width:34px;height:34px;padding:0;border-radius:50%;border:0;background:var(--surface-2);display:flex;align-items:center;justify-content:center;cursor:pointer}.ann-size i{display:block;width:var(--d);height:var(--d);border-radius:50%;background:var(--ink)}.ann-size[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
@@ -1198,23 +1198,31 @@ function annSizeIx(tool){ const i=+annPref("size."+tool,"1"); return i>=0&&i<3?i
 function annSize(tool){ return ANN_SIZES[tool][annSizeIx(tool)]; }
 function annKeys(owner){ return Object.keys(S.prog.annotations||{}).filter(k=>k===owner||k.startsWith(owner+"#")); }
 function annCount(owner){ return annKeys(owner).reduce((n,k)=>n+annotationStrokes(k).length,0); }
+/* Lição com anotação sempre ligada (22/11/2026): em aparelho com caneta (tablet ou S Pen já vista), a lição já abre anotável.
+   Só a caneta escreve; dedo e mouse rolam, tocam links e passam a questão. No PC (sem caneta) segue o botão ✍ Anotar.
+   Anotar a questão (✍ na questão) tem prioridade; ao concluir, volta para a lição. Desliga em Ajustes (por aparelho). */
+const ANN_TAB_Q=matchMedia("(pointer:coarse) and (min-width:600px)");
+function annAutoOn(){ if(annPref("auto","1")==="0") return false; if(ANN.pen||ANN_TAB_Q.matches) return true; return annPref("pen","0")==="1"; }
+function annIsAuto(owner){ return String(owner||"").startsWith("L:")&&annAutoOn(); }
+function annAuto(owner){ if(annIsAuto(owner)&&(!S.annId||String(S.annId).startsWith("L:"))){ S.annId=owner; S.annTool=S.annTool||"pen"; } }
 function annBar(owner,mark){
+  annAuto(owner); const auto=annIsAuto(owner)&&S.annId===owner;
   const active=S.annId===owner, o=esc(owner), tool=S.annTool||"pen", count=annCount(owner);
   let h='<div class="ann-toolbar" data-ann-bar="'+o+'" data-mark="'+(mark?1:0)+'">';
   if(mark){ const m=isMarked(owner); h+='<button type="button" class="btn small '+(m?"primary":"")+'" data-act="markToggle" data-q="'+o+'" aria-pressed="'+m+'" title="'+(m?tr("unmarkQuestion"):tr("markQuestion"))+'">'+(m?"🔖 "+T2("Marcada","Marked"):"☆ "+T2("Marcar","Mark"))+'</button>'; }
-  h+='<button type="button" class="btn small '+(active?"primary":"")+'" data-act="annToggle" data-q="'+o+'" aria-pressed="'+active+'">✍ '+(active?tr("annotationOn"):tr("annotate"))+(count?" · "+count:"")+'</button>';
+  if(!auto) h+='<button type="button" class="btn small '+(active?"primary":"")+'" data-act="annToggle" data-q="'+o+'" aria-pressed="'+active+'">✍ '+(active?tr("annotationOn"):tr("annotate"))+(count?" · "+count:"")+'</button>';
   if(active){
     const tb=(t,ic,l)=>'<button type="button" class="btn small '+(tool===t?"primary":"")+'" data-act="annTool" data-v="'+t+'" aria-pressed="'+(tool===t)+'" title="'+l+'">'+ic+' <span class="ann-lbl">'+l+'</span></button>';
     const pal=(tool==="pen"||tool==="marker")?'<span class="ann-palette" role="group" aria-label="'+T2("Cor","Color")+'">'+ANN_COLORS[tool].map(c=>'<button type="button" class="ann-color" data-act="annColor" data-tool="'+tool+'" data-v="'+c+'" style="--swatch:'+c+'" aria-label="'+T2("Cor","Color")+' '+c+'" aria-pressed="'+(annColor(tool)===c)+'"></button>').join("")+'</span>':"";
     const sz='<span class="ann-sizes" role="group" aria-label="'+T2("Espessura","Thickness")+'">'+[0,1,2].map(i=>'<button type="button" class="ann-size" data-act="annSize" data-tool="'+tool+'" data-v="'+i+'" aria-pressed="'+(annSizeIx(tool)===i)+'" aria-label="'+T2("Espessura","Thickness")+' '+(i+1)+'"><i style="--d:'+[4,8,13][i]+'px"></i></button>').join("")+'</span>';
     const mini=annPref("min","0")==="1", cur={pen:"✒️",marker:"🖍",eraser:"🧽"}[tool]||"✒️";
     if(mini) h+='<div class="ann-float mini" role="toolbar" aria-label="'+tr("annotations")+'"><button type="button" class="btn small" data-act="annMin" data-v="0" title="'+T2("Mostrar ferramentas","Show tools")+'">'+cur+' <svg class="ann-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
-    else h+='<div class="ann-float" role="toolbar" aria-label="'+tr("annotations")+'"><button type="button" class="btn small primary" data-act="annToggle" data-q="'+o+'" title="'+T2("Concluir anotações","Finish annotating")+'" aria-label="'+T2("Concluir anotações","Finish annotating")+'">✓</button>'+tb("pen","✒️",tr("pen"))+tb("marker","🖍",tr("highlighter"))+tb("eraser","🧽",tr("eraser"))+'<span class="ann-sep"></span>'+pal+sz+'<span class="ann-sep"></span><button type="button" class="btn small" data-act="annUndo" data-q="'+o+'" '+(count||ANN.hist.length?"":"disabled")+' title="'+tr("undo")+'" aria-label="'+tr("undo")+'"><svg class="ann-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button type="button" class="btn small" data-act="annClear" data-q="'+o+'" '+(count?"":"disabled")+' title="'+tr("clearNotes")+'">🗑</button>'+(mark?'<button type="button" class="btn small'+(annPref("keep","0")==="1"?" primary":"")+'" data-act="annKeep" aria-pressed="'+(annPref("keep","0")==="1")+'" title="'+T2("Manter Anotar ao passar de questão","Keep Annotate on when changing question")+'">📌</button>':"")+'<button type="button" class="btn small ghost" data-act="annMin" data-v="1" title="'+T2("Minimizar","Minimize")+'" aria-label="'+T2("Minimizar","Minimize")+'"><svg class="ann-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
+    else h+='<div class="ann-float" role="toolbar" aria-label="'+tr("annotations")+'">'+(auto?'':'<button type="button" class="btn small primary" data-act="annToggle" data-q="'+o+'" title="'+T2("Concluir anotações","Finish annotating")+'" aria-label="'+T2("Concluir anotações","Finish annotating")+'">✓</button>')+tb("pen","✒️",tr("pen"))+tb("marker","🖍",tr("highlighter"))+tb("eraser","🧽",tr("eraser"))+'<span class="ann-sep"></span>'+pal+sz+'<span class="ann-sep"></span><button type="button" class="btn small" data-act="annUndo" data-q="'+o+'" '+(count||ANN.hist.length?"":"disabled")+' title="'+tr("undo")+'" aria-label="'+tr("undo")+'"><svg class="ann-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button type="button" class="btn small" data-act="annClear" data-q="'+o+'" '+(count?"":"disabled")+' title="'+tr("clearNotes")+'">🗑</button>'+(mark?'<button type="button" class="btn small'+(annPref("keep","0")==="1"?" primary":"")+'" data-act="annKeep" aria-pressed="'+(annPref("keep","0")==="1")+'" title="'+T2("Manter Anotar ao passar de questão","Keep Annotate on when changing question")+'">📌</button>':"")+'<button type="button" class="btn small ghost" data-act="annMin" data-v="1" title="'+T2("Minimizar","Minimize")+'" aria-label="'+T2("Minimizar","Minimize")+'"><svg class="ann-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
   }
   return h+'</div>';
 }
 function annotationControls(q){ return S.qs.has(q.id)?annBar(q.id,true):""; }
-function annSurfaceHTML(key,owner,html){ return '<div class="ann-surface'+(S.annId===owner?" ann-enabled":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
+function annSurfaceHTML(key,owner,html){ annAuto(owner); return '<div class="ann-surface'+(S.annId===owner?" ann-enabled":"")+(annIsAuto(owner)?" ann-auto":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
 function annotationSurface(q,html,part){ return S.qs.has(q.id)?annSurfaceHTML(part?q.id+"#"+part:q.id,q.id,html):html; }
 const ANN={observer:null,observed:new WeakSet(),stroke:null,touch:null,hist:[],seq:0,pen:false};
 function annBlocks(surface){ let el=surface.querySelector(".ann-content"); while(el&&el.children.length===1&&/^(DIV|ARTICLE|SECTION)$/.test(el.firstElementChild.tagName)) el=el.firstElementChild; return el?[...el.children]:[]; }
@@ -1350,7 +1358,7 @@ function annLpPos(){ lpFullPos(); const pane=document.querySelector("#view .qgri
 function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
-  document.querySelectorAll("[data-ann-surface]").forEach(s=>s.classList.toggle("ann-enabled",s.dataset.owner===S.annId));
+  document.querySelectorAll("[data-ann-surface]").forEach(s=>{ annAuto(s.dataset.owner); s.classList.toggle("ann-auto",annIsAuto(s.dataset.owner)); s.classList.toggle("ann-enabled",s.dataset.owner===S.annId); });
   annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer")); lreadBar();
 }
 function annPt(e,g){ return [e.clientX-g.sr.left,e.clientY-g.sr.top,e.pointerType==="pen"||e.pressure>0&&e.pressure!==.5?Math.max(.05,Math.min(1,e.pressure||.5)):.5]; }
@@ -1363,9 +1371,20 @@ function annErase(A,p,q){
   if(hit) annDraw(A.surface,A.keep);
 }
 function annScroller(el){ for(let n=el.parentElement;n&&n!==document.body;n=n.parentElement){ const o=getComputedStyle(n).overflowY; if((o==="auto"||o==="scroll")&&n.scrollHeight>n.clientHeight+1) return n; } return document.scrollingElement||document.documentElement; }
+// tabela larga sob o dedo: o arraste lateral rola a tabela, não a página
+function annHScroller(e,surface){ const el=document.elementsFromPoint(e.clientX,e.clientY).find(x=>!x.classList?.contains("ann-input")&&!x.closest?.("svg.ann-svg")&&surface.contains(x));
+  for(let n=el;n&&n!==surface;n=n.parentElement){ const o=getComputedStyle(n).overflowX; if((o==="auto"||o==="scroll")&&n.scrollWidth>n.clientWidth+1) return n; } return null; }
+// primeira vez que a caneta aparece neste aparelho: guarda e liga a lição sempre anotável
+function annPenSeen(){ const was=annAutoOn(); ANN.pen=true; try{ localStorage.setItem("gab.ann.pen","1"); }catch(_){} applyLessonLight(); if(!was&&annAutoOn()&&document.querySelector('[data-ann-surface][data-owner^="L:"]')) annRefresh(S.annId||""); }
+// lição sempre anotável: toque rápido da caneta num link/botão abre o link em vez de deixar um ponto
+function annPenTap(A){ if(A.tool==="eraser"||A.ghost||!A.surface.classList.contains("ann-auto")||performance.now()-(A.t0||0)>320) return false;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const q of A.raw){ x0=Math.min(x0,q[0]); x1=Math.max(x1,q[0]); y0=Math.min(y0,q[1]); y1=Math.max(y1,q[1]); } if(x1-x0>6||y1-y0>6) return false;
+  const p=A.raw[0], X=p[0]+A.geo.sr.left, Y=p[1]+A.geo.sr.top, el=document.elementsFromPoint(X,Y).find(x=>!x.classList?.contains("ann-input")&&!x.closest?.("svg.ann-svg"));
+  const L=el?.closest?.("a[href],summary,button,[data-act],label"); if(!L||!A.surface.contains(L)) return false; annDraw(A.surface); L.click(); return true; }
 function annFinish(e,given){
   const A=given||ANN.stroke; if(!A||(!given&&e&&e.pointerId!==A.pointerId)) return; if(!given) ANN.stroke=null;
   if(A.tool==="eraser"){ if(A.keep.length!==A.start.length) annSet(A.key,A.keep); annDraw(A.surface); annRefreshBars(); return; }
+  if(!given&&annPenTap(A)) return;
   let p=A.tool==="marker"?annStraighten(A.raw):A.raw; if(!p.length){ annDraw(A.surface); return; }
   const g=A.geo, y0=p[0][1]; let bi=-1,best=1e9; g.bl.forEach((b,i)=>{ const d=y0<b.y?b.y-y0:y0>b.y+b.h?y0-b.y-b.h:0; if(d<best){best=d;bi=i;} });
   const B=bi>=0?g.bl[bi]:{x:0,y:0,w:g.W,h:g.H};
@@ -1376,20 +1395,20 @@ function annFinish(e,given){
 function annRefreshBars(){ document.querySelectorAll("[data-ann-bar],#annHost").forEach(b=>{ if(b.id==="annHost"){ const c=annCount(S.annId||""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); return; } const o=b.dataset.annBar; if(o!==S.annId) return; const btn=b.querySelector('[data-act="annToggle"]'); const c=annCount(o); if(btn&&!btn.closest(".ann-float")) btn.textContent="✍ "+tr("annotationOn")+(c?" · "+c:""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); }); }
 document.addEventListener("pointerdown",e=>{
   if(ANN.touch?.raf){ cancelAnimationFrame(ANN.touch.raf); ANN.touch.raf=0; }
-  if(e.pointerType==="pen"&&!ANN.pen){ ANN.pen=true; applyLessonLight(); }
+  if(e.pointerType==="pen"&&!ANN.pen) annPenSeen();
   const inp=e.target.closest?.(".ann-input"); if(!inp) return;
   const surface=inp.closest("[data-ann-surface]"); if(!surface||surface.dataset.owner!==S.annId) return;
   try{ inp.setPointerCapture(e.pointerId); }catch(_){}
-  if(e.pointerType==="touch"){ // dedo rola a tela (rejeição de palma: só a caneta desenha)
-    if(ANN.touch&&!ANN.touch.done) return; ANN.touch={id:e.pointerId,x0:e.clientX,y0:e.clientY,y:e.clientY,x:e.clientX,t:performance.now(),t0:performance.now(),v:0,moved:false,sc:annScroller(surface)}; return; }
+  if(e.pointerType==="touch"||e.pointerType!=="pen"&&surface.classList.contains("ann-auto")){ // dedo rola a tela (rejeição de palma: só a caneta desenha); na lição sempre anotável o mouse também só rola/clica
+    if(ANN.touch&&!ANN.touch.done) return; ANN.touch={id:e.pointerId,x0:e.clientX,y0:e.clientY,y:e.clientY,x:e.clientX,t:performance.now(),t0:performance.now(),v:0,moved:false,sc:annScroller(surface),hx:annHScroller(e,surface),mouse:e.pointerType==="mouse"}; return; }
   if(ANN.stroke) return;
   const eraser=annBtnErase(e)||ANN.btnHover, tool=eraser?"eraser":(S.annTool||"pen");
-  const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool,color:annColor(tool),width:annSize(tool),pointerId:e.pointerId,raw:[annPt(e,g)]};
+  const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool,color:annColor(tool),width:annSize(tool),pointerId:e.pointerId,raw:[annPt(e,g)],t0:performance.now()};
   if(tool==="eraser"){ A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)])); annErase(A,A.raw[0]); }
   ANN.stroke=A; e.preventDefault(); annLive();
 });
 document.addEventListener("pointermove",e=>{
-  const T=ANN.touch; if(T&&e.pointerId===T.id&&!T.done){ const t=performance.now(),dy=e.clientY-T.y,dx=e.clientX-T.x; T.sc.scrollTop-=dy; if(dx&&T.sc!==document.scrollingElement) T.sc.scrollLeft-=dx; T.v=.8*(dy/Math.max(1,t-T.t))+.2*T.v; T.y=e.clientY; T.x=e.clientX; T.t=t; if(Math.hypot(e.clientX-T.x0,e.clientY-T.y0)>8) T.moved=true; e.preventDefault(); return; }
+  const T=ANN.touch; if(T&&e.pointerId===T.id&&!T.done){ const t=performance.now(),dy=e.clientY-T.y,dx=e.clientX-T.x; T.sc.scrollTop-=dy; if(dx){ if(T.hx) T.hx.scrollLeft-=dx; else if(T.sc!==document.scrollingElement) T.sc.scrollLeft-=dx; } T.v=.8*(dy/Math.max(1,t-T.t))+.2*T.v; T.y=e.clientY; T.x=e.clientX; T.t=t; if(Math.hypot(e.clientX-T.x0,e.clientY-T.y0)>8) T.moved=true; e.preventDefault(); return; }
   if(!ANN.stroke&&e.pointerType==="pen") ANN.btnHover=annBtnErase(e);
   // Galaxy Tab/Chrome: com o botão lateral apertado, encostar a caneta NÃO gera pointerdown; chegam só pointermove com buttons=1 (e um contextmenu depois). Isso vira borracha.
   if(!ANN.stroke&&!ANN.penDown&&e.pointerType==="pen"&&(e.buttons&1)){ const surface=e.target.closest?.(".ann-input")?.closest("[data-ann-surface]");
@@ -1402,6 +1421,7 @@ document.addEventListener("pointermove",e=>{
   annLive(); e.preventDefault();
 });
 ["pointerdown","pointerup","pointercancel"].forEach(t=>document.addEventListener(t,e=>{ if(e.pointerType==="pen") ANN.penDown=t==="pointerdown"; },true));
+document.addEventListener("pointermove",e=>{ if(e.pointerType==="pen"&&!ANN.pen) annPenSeen(); },true);
 function annBtnErase(e){ return e.button===2||e.button===5||!!(e.buttons&(2|32)); }
 function annToEraser(A,pt){ if(A.raw.length>2) annFinish(null,{...A});
   const g=A.geo; A.tool="eraser"; A.width=annSize("eraser"); A.raw=[pt]; A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)]));
@@ -2893,6 +2913,7 @@ function openSettings(){
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
    <div class="toggle"><span>${tr("alwaysDetail")}</span><button type="button" class="switch" role="switch" data-act="toggleDetail" aria-checked="${!!st.detail}" aria-label="${tr("alwaysDetail")}"></button></div>
+   <div class="toggle"><span>${T2("Lição sempre pronta para a caneta (só a caneta escreve; o dedo rola)","Lessons always ready for the pen (only the pen writes; finger scrolls)")}</span><button type="button" class="switch" role="switch" data-act="toggleAnnAuto" aria-checked="${annPref("auto","1")!=="0"}" aria-label="${T2("Lição sempre pronta para a caneta","Lessons always ready for the pen")}"></button></div>
    <div class="row"><button class="btn small" data-act="penTest">🖊 ${T2("Testar S Pen","Test S Pen")}</button></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>
    ${SB&&S.uid?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:12.5px;color:var(--muted)">${esc((window.__email)||"")}</span><button class="btn small" data-act="signOut">${set().lang==="en"?"Sign out":"Sair"}</button></div>`:""}
@@ -3505,6 +3526,7 @@ document.addEventListener("click", async e=>{
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
   if(act==="qlang"){ const id=a.dataset.q, q=S.qs.get(id); if(!q) return; const v=a.dataset.v||(content(q).lang==="pt"?"en":"pt"); if(v===set().lang) delete S.qLang[id]; else S.qLang[id]=v; const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
   if(act==="detail"){ const id=a.dataset.q; if(S.detail.has(id)) S.detail.delete(id); else S.detail.add(id); const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
+  if(act==="toggleAnnAuto"){ try{ localStorage.setItem("gab.ann.auto",annPref("auto","1")==="0"?"1":"0"); }catch(_){} if(String(S.annId||"").startsWith("L:")) S.annId=null; render(); return openSettings(); }
   if(act==="toggleDetail"){ set().detail=!set().detail; S.detail.clear(); saveProg(); render(); return openSettings(); }
   if(act==="explain") return explain(a.dataset.q, a);
   if(act==="translate") return translateQ(a.dataset.q, a);

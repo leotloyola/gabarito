@@ -482,6 +482,10 @@ function fixture(){
         const b=document.querySelector("#view .qlesson"); const out={same:b===a, i:S.session.i, conn:a.isConnected};
         document.querySelector('[data-act="lpRead"]').click(); await W(30); out.readNew=document.querySelector("#view .qlesson")!==a; S.lpRead=false; S.session=null; go("study"); return out; });
       if(r.skip) throw new Error("sem painel"); if(!r.same||!r.conn||r.i!==1||!r.readNew) throw new Error(JSON.stringify(r)); });
+    await step("alternativas F e G têm letra", async()=>{
+      const r=await p.evaluate(()=>{ const L7={stem:"Seis+",opts:[0,1,2,3,4,5,6].map(j=>({t:"Op "+j,why:"x"}))}; const q={id:"u7",discipline:"da",topic:"t1",standard:"usmle",origin:"real",correct:5,pri:1,i18n:{en:L7}};
+        const h=questionHTML(q,{perm:[0,1,2,3,4,5,6],pick:5},true,false); return {f:/class="letter">F</.test(h),g:/class="letter">G</.test(h),und:/undefined/.test(h)}; });
+      if(!r.f||!r.g||r.und) throw new Error(JSON.stringify(r)); });
     await ctx.close();
   }
   await b.close(); srv.close();

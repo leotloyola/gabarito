@@ -820,9 +820,8 @@ input[type=date]{font:inherit;font-size:13px;padding:6px 8px;border-radius:10px;
 .answer-depth>summary,.answer-source>summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);padding:6px 0;min-height:36px}
 .answer-depth[open]>.answer-comment-text{margin-top:10px}
 .answer-distractors{background:var(--surface);border:1px solid var(--line);border-radius:16px}
-.answer-distractors>summary{cursor:pointer;padding:10px 14px;font-size:14px;font-weight:500;line-height:1.4}
-.answer-distractors>summary span{color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
-.answer-distractor-list{padding:0 14px 12px}
+.answer-distractors>h3{padding:12px 14px 0;color:var(--muted)}
+.answer-distractor-list{padding:6px 14px 12px}
 .answer-distractor-list>.answer-comment{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
 .answer-distractor-list>.answer-comment:first-child{margin-top:0}
 .answer-source{border-top:1px solid var(--line);padding:8px 0;color:var(--muted);font-size:13px;line-height:1.7;overflow-wrap:anywhere}
@@ -1989,9 +1988,7 @@ function questionHTML(q, it, reveal, simMode){
   if(c.outdated) tags.push(`<span class="tag old">${set().lang==="en"?"Outdated":"Defasada"}</span>`);
   if(q.exc) tags.push(`<span class="tag exc">${set().lang==="en"?"Except / incorrect":"Exceto / incorreta"}</span>`);
   const qlb = (q.i18n?.pt&&q.i18n?.en) ? `<span class="qlang" role="group" aria-label="${T2("Idioma da questão","Question language")}">${["pt","en"].map(x=>`<button type="button" data-act="qlang" data-q="${esc(q.id)}" data-v="${x}" aria-pressed="${lang===x}" title="${x==="pt"?T2("Ver em português (I)","Show in Portuguese (I)"):T2("Ver em inglês (I)","Show in English (I)")}">${x.toUpperCase()}</button>`).join("")}</span>` : "";
-  const hasMore = q.standard==="usmle" ? !!c.pegMore : (c.opts.some(o=>o.more) || !!c.pegMore);
-  const detBase = !!set().detail || (reveal && pick!==null && pick!==q.correct); // errou: abre o aprofundamento
-  const det = hasMore && (S.detail.has(q.id) ? !detBase : detBase);
+  const det = true; // 22/11/2026: só existe a justificativa aprofundada (enxuta + detalhada num texto só)
   const opts = perm.map((orig,pos)=>{
     const o=c.opts[orig]; let cls="opt", mark="";
     if(reveal){ if(orig===q.correct){cls+=" correct";mark=orig===pick?tr("answer")+" · ✓":tr("answer");} else if(orig===pick){cls+=" wrong";mark=tr("yourAns");} }
@@ -2001,22 +1998,21 @@ function questionHTML(q, it, reveal, simMode){
   const fb = (fallback && q.standard!=="usmle") ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const explanation = orig=>{
     const o=c.opts[orig], letter=L[perm.indexOf(orig)];
-    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${det&&o.more&&q.standard!=="usmle"?safe(deepText(o.why,o.more)):safe(o.why||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div></div>`; // detalhada: um texto só, sem bloco enxuto separado
+    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${safe(optFull(q,o)||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div></div>`; // justificativa única: why + more sem repetir
   };
   const otherOptions=perm.filter(orig=>orig!==q.correct&&orig!==pick);
   const feedback = reveal ? `<section class="answer-feedback" aria-label="${T2("Correção comentada","Answer explanation")}">
     <div class="answer-correct"><h3>${T2("Por que esta é a resposta","Why this is the answer")}</h3>${explanation(q.correct)}</div>
     ${pick!==null&&pick!==q.correct?`<div class="answer-picked"><h3>${T2("Sobre a sua escolha","About your choice")}</h3>${explanation(pick)}</div>`:""}
-    ${otherOptions.length?`<details class="answer-distractors"${det?" open":""}><summary>${T2("Entender as demais alternativas","Review the other options")} <span>${otherOptions.length}</span></summary><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></details>`:""}
+    ${otherOptions.length?`<div class="answer-distractors"><h3>${T2("Demais alternativas","Other options")}</h3><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></div>`:""}
   </section>` : "";
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
     ${tutorNoteHTML(q.id)}
     ${cxQHTML(q.id)}
     ${feedback}
-    ${hasMore?`<div class="row"><button class="btn small" data-act="detail" data-q="${esc(q.id)}" aria-pressed="${det}">${det?"− "+tr("less"):"+ "+tr("more")}</button></div>`:""}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
-    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(det&&c.pegMore?c.pegMore+driveLinks(c.peg,c.pegMore):c.peg)}${q.standard==="usmle"?driveInline(c.peg+(det&&c.pegMore?" "+c.pegMore:"")):""}</div>`:""}
+    ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(pegFull(q,c))}${q.standard==="usmle"?driveInline(c.peg+(c.pegMore?" "+c.pegMore:"")):""}</div>`:""}
     ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
     <div class="row">${lsnRow?`<button class="btn small qrow-lesson" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com esta questão","Opens the lesson at the passage closest to this question")}">🎯 ${T2("Ver na lição","See in lesson")}</button><button class="btn small ghost qrow-lesson" data-act="lesson" data-id="${esc(lsnRow.id)}">📖 ${T2("Lição do tema","Topic lesson")}</button>`:""}<button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><details class="qmore"><summary class="btn small ghost">⋯ ${T2("Mais opções","More")}</summary><div class="qmore-in"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div></details></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
@@ -2042,8 +2038,8 @@ function askPrompt(id){
     "QUESTÃO"+(q.exam?" ("+q.exam+")":"")+":",plain(c.stem),"",
     "ALTERNATIVAS:",...ord.map(x=>pos(x.o)+") "+plain(x.t.t)),"",
     "GABARITO: "+pos(q.correct)+(pick!=null?" · Minha resposta: "+pos(pick):""),"",
-    "COMENTÁRIO:",...ord.map(x=>pos(x.o)+") "+plain(x.t.why)),
-    c.peg?"\nPEGADINHA: "+plain(c.peg):""
+    "COMENTÁRIO:",...ord.map(x=>pos(x.o)+") "+plain(optFull(q,x.t))),
+    c.peg?"\nPEGADINHA: "+plain(pegFull(q,c)):""
   ].join("\n");
   return txt;
 }
@@ -2683,7 +2679,7 @@ async function pqHtml(groups, inline=false){
   for(const gr of groups){ if(gr.title){ q+=`<h2 class="pq-grp">${esc(gr.title)}</h2>`; g+=`<h3>${esc(gr.title)}</h3>`; }
     for(const x of gr.qs){ n++; const c=x.i18n?.[lang]||x.i18n?.pt||x.i18n?.en; if(!c){ n--; continue; }
       let im=""; if(x.img?.url){ const d=await pqImgData(x.img.url); im=d?`<div class="pq-img"><img src="${d}" alt=""></div>`:`<div class="pq-img"><span>[${T2("figura: ver no app","figure: see in app")}]</span></div>`; }
-      const ok=c.opts[x.correct], gb=`<div class="pq-g"><b class="n">Q${n} — ${L[x.correct]??"?"}</b> · ${safe(ok?.why||"")}${c.peg?` <em>${T2("Pegadinha","Trap")}:</em> ${safe(c.peg)}`:""}</div>`;
+      const ok=c.opts[x.correct], gb=`<div class="pq-g"><b class="n">Q${n} — ${L[x.correct]??"?"}</b> · ${safe(ok?optFull(x,ok):"")}${c.peg?` <em>${T2("Pegadinha","Trap")}:</em> ${safe(pegFull(x,c))}`:""}</div>`;
       q+=`<div class="pq"><div class="pq-h"><b>Q${n}</b> · ${"★".repeat(x.pri||1)}${x.exam?" · "+esc(x.exam):""}${x.exc?" · "+T2("EXCETO","EXCEPT"):""}</div><p class="pq-s">${stemHtml(c.stem)}</p>${im}${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i> ${safe(o.t)}</div>`).join("")}${inline?gb:""}</div>`;
       if(!inline) g+=gb; } }
   return {q,g};
@@ -2898,7 +2894,7 @@ function vCards(v){
    <div class="qtop"><span class="qnum">${d.i+1} / ${d.ids.length}</span><div class="progress"><i style="width:${100*d.i/d.ids.length}%"></i></div>${document.fullscreenEnabled?`<button class="btn small ghost fsbtn" data-act="fs" aria-label="Tela cheia">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}<button class="btn small ghost fsbtn kbtn" data-act="keys" aria-label="${T2("Atalhos de teclado","Keyboard shortcuts")}" title="${T2("Atalhos (?)","Shortcuts (?)")}">⌨</button><button class="btn small ghost fsbtn" data-act="fcReset" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button></div>
    <div class="card"><div class="tags">${tagsOf(q).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
      ${annotationControls(q)}${annotationSurface(q,`<div class="face">${stemHtml(c.stem)}</div>${qImg(q)}${driveFig(c.stem)}`)}
-     ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(corr.why)}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(c.peg)}</div>`:""}`:""}
+     ${d.show?`<div class="ans"><div class="eyebrow" style="color:var(--ok)">${tr("answer")}</div><div class="face" style="font-weight:600">${safe(corr.t)}</div><p style="margin:8px 0 0">${safe(optFull(q,corr))}</p></div>${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(pegFull(q,c))}</div>`:""}`:""}
    </div>
    <div class="qnav">${d.show?`<div class="rate" style="flex:1"><button class="btn" data-act="fcRate" data-g="0">${tr("again")}<small>${previewDays(S.prog.fc[q.id],1)}${tr("days")}</small></button><button class="btn" data-act="fcRate" data-g="1">${tr("hard")}<small>${previewDays(S.prog.fc[q.id],2)}${tr("days")}</small></button><button class="btn primary" data-act="fcRate" data-g="2">${tr("good")}<small>${previewDays(S.prog.fc[q.id],3)}${tr("days")}</small></button></div>`:`<button class="btn primary block" data-act="fcShow">${tr("show")}</button>`}</div>`;
 }
@@ -2976,7 +2972,6 @@ function openSettings(){
    <div class="field"><span class="flabel">${T2("Fundo da lição","Lesson background")}</span><div class="chips">${[["sepia",T2("Sépia","Sepia")],["light",T2("Claro","Light")],["dark",T2("Escuro","Dark")],["off",T2("Seguir o tema","Follow theme")]].map(([k,l])=>`<button type="button" class="chip" data-setll="${k}" aria-pressed="${lessonBg()===k}">${l}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
-   <div class="toggle"><span>${tr("alwaysDetail")}</span><button type="button" class="switch" role="switch" data-act="toggleDetail" aria-checked="${!!st.detail}" aria-label="${tr("alwaysDetail")}"></button></div>
    <div class="toggle"><span>${T2("Lição e questão sempre prontas para a caneta (só a caneta escreve; o dedo rola, marca a alternativa e desliza)","Lessons and questions always ready for the pen (only the pen writes; finger scrolls, picks and swipes)")}</span><button type="button" class="switch" role="switch" data-act="toggleAnnAuto" aria-checked="${annPref("auto","1")!=="0"}" aria-label="${T2("Lição sempre pronta para a caneta","Lessons always ready for the pen")}"></button></div>
    <div class="row"><button class="btn small" data-act="penTest">🖊 ${T2("Testar S Pen","Test S Pen")}</button></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>
@@ -2999,7 +2994,7 @@ async function explain(id, btn){
    : "Você é tutor de um estudante de Medicina da UFPR (também policial rodoviário federal, com pouco tempo) que estuda para a prova da UFPR e para o USMLE Step 1/2 CK. Seja direto, técnico, denso, sem saudações. Use guidelines americanos (AHA, ADA, IDSA etc.) quando pertinente. Responda em PORTUGUÊS usando exatamente estas seções, em tópicos curtos:\n**Flashcard** (pergunta estilo Anki + resposta em 1-3 linhas)\n**Não confundir com** (fármaco/condição confundida e a diferença-chave)\n**Best Next Step** (diagnóstico/terapêutico, baseado em guideline)\n**Fonte** (UMA referência: First Aid, Pathoma, Harrison, Robbins, Costanzo, UWorld/Amboss ou Katzung)\n**Recall** (uma pergunta respondível em 1 linha)\nSe nomenclatura ou guideline do Brasil e do USMLE divergirem, sinalize em uma linha.\n\n")
    + "QUESTION:\n" + plain(c.stem) + "\n\nOPTIONS:\n" + c.opts.map((o,i)=>`${L[i]}) ${plain(o.t)}${i===q.correct?"  [CORRECT]":""}`).join("\n")
    + (pick!==null && pick!==q.correct ? `\n\nThe student chose ${L[pick]} (wrong). Address that misconception first.` : "")
-   + "\n\nEXISTING EXPLANATION (do not repeat it, go deeper):\n" + plain(c.opts[q.correct].why);
+   + "\n\nEXISTING EXPLANATION (do not repeat it, go deeper):\n" + plain(optFull(q,c.opts[q.correct]));
   try{
     const r=await S.sample(prompt,{signal:ctl.signal,onText:({text})=>{ const t=document.getElementById("aiT-"+id); if(t) t.innerHTML=md(text); }});
     S.ai[id]={html:md(r.text)}; hydrateAI(q);
@@ -3069,6 +3064,12 @@ async function genSave(){
 const nz = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ");
 function nzAlign(s){ let o=""; for(let i=0;i<s.length;i++){ const b=s[i].normalize("NFD")[0]||" "; o+=/[a-zA-Z0-9]/.test(b)?b.toLowerCase():" "; } return o; } // mantém o comprimento (para destacar)
 // Versão detalhada: se o "more" já repete o comentário curto, mostra só o "more" (mantendo o rótulo "Correta:"/"Errada:"); senão junta os dois.
+// Justificativa única (22/11/2026): alternativa = why + more (sem repetir); USMLE usa só o why (o more do UWorld é "See the full explanation").
+function optFull(q,o){ if(!o) return ""; return o.more&&q?.standard!=="usmle"&&!/^see (the )?full explanation/i.test(plain(o.more)) ? deepText(o.why,o.more) : (o.why||o.more||""); }
+// Pegadinha/explicação: peg + pegMore. UFPR: deepText; USMLE: explicação completa + objetivo educacional em parágrafo próprio.
+function pegFull(q,c){ const p=c?.peg||"", m=c?.pegMore||""; if(!m) return p; if(!p) return m;
+  if(q?.standard==="usmle"){ return plain(p).toLowerCase().includes(plain(m).toLowerCase()) ? p : p+"<br><br>"+m; }
+  return deepText(p,m); }
 function deepText(why,more){
   if(!why) return more;
   const lab=(String(why).match(/^\s*(<b>[^<]*<\/b>\s*[:.\u2013\u2014-]?\s*)/)||[])[1]||"";
@@ -3651,9 +3652,7 @@ document.addEventListener("click", async e=>{
   if(act==="newSession"){ S.session=null; return go("study"); }
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
   if(act==="qlang"){ const id=a.dataset.q, q=S.qs.get(id); if(!q) return; const v=a.dataset.v||(content(q).lang==="pt"?"en":"pt"); if(v===set().lang) delete S.qLang[id]; else S.qLang[id]=v; const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
-  if(act==="detail"){ const id=a.dataset.q; if(S.detail.has(id)) S.detail.delete(id); else S.detail.add(id); const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
   if(act==="toggleAnnAuto"){ try{ localStorage.setItem("gab.ann.auto",annPref("auto","1")==="0"?"1":"0"); }catch(_){} S.annId=null; render(); return openSettings(); }
-  if(act==="toggleDetail"){ set().detail=!set().detail; S.detail.clear(); saveProg(); render(); return openSettings(); }
   if(act==="explain") return explain(a.dataset.q, a);
   if(act==="translate") return translateQ(a.dataset.q, a);
   if(act==="fcStart"){ const all=a.dataset.all==="1"; const ids=shuffle((all?ctxQs():dueCards()).map(q=>q.id)); S.fcDeck={ids,i:0,show:false,topic:curTopic()?.id,std:set().std}; return render(); }
@@ -4013,7 +4012,7 @@ const lsStem=w=>w.length>6?w.slice(0,6):w;
 function lsToks(t){ return nz(t).split(" ").filter(w=>w.length>=3&&!LS_STOP.has(w)&&!/^\d+$/.test(w)); }
 function lspotTerms(q){ const c=q.i18n?.pt||content(q).c; if(!c) return [];
   const it=S.session?.items?.find(x=>x.id===q.id), blind=!!(it&&it.pick==null); // ainda não respondida: não usa a resposta
-  const co=c.opts?.[q.correct]||{}, F=blind?[[c.stem,1.6],...(c.opts||[]).map(o=>[o.t,.7])]:[[c.stem,1],[co.t,2.2],[co.why,1.4],[c.peg,1]];
+  const co=c.opts?.[q.correct]||{}, F=blind?[[c.stem,1.6],...(c.opts||[]).map(o=>[o.t,.7])]:[[c.stem,1],[co.t,2.2],[optFull(q,co),1.4],[pegFull(q,c),1]];
   const syn=synIndex(), T=new Map(); // chave -> {w, alt:[stems], ph:[frases]}
   for(const [txt,w] of F){ const ws=lsToks(plain(txt||"")); const used=new Set();
     for(let i=0;i<ws.length;i++){ let hit=null; for(let n=Math.min(3,ws.length-i);n>=1&&!hit;n--){ const ph=ws.slice(i,i+n).join(" "); if(syn.has(ph)) hit={n,ph}; }

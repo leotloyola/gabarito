@@ -30,6 +30,7 @@ function fixture(){
     p.on("pageerror",e=>errs.push(`[${vp.width}] ${e.message}`));
     p.on("console",m=>{ if(m.type()==="error"&&!/Failed to load resource|ERR_FAILED|net::/.test(m.text())) errs.push(`[${vp.width}] console: ${m.text()}`); });
     await p.goto(base); await p.waitForTimeout(500);
+    await p.evaluate(()=>localStorage.setItem("gab.ann.auto","0")); // passos antigos testam o Anotar manual (PC); o modo sempre ligado tem passo próprio
     const F=fixture();
     await p.evaluate(F=>{ S.catalog=F.cat; F.qs.forEach(q=>S.qs.set(q.id,q)); F.lessons.forEach(l=>S.lessons.set(l.id,l)); S.dbState="on"; S.advOpen=true; set().disc="da"; set().topic="t1";
       const t=Date.now(); F.qs.forEach((q,i)=>{ if(i%3) return; S.prog.q[q.id]={n:2,nOk:i%2,ok:!!(i%2),first:true,box:1,due:t-86400000,ts:t}; }); render(); },F);
@@ -259,6 +260,26 @@ function fixture(){
       await p.waitForTimeout(250);
       const c=await p.evaluate(()=>{ const ok=!document.getElementById("lreadBar"); go("home"); return ok; });
       if(!a||!b||!c) throw new Error("flutuantes: "+JSON.stringify({a,b,c})); });
+    await step("lição sempre anotável com caneta", async()=>{
+      const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); localStorage.setItem("gab.ann.auto","1"); ANN.pen=true; S.annId=null; S.lread=false; delete (S.prog.annotations||{})["L:lesson:da:t1"]; S.lessonId="lesson:da:t1"; go("lesson");
+        const out={}; const sf=()=>document.querySelector(".lwrap [data-ann-surface]");
+        out.on=S.annId==="L:lesson:da:t1"&&sf().classList.contains("ann-enabled")&&sf().classList.contains("ann-auto"); out.noBtn=!document.querySelector('#view [data-act="annToggle"]')&&!document.querySelector('#annHost [data-act="annToggle"]'); out.bar=!!document.querySelector("#annHost .ann-float [data-act=annTool]");
+        const art=document.querySelector(".lwrap .lesson"); art.insertAdjacentHTML("afterbegin",'<p id="auP">Texto <a id="auA" href="#x">link</a> e mais texto para riscar com a caneta aqui.</p>'); let clicks=0; document.getElementById("auA").addEventListener("click",e=>{ e.preventDefault(); clicks++; });
+        annDraw(sf()); const inp=sf().querySelector(".ann-input"), a=document.getElementById("auA").getBoundingClientRect(), P=document.getElementById("auP").getBoundingClientRect();
+        const ev=(t,x,y,id,pt)=>inp.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,pointerId:id,pointerType:pt,clientX:x,clientY:y,pressure:pt==="pen"?.6:0,buttons:t==="pointerup"?0:1}));
+        const cx=a.left+a.width/2, cy=a.top+a.height/2;
+        ev("pointerdown",cx,cy,31,"touch"); ev("pointerup",cx,cy,31,"touch"); out.finger=clicks===1;
+        ev("pointerdown",cx,cy,32,"pen"); ev("pointerup",cx,cy,32,"pen"); out.penTap=clicks===2&&annotationStrokes("L:lesson:da:t1").length===0;
+        ev("pointerdown",cx,cy,33,"mouse"); ev("pointerup",cx,cy,33,"mouse"); out.mouse=clicks===3&&annotationStrokes("L:lesson:da:t1").length===0;
+        const y=P.top+P.height/2; ev("pointerdown",P.left+5,y,34,"pen"); for(let i=1;i<10;i++) ev("pointermove",P.left+5+i*15,y+(i%2),34,"pen"); ev("pointerup",P.left+140,y,34,"pen"); out.stroke=annotationStrokes("L:lesson:da:t1").length===1;
+        document.querySelector('[data-act="lread"]').click(); out.lread=!document.querySelector('#lreadBar [data-act="annToggle"]')&&S.annId==="L:lesson:da:t1"; document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); localStorage.setItem("gab.lread","0"); S.lread=false;
+        localStorage.setItem("gab.ann.auto","0"); S.annId=null; go("lesson"); out.off=!!document.querySelector('#view .row [data-act="annToggle"]')&&!document.querySelector(".lwrap .ann-enabled"); localStorage.setItem("gab.ann.auto","1");
+        if(LP_Q.matches){ localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; S.setup=null; S.tuB=null; set().topic="t1"; go("study"); document.querySelector('[data-act="startSession"]').click(); const s=S.session; s.items[s.i].pick=0; render(); document.querySelector('#view .qrow-lesson[data-act="lesson"]')?.click(); await W(50);
+          out.split=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled")&&!document.querySelector('#view .qlesson [data-act="annToggle"]');
+          const qb=document.querySelector('#view .qleft [data-act="annToggle"]'); qb?.click(); out.qPrio=S.annId===s.items[s.i].id; document.querySelector('#annHost [data-act="annToggle"]')?.click(); out.back=String(S.annId).startsWith("L:")&&!!document.querySelector("#view .qlesson .ann-enabled");
+          localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; }
+        S.annId=null; delete S.prog.annotations["L:lesson:da:t1"]; localStorage.setItem("gab.ann.auto","0"); go("home"); return out; });
+      const bad=Object.entries(r).filter(([k,v])=>!v); if(bad.length) throw new Error("sempre anotável: "+JSON.stringify(r)); });
     await step("borracha não rola a lição", async()=>{
       await p.evaluate(()=>{ S.annId=null; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.querySelector('.row [data-act="annToggle"]').click(); const se=document.scrollingElement; se.scrollTop=600; });
       await p.waitForTimeout(80);

@@ -669,6 +669,29 @@ html.toc-off .lwrap>.gdrag{display:none!important}
   .ltoc summary{list-style:none;pointer-events:none;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 10px}
   .ltoc summary::-webkit-details-marker{display:none}
 }
+/* prova UFPR em página única (rolagem) */
+.sqpage{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.sqtop{position:sticky;top:0;z-index:8;background:var(--bg);margin:-6px 0 0;padding:max(6px,env(safe-area-inset-top,0px)) 0 8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 0 var(--line)}
+.sqwrap .sqtop{margin:0;padding:4px 0 8px}
+.sqbar{display:flex;align-items:center;gap:8px;min-width:0}
+.sqex{font-family:var(--f-ui);font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sqsc{font:600 13px var(--f-ui);font-variant-numeric:tabular-nums;white-space:nowrap}.sqsc .ok{color:var(--ok)}.sqsc .bad{color:var(--bad)}.sqsc .mu{color:var(--muted);font-weight:500}
+.sqstrip{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 3px;scroll-behavior:smooth}.sqstrip::-webkit-scrollbar{display:none}
+.sqn{flex:none;min-width:30px;height:28px;padding:0 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 12px var(--f-ui);font-variant-numeric:tabular-nums;cursor:pointer}
+.sqn.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.sqn.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.sqn.pk{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.sqn.cur{box-shadow:0 0 0 2px currentColor}.sqn.cur:not(.ok):not(.bad):not(.pk){color:var(--ink)}
+.sqlist{display:flex;flex-direction:column;gap:0}
+.sq{display:flex;flex-direction:column;gap:12px;padding:20px 0 28px}
+.sq+.sq{border-top:1px solid var(--line)}
+.sqh{display:flex;gap:10px;align-items:baseline;font:600 12.5px var(--f-ui);color:var(--muted);min-width:0}.sqh .sqk{color:var(--ink);font-size:15px;flex:none}.sqh .sqt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq.ok .sqk{color:var(--ok)}.sq.bad .sqk{color:var(--bad)}
+html body #view .sqgrid{display:flex;flex-direction:column;gap:12px;min-width:0}
+html body #view .sqgrid .qleft,html body #view .sqgrid .qright{display:flex;flex-direction:column;gap:12px;position:static;top:auto;max-height:none;overflow:visible;min-width:0}
+.sqend{display:flex;justify-content:center;padding:12px 0 56px}
+.sqwrap .lptn{display:none!important}
+html body #view .qgrid.l3.sqwrap>.qcol{display:flex;flex-direction:column;gap:0}
 /* ---- lição ao lado da questão (>=900px). Até 1499px: questão numa coluna (enunciado em cima, explicação embaixo) e lição na outra ---- */
 @media (min-width:900px){
   .qdrag{position:absolute;left:-22px;top:0;bottom:0;width:16px;cursor:col-resize;touch-action:none;z-index:2}
@@ -1946,6 +1969,7 @@ function vPlayer(v){
   const s=S.session; clearInterval(timerInt);
   if(!s.items.length){ v.innerHTML=`<p class="empty">${tr("sessionEmpty")}</p>`; return; }
   if(s.done) return vResult(v);
+  if(s.scroll) return vScroll(v);
   const it=s.items[s.i]; const q=S.qs.get(it.id);
   if(!q){ s.items.splice(s.i,1); s.i=Math.min(s.i,s.items.length-1); return vPlayer(v); }
   const reveal = s.mode==="study" && it.pick!==null;
@@ -1969,6 +1993,58 @@ function vPlayer(v){
   const pb1=$("#view .qlbody"); if(keep&&pb1&&pb1.dataset.l===keep.id) pb1.scrollTop=keep.top;
   hydrateAI(q); lpFit();
 }
+/* ---------- PROVA UFPR EM PÁGINA ÚNICA (23/11/2026, pedido do Léo) ----------
+   Prova na íntegra (Comentada ou Simulado): todas as questões numa página só, respondidas rolando.
+   Comentada: gabarito e justificativa logo abaixo de cada questão ao responder. Simulado: correção só no fim.
+   Topo fixo: placar + faixa de números (verde acerto, vermelho erro, cinza em branco; toque leva à questão).
+   Tela dividida (≥900 px, lição ao lado): a lição à direita acompanha a questão que está na tela.
+   Competências não aparecem aqui, mas o registro (progresso, Mapa, Tutor) é o mesmo de sempre (record). */
+function sqStats(s){ let ok=0,bad=0,ans=0; for(const it of s.items){ if(it.pick===null) continue; ans++; if(s.mode==="study"){ const q=S.qs.get(it.id); if(q&&it.pick===q.correct) ok++; else bad++; } } return {ok,bad,ans}; }
+function sqScore(s){ const t=sqStats(s), n=s.items.length; return s.mode==="study"?`<span class="ok">✓ ${t.ok}</span> <span class="bad">✗ ${t.bad}</span> <span class="mu">· ${t.ans}/${n}</span>`:`<span class="mu">${t.ans}/${n} ${T2("respondidas","answered")}</span>`; }
+function sqStrip(s){ return s.items.map((it,i)=>{ const q=S.qs.get(it.id); const st=it.pick===null?"":s.mode!=="study"?" pk":(q&&it.pick===q.correct?" ok":" bad"); return `<button type="button" class="sqn${st}${i===s.i?" cur":""}" data-act="sqGo" data-i="${i}" aria-label="${tr("q")} ${i+1}">${i+1}</button>`; }).join(""); }
+function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button><b class="sqex">${esc(s.exam||"")}</b><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}<button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
+function sqItem(s,i){ const it=s.items[i], q=S.qs.get(it.id); if(!q) return ""; const reveal=s.mode==="study"&&it.pick!==null;
+  return `<section class="sq${reveal?(it.pick===q.correct?" ok":" bad"):""}" id="sq-${i}" data-i="${i}"><div class="sqh"><span class="sqk">${tr("q")} ${i+1}</span><span class="sqt">${esc(topicName(q.discipline,q.topic)||"")}</span></div>${questionHTML(q,it,reveal,s.mode==="sim",true)}</section>`; }
+function sqScroller(){ return $("#view .sqwrap>.qcol"); } // null = a própria página rola
+function sqTopOf(sc){ return sc?sc.getBoundingClientRect().top:0; }
+function sqHeadB(sc){ const h=$("#view .sqtop"); return h?h.getBoundingClientRect().bottom-sqTopOf(sc):0; }
+// lição da questão atual; se o tema não tem lição, a mais próxima para trás (senão para frente), para o painel não sumir
+function sqLesson(s){ const L=i=>{ const q=S.qs.get(s.items[i]?.id); return q&&lessonOf(q.discipline,q.topic); };
+  for(let i=s.i;i>=0;i--){ const l=L(i); if(l) return l; } for(let i=s.i+1;i<s.items.length;i++){ const l=L(i); if(l) return l; } return null; }
+function vScroll(v){
+  const s=S.session; clearInterval(timerInt);
+  const old=$("#view #sq-"+s.i), off=old?old.getBoundingClientRect().top-sqTopOf(sqScroller()):null; // mesma questão no mesmo lugar ao redesenhar
+  const anyL=s.mode!=="sim"&&LP_Q.matches&&s.items.some(it=>{ const q=S.qs.get(it.id); return q&&lessonOf(q.discipline,q.topic); });
+  const lsn=anyL&&lpOn()?sqLesson(s):null;
+  s.items.forEach((it,i)=>{ if(i===s.i&&it.t0==null&&it.pick===null) it.t0=now(); });
+  const body=`${sqHead(s)}<div class="sqlist">${s.items.map((_,i)=>sqItem(s,i)).join("")}</div><div class="sqend"><button class="btn primary" data-act="finish">${tr("finish")}</button></div>`;
+  v.innerHTML=lsn?`<div class="qgrid l3 sqwrap"><div class="qcol">${body}</div>${lpPaneHTML(lsn)}</div>`:`<div class="sqpage">${body}</div>`;
+  if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
+  document.body.classList.toggle("lpread",!!(S.lpRead&&lsn)); document.body.classList.toggle("lpfull",!!(S.lpFull&&lsn)); lpFullBtn(); lpToc(); lpFit(); sqTopPos();
+  const place=()=>{ const el=$("#view #sq-"+s.i), sc=sqScroller(); if(!el) return; if(off==null&&s.i===0) return;
+    const want=off!=null?off:sqHeadB(sc)+8, d=el.getBoundingClientRect().top-sqTopOf(sc)-want; if(Math.abs(d)<2) return; if(sc) sc.scrollTop+=d; else window.scrollBy(0,d); sqStripCur(); };
+  place(); requestAnimationFrame(()=>requestAnimationFrame(place)); // go() rola a página ao topo depois de desenhar
+}
+// sem modo foco, o cabeçalho do app fica preso no topo: a faixa da prova encosta logo abaixo dele
+function sqTopPos(){ const h=$("#view .sqtop"); if(!h) return; const tb=$(".top"); const y=!sqScroller()&&tb&&getComputedStyle(tb).display!=="none"&&getComputedStyle(tb).position==="sticky"?Math.round(tb.getBoundingClientRect().height):0; h.style.top=y+"px"; }
+function sqStripCur(){ const st=$("#sqstrip"); if(!st) return; const s=S.session; st.querySelectorAll(".sqn.cur").forEach(b=>b.classList.remove("cur")); const b=st.querySelector('.sqn[data-i="'+s.i+'"]'); if(!b) return; b.classList.add("cur");
+  const l=b.offsetLeft-st.offsetLeft, r=l+b.offsetWidth; if(l<st.scrollLeft+8||r>st.scrollLeft+st.clientWidth-8) st.scrollLeft=Math.max(0,l-st.clientWidth/2+b.offsetWidth/2); }
+function sqGo(i,smooth=true){ const s=S.session; i=Math.max(0,Math.min(i,s.items.length-1)); const el=$("#view #sq-"+i), sc=sqScroller(); if(!el) return;
+  const d=el.getBoundingClientRect().top-sqTopOf(sc)-sqHeadB(sc)-8; const o={top:d,behavior:smooth?"smooth":"auto"}; if(sc) sc.scrollBy(o); else window.scrollBy(o); sqSetCur(i); }
+function sqSetCur(i){ const s=S.session; if(!s||!s.scroll) return; if(i!==s.i){ s.i=i; const it=s.items[i]; if(it&&it.t0==null&&it.pick===null) it.t0=now(); posSave(); } sqStripCur(); sqPane(); }
+// a lição ao lado troca quando a questão da vez é de outro tema
+function sqPane(){ const s=S.session, g=$("#view .sqwrap"); if(!g||!s) return; const l=sqLesson(s); const cur=g.querySelector(":scope>.qlesson .qlbody")?.dataset.l; if(!l||cur===l.id) return;
+  const pane=g.querySelector(":scope>.qlesson"); if(!pane) return; if(S.annId&&String(S.annId).startsWith("L:")) S.annId=null;
+  pane.outerHTML=lpPaneHTML(l); const np=g.querySelector(":scope>.qlesson"); if(np){ np.classList.add("qsw"); annInit(np); } lpFullBtn(); lpToc(); annFloatPos(); }
+function sqTrack(){ const s=S.session; if(!s||!s.scroll||s.done||!inQSession()||$("#layer").innerHTML) return; const sc=sqScroller(), top=sqTopOf(sc), hb=sqHeadB(sc), vis=(sc?sc.clientHeight:(window.visualViewport?.height||innerHeight))-hb;
+  const line=top+hb+Math.min(160,vis*.3); let cur=0; for(const el of document.querySelectorAll("#view .sq")){ if(el.getBoundingClientRect().top<=line) cur=+el.dataset.i; else break; } if(cur!==s.i) sqSetCur(cur); }
+{ let raf=0; document.addEventListener("scroll",()=>{ if(raf||!S.session?.scroll) return; raf=requestAnimationFrame(()=>{ raf=0; sqTrack(); }); },{passive:true,capture:true}); window.addEventListener("resize",()=>{ if(S.session?.scroll){ sqTopPos(); } }); }
+// responder: redesenha só a questão respondida e o topo (a página não pula)
+function sqPick(sec,p){ const s=S.session, i=+sec.dataset.i, it=s.items[i], q=S.qs.get(it?.id); if(!q) return;
+  it.pick=p; if(s.mode==="study") record(q,p,{rev:false, ms:it.t0?now()-it.t0:null});
+  if(s.i!==i){ s.i=i; } sec.outerHTML=sqItem(s,i); const ns=$("#view #sq-"+i); if(ns) annInit(ns);
+  const sc=$("#sqsc"); if(sc) sc.innerHTML=sqScore(s); const st=$("#sqstrip"); if(st){ const x=st.scrollLeft; st.innerHTML=sqStrip(s); st.scrollLeft=x; }
+  hydrateAI(q); posSave(); if(s.mode==="study"){ const r=ns&&ns.querySelector(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); } }
 // tablet com a lição ao lado: a grade ocupa só a altura visível (do topo da questão até a barra ←/→), e cada coluna rola sozinha
 // botão discreto no canto inferior esquerdo (espelha o da caneta): amplia a lição ao lado para a tela inteira e volta
 // lição em tela cheia (⤢) no tablet deitado/PC: índice lateral como na página, recolhível com » (☰ reabre)
@@ -1982,7 +2058,8 @@ function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches)
   const top=g.getBoundingClientRect().top+(window.scrollY||0), tb=$("nav.tabs"), tr0=tb&&getComputedStyle(tb).display!=="none"?tb.getBoundingClientRect():null, nh=(tr0&&tr0.top>innerHeight/2?tr0.height:0)+12;
   g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
 window.addEventListener("resize",()=>{ if($("#view .qgrid.l3")) lpFit(); annLpPos(); });
-function questionHTML(q, it, reveal, simMode){
+function lpPaneHTML(lsn){ return `<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(annAutoOn()?"a":S.annId==="L:"+lsn.id?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`; }
+function questionHTML(q, it, reveal, simMode, sc){ // sc = prova em página única (rolagem)
   const lsnRow=!simMode&&lessonOf(q.discipline,q.topic); // botão "Lição do tema" junto da explicação, sem precisar subir até as etiquetas
   const {c, lang, fallback} = content(q); if(!c) return "";
   const perm = it?.perm || c.opts.map((_,i)=>i);
@@ -2018,19 +2095,19 @@ function questionHTML(q, it, reveal, simMode){
   const after = reveal ? `
     <div class="result ${pick===q.correct?"ok":"bad"}">${pick===q.correct?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[perm.indexOf(q.correct)]}</div>
     ${tutorNoteHTML(q.id)}
-    ${cxQHTML(q.id)}
+    ${sc?"":cxQHTML(q.id)}
     ${feedback}
     ${c.outdated?`<div class="banner old"><b>⚠ ${set().lang==="en"?"Outdated question":"Questão defasada"}:</b> ${safe(c.outdated)}</div>`:""}
     ${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(pegFull(q,c))}${q.standard==="usmle"?driveInline(c.peg+(c.pegMore?" "+c.pegMore:"")):""}</div>`:""}
     ${c.src?`<details class="answer-source"><summary>${tr("source")}</summary><div>${safe(c.src)}</div></details>`:""}
     <div class="row">${lsnRow?`<button class="btn small qrow-lesson" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com esta questão","Opens the lesson at the passage closest to this question")}">🎯 ${T2("Ver na lição","See in lesson")}</button><button class="btn small ghost qrow-lesson" data-act="lesson" data-id="${esc(lsnRow.id)}">📖 ${T2("Lição do tema","Topic lesson")}</button>`:""}<button class="btn small" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button><details class="qmore"><summary class="btn small ghost">⋯ ${T2("Mais opções","More")}</summary><div class="qmore-in"><button class="btn small ghost" data-act="report" data-q="${esc(q.id)}">⚑ ${openReports(q).length?T2("Contestada · contestar de novo","Reported · report again"):T2("Contestar gabarito","Report this question")}</button></div></details></div>
     ${S.sample?`<div class="row"><button class="btn" data-act="explain" data-q="${esc(q.id)}">✦ ${tr("explain")}</button></div><div id="ai-${esc(q.id)}"></div>`:""}` : "";
-  const pre = !reveal && !simMode ? `<div class="row qpre">${lsnRow?`<button class="btn small ghost" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com o enunciado (sem usar a resposta)","Opens the lesson at the passage closest to the stem (without using the answer)")}">🎯 ${T2("Ver na lição","See in lesson")}</button>`:""}<button class="btn small ghost" data-act="askClaude" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small ghost" data-act="askGemini" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button></div>` : "";
+  const pre = sc ? (!reveal && !simMode ? `<div class="row qpre">${lsnRow?`<button class="btn small ghost" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com o enunciado (sem usar a resposta)","Opens the lesson at the passage closest to the stem (without using the answer)")}">🎯 ${T2("Ver na lição","See in lesson")}</button>`:""}<details class="qmore"><summary class="btn small ghost">⋯</summary><div class="qmore-in"><button class="btn small ghost" data-act="askClaude" data-q="${esc(q.id)}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small ghost" data-act="askGemini" data-q="${esc(q.id)}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button></div></details></div>` : "") : !reveal && !simMode ? `<div class="row qpre">${lsnRow?`<button class="btn small ghost" data-act="lspot" data-q="${esc(q.id)}" title="${T2("Abre a lição no trecho mais parecido com o enunciado (sem usar a resposta)","Opens the lesson at the passage closest to the stem (without using the answer)")}">🎯 ${T2("Ver na lição","See in lesson")}</button>`:""}<button class="btn small ghost" data-act="askClaude" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">💬 ${T2("Perguntar ao Claude","Ask Claude")}</button><button class="btn small ghost" data-act="askGemini" data-q="${esc(q.id)}" title="${T2("Pede ajuda para raciocinar, sem o gabarito","Asks for help reasoning, without the answer")}">✦ ${T2("Perguntar ao Gemini","Ask Gemini")}</button></div>` : "";
   const lsn=!simMode&&lessonOf(q.discipline,q.topic);
-  const lp=!!lsn&&LP_Q.matches&&lpOn();
-  const pane=lp?`<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(annAutoOn()?"a":S.annId==="L:"+lsn.id?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`:"";
+  const lp=!sc&&!!lsn&&LP_Q.matches&&lpOn();
+  const pane=lp?lpPaneHTML(lsn):"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="qgrid${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}${pre}</div>${lp?"</div>":""}${pane}</div>`;
+  return `<div class="${sc?"sqgrid":"qgrid"}${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}${pre}</div>${lp?"</div>":""}${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
 function askPrompt(id){
@@ -2066,6 +2143,11 @@ function askGemini(id){
   copyText(txt).then(()=>toast(T2("Texto copiado. Cole no Gemini (toque longo → Colar)","Text copied. Paste it in Gemini")),()=>toast(T2("Não consegui copiar o texto","Could not copy the text")));
   window.open("https://gemini.google.com/app","_blank","noopener");
 }
+// fim da prova na íntegra: temas em que errou, com a lição de cada um
+function sqWrongHTML(s){ if(!s.exam) return ""; const m=new Map();
+  s.items.forEach(it=>{ const q=S.qs.get(it.id); if(!q||it.pick===null||it.pick===q.correct) return; const k=q.discipline+"|"+q.topic; const o=m.get(k)||{d:q.discipline,t:q.topic,n:0}; o.n++; m.set(k,o); });
+  const R=[...m.values()].sort((a,b)=>b.n-a.n); if(!R.length) return "";
+  return `<div class="panel"><h2>${T2("Temas para rever","Topics to review")}</h2><div class="list">${R.map(r=>{ const l=lessonFor(r.d,r.t); return `<div class="li" style="cursor:default;align-items:center"><span class="t" style="font-family:var(--f-ui)"><b>${esc(topicName(r.d,r.t)||r.t)}</b><br><small style="color:var(--subtle)">${r.n} ${T2(r.n===1?"errada":"erradas",r.n===1?"missed":"missed")}</small></span>${l?`<button class="btn small" data-act="endLesson" data-id="${esc(l.id)}">📖 ${T2("Lição","Lesson")}</button>`:""}</div>`; }).join("")}</div></div>`; }
 function vResult(v){
   const s=S.session; const n=s.items.length; const ok=s.items.filter(it=>{ const q=S.qs.get(it.id); return q && it.pick===q.correct; }).length;
   const ans=s.items.filter(it=>it.pick!==null).length, bad=ans-ok, secs=s.secs ?? (now()-s.t0)/1000;
@@ -2099,6 +2181,7 @@ function vResult(v){
   v.innerHTML = `
    <div>${head}</div>
    <div class="row endacts" style="flex-wrap:wrap;gap:8px">${acts}</div>
+   ${sqWrongHTML(s)}
    <div class="panel"><h2>${tr("reviewList")}</h2><div class="list">${s.items.map((it,i)=>{ const q=S.qs.get(it.id); if(!q) return ""; const c=content(q).c; const good=it.pick===q.correct; return `
      <button type="button" class="li" data-act="reviewItem" data-i="${i}"><span class="t">${i+1}. ${safe(c.stem)}</span><span class="st ${it.pick===null?"no":good?"ok":"bad"}">${it.pick===null?"—":good?"✓":"✗"}</span>
      <span class="m">${tagsOf(q).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</span></button>`; }).join("")}</div></div>`;
@@ -2224,7 +2307,7 @@ function fullExamsHTML(){ const d=curDisc(); if(!d||set().std==="usmle") return 
      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="study">${T2("Comentada","Tutor")}</button><button class="btn small primary" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="sim">${T2("Simulado","Timed")}</button></span></div>`; }).join("")}</div></div>`).join("")}`; }
 function startFullExam(ex, mode){ const d=curDisc(); const x=fullExams(d.id).find(e=>e.ex===ex); if(!x) return;
   const qs=x.list.map(i=>i.q); const su=Object.assign(defaultSetup(),{mode, count:0, shuffleQ:false, shuffleO:false}); S.setup=su;
-  S.session=buildSession("study", qs, su); S.session.exam=ex; go("study"); }
+  S.session=buildSession("study", qs, su); S.session.exam=ex; S.session.scroll=true; go("study"); } // página única com rolagem (23/11/2026)
 // incidência: cada aparição em prova (questão repetida em anos diferentes conta de novo)
 function incidence(dId, exId){ const d=discById(dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
   const okT=new Set((d.topics||[]).filter(t=>!exId||t.exam===exId).map(t=>t.id));
@@ -3526,7 +3609,7 @@ document.addEventListener("click", async e=>{
   const lgB=e.target.closest("[data-lang]"); if(lgB){ set().lang=lgB.dataset.lang; saveProg(); render(); return; }
   const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; setupKeep(); render(); return; }
   const sw=e.target.closest("[data-sw]"); if(sw){ const k=sw.dataset.sw; S.setup[k]=!S.setup[k]; setupKeep(); render(); return; }
-  const pk=e.target.closest("[data-pick]"); if(pk && !pk.disabled){ const s=S.session; if(!s) return; const it=s.items[s.i]; const q=S.qs.get(it.id); const p=Number(pk.dataset.pick);
+  const pk=e.target.closest("[data-pick]"); if(pk && !pk.disabled){ const s=S.session; if(!s) return; if(s.scroll&&!s.done){ const sec=pk.closest(".sq"); if(sec) sqPick(sec,Number(pk.dataset.pick)); return; } const it=s.items[s.i]; const q=S.qs.get(it.id); const p=Number(pk.dataset.pick);
      if(s.mode==="study"){ it.pick=p; record(q,p,{rev:s.kind==="review", ms:it.t0?now()-it.t0:null}); render(); const r=$(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); }
      else { it.pick=p; render(); }
      return; }
@@ -3584,7 +3667,8 @@ document.addEventListener("click", async e=>{
   if(act==="repAlt"){ S.rep.alt=Number(a.dataset.val); return S.repDraw(); }
   if(act==="repSend"){ const r=S.rep; const ta=$("#repTxt"); r.text=(ta?ta.value:r.text||"").trim(); if(r.kind==="key"&&r.alt==null&&!r.text) return toast(T2("Escolha a alternativa correta ou escreva uma observação","Pick the correct option or add a note"));
     S.prog.reports=(S.prog.reports||[]).concat([{id:"r"+now().toString(36), qid:r.qid, ts:now(), kind:r.kind, alt:r.alt, text:r.text||"", status:"aberta"}]); saveProg(); flushProg&&flushProg(); closeSheet(); toast(T2("Contestação enviada","Report sent")); return render(); }
-  if(act==="lspot") return lspotOpen(a.dataset.q);
+  if(act==="sqGo") return sqGo(Number(a.dataset.i));
+  if(act==="lspot"){ const s=S.session; if(s?.scroll&&!s.done){ const i=s.items.findIndex(it=>it.id===a.dataset.q); if(i>=0) sqSetCur(i); } return lspotOpen(a.dataset.q); }
   if(act==="lpane"){ lpSet(!lpOn()); S.lpRead=false; S.lpFull=false; return render(); }
   if(act==="lpRead"){ S.lpRead=!S.lpRead; return render(); }
   if(act==="lpFull"){ S.lpFull=!S.lpFull; return render(); }
@@ -3728,6 +3812,10 @@ document.addEventListener("keydown", e=>{
   if(S.view==="tutor"&&S.tuB!=null){ if(k==="escape"||k==="backspace"){ e.preventDefault(); tuUp(); } else if(k==="arrowright") click('[data-act="tuOpen"][data-nx]'); else if(k==="arrowleft") click('[data-act="tuOpen"][data-pv]'); else if(k==="enter") click('.tbmain [data-act="tutorBlock"],.tbmain [data-act="tutorLesson"]'); return; }
   const s=S.session; if(!s||s.done||!(S.view==="study"||S.view==="review")) return;
   const idx="abcde".indexOf(k)>=0?"abcde".indexOf(k):"123456789".indexOf(k); // F, G, I… são atalhos: da 6ª em diante, pelos números
+  if(s.scroll){ // prova em página única: letras respondem a questão da vez; ← → (ou J/K) vão para a anterior/próxima
+    if(idx>=0){ const b=document.querySelectorAll("#view #sq-"+s.i+" .opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
+    if(k==="arrowright"||k==="j"){ e.preventDefault(); return sqGo(s.i+1); } if(k==="arrowleft"||k==="k"){ e.preventDefault(); return sqGo(s.i-1); }
+    if(k==="f") click('#view [data-act="fs"]'); return; }
   if(idx>=0){ const b=document.querySelectorAll("#view .opts .opt")[idx]; if(b&&!b.disabled){ b.click(); e.preventDefault(); } return; }
   if(k==="arrowright"||(k==="enter"&&!e.target.closest("button"))||(k===" "&&!e.target.closest("button"))){ if(!click('#view [data-act="next"]') && k!==" ") click('#view [data-act="finish"]'); return; }
   if(k==="arrowleft"){ click('#view [data-act="prev"]'); return; }

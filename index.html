@@ -431,6 +431,9 @@ body.g-drag iframe{pointer-events:none}
 .lesson .dif{display:block;margin-top:3px;font-size:.92em;color:var(--usmle)} .lesson .dif::before{content:"≠ "}
 .rvbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 2px} .rvbar .flabel{font-size:12px;color:var(--muted);margin-right:2px}
 .lesson.review table.stack td:first-child{font-weight:600;color:var(--ink)}
+/* revisão final: cabeçalho da tabela fica preso no topo ao rolar (pedido do Léo, 23/11); a tabela cabe na largura para o sticky funcionar */
+.lesson.review .tbl{overflow:visible} .lesson.review td{min-width:0;overflow-wrap:break-word;hyphens:auto}
+.lesson.review thead th{position:sticky;top:var(--rvst,0px);z-index:2;background:var(--surface-2);box-shadow:0 1px 0 var(--line)}
 .lesson td.rvx:not(.peek){color:transparent!important;cursor:pointer;background:repeating-linear-gradient(135deg,var(--line) 0 6px,transparent 6px 14px);border-radius:4px;min-height:2.2em}
 .lesson td.rvx:not(.peek) *{color:transparent!important;background:none!important}
 .lesson td.rvx:not(.peek)::before{color:var(--subtle)!important}
@@ -2613,6 +2616,12 @@ function rvMarkCells(root,H){ root.querySelectorAll("table").forEach(tb=>{ if(tb
 function rvBarHTML(l){ const cols=rvCols(l.html); if(!cols.length) return ""; const H=rvHide(), hasN=/<table class=""/.test(l.html||"");
   const c=(k,t)=>`<button type="button" class="chip" data-act="rvCol" data-k="${k}" aria-pressed="${H.has(k)}">${esc(t)}</button>`;
   return `<div class="rvbar" role="group" aria-label="${T2("Esconder colunas","Hide columns")}"><span class="flabel">🙈 ${T2("Esconder para treinar:","Hide to drill:")}</span>${cols.slice(1).map((t,i)=>c(i+1,t)).join("")}${hasN?c(0,T2("Números","Numbers")):""}${H.size?`<button type="button" class="chip" data-act="rvCol" data-k="none">${T2("Mostrar tudo","Show all")}</button>`:""}</div>`; }
+// cabeçalho preso da revisão: desconta a barra fixa de cima (topo do app na página, "Voltar à questão" na folha)
+function rvStick(){ document.querySelectorAll("article.lesson.review").forEach(a=>{ let sc=a.parentElement; while(sc&&sc!==document.body&&sc!==document.documentElement){ const o=getComputedStyle(sc).overflowY; if(o==="auto"||o==="scroll") break; sc=sc.parentElement; }
+    let off=0; const pin=el=>{ if(!el||!el.offsetParent) return 0; const cs=getComputedStyle(el); return cs.position==="sticky"||cs.position==="fixed"?el.offsetHeight+(parseFloat(cs.top)||0):0; };
+    if(!sc||sc===document.body||sc===document.documentElement) off=pin(document.querySelector(".top")); else off=pin(sc.querySelector(":scope>.lsh-top"));
+    const v=Math.max(0,Math.round(off))+"px"; if(a.style.getPropertyValue("--rvst")!==v) a.style.setProperty("--rvst",v); }); }
+{ let rq=0; const k=()=>{ if(rq) return; rq=requestAnimationFrame(()=>{ rq=0; rvStick(); }); }; try{ new MutationObserver(k).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){} addEventListener("resize",k); }
 function rvApply(){ const a=$("#view article.lesson.review"); if(a) rvMarkCells(a,rvHide()); const b=$("#view .rvbar"), l=S.lessons.get(S.lessonId); if(b&&l) b.outerHTML=rvBarHTML(l); }
 function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-all$/.test(S.lessonId)?(reviewsOf(S.lessonId.split(":")[1]),S.lessons.get(S.lessonId)):null); if(!l){ S.view="study"; return vStudy(v); }
   const rv=isReview(l), rvV=rv?rvSplit(l).vesp:"";

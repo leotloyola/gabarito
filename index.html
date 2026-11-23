@@ -691,6 +691,15 @@ html body #view .sqgrid{display:flex;flex-direction:column;gap:12px;min-width:0}
 html body #view .sqgrid .qleft,html body #view .sqgrid .qright{display:flex;flex-direction:column;gap:12px;position:static;top:auto;max-height:none;overflow:visible;min-width:0}
 .sqend{display:flex;justify-content:center;padding:12px 0 56px}
 .sqwrap .lptn{display:none!important}
+/* prova em rolagem: tema escuro com a cor da disciplina (variáveis --sq-* calculadas em sqTheme) */
+body.sqdk{--bg:var(--sq-bg);--surface:var(--sq-sf);--surface-2:var(--sq-s2);--pill:color-mix(in srgb,var(--sq-ln) 70%,transparent);--ink:#F4F4F5;--ink-2:#E7E7EA;--muted:#B9B9C2;--subtle:#9A9AA5;--line:var(--sq-ln);--hair:rgba(255,255,255,.07);
+  --accent:var(--sq-ac);--accent-ink:#0B0C0E;--accent-soft:var(--sq-acs);--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;
+  --ok:#34D399;--ok-soft:#06281E;--ok-bar:#10B981;--bad:#FB7185;--bad-soft:#2E0C16;--bad-bar:#E11D48;--warn:#FCD34D;--warn-soft:#271A04;--warn-line:#78350F;--shadow:none;--shadow-md:none;color-scheme:dark;background:var(--bg);color:var(--ink)}
+body.sqdk .top{background:color-mix(in srgb,var(--bg) 86%,transparent)}
+body.sqdk .ann-svg.mk{mix-blend-mode:normal;opacity:.42}
+body.sqdk :is(.sqpage,.sqwrap>.qcol) .ann-svg.ink path[fill="#111827"]{fill:#F4F4F5} /* caneta preta vira clara no fundo escuro */
+body.sqdk .sqflag[aria-pressed="true"]{color:#FDA4AF}
+
 .sqflag{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:none;border-radius:99px;padding:3px 10px;font:600 12px var(--f-ui);color:var(--muted);cursor:pointer;filter:grayscale(1);opacity:.75}
 .sqflag[aria-pressed="true"]{filter:none;opacity:1;color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
 .sqn.fl{position:relative}.sqn.fl::after{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#F59E0B;box-shadow:0 0 0 1.5px var(--bg)}
@@ -1749,7 +1758,7 @@ window.addEventListener("popstate", e=>{
   if(S.lTop){ S.lTop=false; const top=()=>{ if(S.view==="lesson"&&window.scrollY) window.scrollTo(0,0); }; requestAnimationFrame(()=>requestAnimationFrame(top)); setTimeout(top,300); }
 });
 function inSession(){ return (S.session && !S.session.done && (S.view==="study"||S.view==="review") && (S.view==="review"?S.session.kind==="review":S.session.kind!=="review")) || (S.view==="cards" && S.fcDeck && S.fcDeck.i < S.fcDeck.ids.length); }
-function render(){ document.body.classList.remove("lpread","lpfull"); document.getElementById("lpFullBtn")?.remove(); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
+function render(){ document.body.classList.remove("lpread","lpfull","sqdk"); document.getElementById("lpFullBtn")?.remove(); document.body.classList.toggle("focus", !!inSession() && set().focus!==false || lreadOn()); document.body.classList.toggle("lread", lreadOn()); document.body.classList.toggle("qnav-on",!!(S.session&&!S.session.done&&(S.view==="study"||S.view==="review"))); document.documentElement.lang=set().lang==="en"?"en":"pt-BR"; renderCtx(); renderTabs(); const v=$("#view");
   if(!S.catalog){ v.innerHTML = S.dbState==="loading"? `<p class="empty">${tr("loading")}…</p>` : `<div class="panel"><h2>${tr("noData")}</h2><p class="lede">${tr("howAddTxt")}</p></div>`; return; }
   ({home:vHome, study:vStudy, review:vReview, cards:vCards, stats:vStats, bank:vBank, plan:vPlan, tutor:vTutor, mapa:vMapa, lesson:vLesson, search:vSearch}[S.view]||vHome)(v); annInit(v); lreadBar(); lfSync();
 }
@@ -2024,6 +2033,17 @@ function sqHeadB(sc){ const h=$("#view .sqtop"); return h?h.getBoundingClientRec
 // lição da questão atual; se o tema não tem lição, a mais próxima para trás (senão para frente), para o painel não sumir
 function sqLesson(s){ const L=i=>{ const q=S.qs.get(s.items[i]?.id); return q&&lessonOf(q.discipline,q.topic); };
   for(let i=s.i;i>=0;i--){ const l=L(i); if(l) return l; } for(let i=s.i+1;i<s.items.length;i++){ const l=L(i); if(l) return l; } return null; }
+/* Cor própria da prova em rolagem (23/11/2026, pedido do Léo): fundo escuro tingido com a cor da disciplina.
+   A mistura com quase-preto é ajustada até a luminância ficar baixa (≤ 0,03), então o texto claro passa
+   do contraste AA em qualquer cor de disciplina (inclusive amarelos/verdes claros); o destaque é a cor da
+   disciplina clareada até ler bem sobre o fundo. A lição ao lado mantém o próprio fundo (sépia etc.). */
+function sqTheme(){ const s=S.session, q=S.qs.get(s?.items?.[0]?.id), d=q&&discById(q.discipline); const m=String(discColor(d)||"").match(/^#?([0-9a-f]{6})$/i);
+  const c=m?[0,2,4].map(i=>parseInt(m[1].substr(i,2),16)):[15,118,110], K=[9,11,14];
+  const mix=(a,b,t)=>a.map((x,i)=>Math.round(x*(1-t)+b[i]*t)), lin=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }, lum=a=>.2126*lin(a[0])+.7152*lin(a[1])+.0722*lin(a[2]);
+  const at=L=>{ let t=.62, a=mix(K,c,t); while(lum(a)>L&&t>.02){ t*=.88; a=mix(K,c,t); } return a; }, hex=a=>"#"+a.map(x=>x.toString(16).padStart(2,"0")).join("");
+  let ac=c; for(let k=0;k<24&&lum(ac)<.38;k++) ac=mix(ac,[255,255,255],.14);
+  const st=document.body.style; st.setProperty("--sq-bg",hex(at(.028))); st.setProperty("--sq-sf",hex(at(.05))); st.setProperty("--sq-s2",hex(at(.075))); st.setProperty("--sq-ln",hex(at(.12))); st.setProperty("--sq-ac",hex(ac)); st.setProperty("--sq-acs",hex(at(.06)));
+  document.body.classList.add("sqdk"); }
 function vScroll(v){
   const s=S.session; clearInterval(timerInt);
   const old=$("#view #sq-"+s.i), off=old?old.getBoundingClientRect().top-sqTopOf(sqScroller()):null; // mesma questão no mesmo lugar ao redesenhar
@@ -2033,6 +2053,7 @@ function vScroll(v){
   const body=`${sqHead(s)}<div class="sqlist">${s.items.map((_,i)=>sqItem(s,i)).join("")}</div><div class="sqend"><button class="btn primary" data-act="finish">${tr("finish")}</button></div>`;
   const tog=sqPmTog(rv,lsn,pm), pane=!side?"":pm==="rv"?sqRvPaneHTML(rv,tog):lpPaneHTML(lsn).replace('<div class="qlh"><b>','<div class="qlh">'+tog+'<b>');
   v.innerHTML=side?`<div class="qgrid l3 sqwrap"><div class="qcol">${body}</div>${pane}</div>`:`<div class="sqpage">${body}</div>`;
+  sqTheme();
   if(s.mode==="sim"){ timerInt=setInterval(()=>{ const el=$("#timer"); if(el) el.textContent=fmtTime((now()-s.t0)/1000); else clearInterval(timerInt); },1000); }
   document.body.classList.toggle("lpread",!!(S.lpRead&&side&&pm==="l")); document.body.classList.toggle("lpfull",!!(S.lpFull&&side)); lpFullBtn(); lpToc(); lpFit(); sqTopPos(); if(pm==="rv"&&side) requestAnimationFrame(()=>sqRvMark(true));
   const place=()=>{ const el=$("#view #sq-"+s.i), sc=sqScroller(); if(!el) return; if(off==null&&s.i===0) return;

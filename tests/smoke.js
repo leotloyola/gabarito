@@ -351,6 +351,17 @@ function fixture(){
         sqGo(n-1,false); await new Promise(r=>setTimeout(r,120)); const cur=S.session.i; document.querySelector('.sqend [data-act="finish"]').click(); await new Promise(r=>setTimeout(r,50));
         return {n,res,strip,rec1,cx,lspot,cur,done:S.session.done,wrong:/Temas para rever/.test(document.getElementById("view").textContent),ov:document.documentElement.scrollWidth-document.documentElement.clientWidth}; });
       if(r.n<2||!r.res||!r.strip||!r.rec1||!r.cx||!r.lspot||!r.done||!r.wrong||r.ov>0||r.cur<1) throw new Error(JSON.stringify(r)); await p.evaluate(()=>{ set().std="all"; S.session=null; }); });
+    await step("prova em rolagem: 🚩, refazer, rodada final, zerar, revisão ao lado", async()=>{ await p.evaluate(()=>{ S.session=null; S.studyTab="full"; set().std="ufpr"; go("study"); }); await p.click('[data-act="fullExam"][data-mode="study"]'); await p.waitForTimeout(100);
+      const r=await p.evaluate(async()=>{ const s=S.session, ex=s.exam, q0=S.qs.get(s.items[0].id), q2=S.qs.get(s.items[2].id); S.prog.exr={};
+        document.querySelector('#sq-0 [data-pick="'+((q0.correct+1)%5)+'"]').click(); document.querySelector('#sq-2 [data-pick="'+q2.correct+'"]').click(); document.querySelector('#sq-2 [data-act="sqFlag"]').click();
+        const redo=exrRedo(ex).map(q=>q.id).sort().join(), want=[q0.id,q2.id].sort().join(), fin=exrFinal().length;
+        S.session=null; S.studyTab="full"; go("study"); const rowBtn=!!document.querySelector('[data-act="exRedo"]'), finBtn=!!document.querySelector('[data-act="exFinal"]');
+        document.querySelector('[data-act="exRedo"]').click(); const n2=S.session.items.length, sc=S.session.scroll;
+        S.lessons.set("lesson:da:revisao-P1",{id:"lesson:da:revisao-P1",kind:"lesson",discipline:"da",topic:"revisao-P1",review:"P1",title:"Revisão P1",html:'<h2>Disciplina A tema 1</h2><div class="tbl"><table><thead><tr><th>Condição</th><th>B</th></tr></thead><tbody><tr><td>Enunciado alternativa questão</td><td>x</td></tr></tbody></table></div>'});
+        const lps=LP_S; LP_S=true; render(); await new Promise(r=>setTimeout(r,80)); LP_S=lps; const rvPane=!!document.querySelector(".qlesson.sqrv")||!LP_Q.matches;
+        S.session=null; S.studyTab="full"; go("study"); const z=document.querySelector('[data-act="exZero"]'); z.click(); z.click(); const after=exrRedo(ex).length; S.lessons.delete("lesson:da:revisao-P1");
+        return {redo:redo===want,fin,rowBtn,finBtn,n2,sc,rvPane,after}; });
+      if(!r.redo||r.fin<2||!r.rowBtn||!r.finBtn||r.n2!==r.fin||!r.sc||!r.rvPane||r.after!==0) throw new Error(JSON.stringify(r)); await p.evaluate(()=>{ set().std="all"; S.session=null; }); });
     await step("review session", ()=>p.evaluate(()=>{ S.session=null; go("review"); document.querySelector('[data-act="startReview"]')?.click(); }));
     await step("flashcards", ()=>p.evaluate(()=>{ S.session=null; S.fcDeck=null; go("cards"); document.querySelector('[data-act="fcStart"]')?.click(); }));
     await step("banco", ()=>p.evaluate(()=>{ set().std="banco"; S.session=null; go("home"); go("stats"); go("bank"); const n=discQs().length; if(n!==3) throw new Error("banco deveria ter 3 questões: "+n); set().std="all"; if(discQs().some(q=>q.standard==="banco")) throw new Error("Ambos não pode incluir banco"); }));

@@ -1279,6 +1279,9 @@ function annKeepNext(s){
   // anotando na lição ao lado: segue anotando na lição (a do tema da nova questão)
   if(S.annId&&String(S.annId).startsWith("L:")&&LP_Q.matches&&lpOn()){ const q=S.qs.get(s.items[s.i]?.id), l=q&&lessonFor(q.discipline,q.topic); return l?"L:"+l.id:null; }
   return annPref("keep","0")==="1"&&S.annId&&!String(S.annId).startsWith("L:")&&s.items[s.i]?s.items[s.i].id:null; }
+function annOpenNext(s){ const was=new Set([...S.annOpen,...(S.annId?[S.annId]:[])]), q=S.qs.get(s.items[s.i]?.id), l=q&&LP_Q.matches&&lpOn()&&lessonFor(q.discipline,q.topic), nx=new Set();
+  for(const o of was){ if(String(o).startsWith("L:")){ if(l) nx.add("L:"+l.id); } else if(annPref("keep","0")==="1"&&q) nx.add(q.id); }
+  const k=annKeepNext(s); S.annOpen=nx; S.annId=k&&nx.has(k)?k:k||[...nx][0]||null; if(S.annId) S.annOpen.add(S.annId); }
 function annPref(k,d){ try{ return localStorage.getItem("gab.ann."+k)||d; }catch(_){ return d; } }
 /* cada lado lembra a própria caneta (22/11/2026): "L" = lição, "Q" = questão; ferramenta, cor e espessura separadas */
 function annSide(o){ return String(o===undefined?S.annId:o||"").startsWith("L:")?"L":"Q"; }
@@ -1294,22 +1297,26 @@ function annCount(owner){ return annKeys(owner).reduce((n,k)=>n+annotationStroke
    Só a caneta escreve; dedo e mouse rolam, tocam links e passam a questão. No PC (sem caneta) segue o botão ✍ Anotar.
    Anotar a questão (✍ na questão) tem prioridade; ao concluir, volta para a lição. Desliga em Ajustes (por aparelho). */
 const ANN_TAB_Q=matchMedia("(pointer:coarse) and (min-width:600px)");
-function annAutoOn(){ if(annPref("auto","1")==="0") return false; if(ANN.pen||ANN_TAB_Q.matches) return true; return annPref("pen","0")==="1"; }
+function annAutoOn(){ if(annPref("auto","0")!=="1") return false; /* 23/11/2026: padrão desligado — o Léo prefere o botão ✍ */ if(ANN.pen||ANN_TAB_Q.matches) return true; return annPref("pen","0")==="1"; }
 /* 22/11/2026: a questão também fica sempre anotável, e na tela dividida as duas colunas ficam abertas juntas;
    a caneta que encosta numa coluna a torna a ativa (barra e ferramenta daquela coluna). */
 function annIsAuto(owner){ return !!owner&&annAutoOn(); }
 function annAuto(owner){ if(annIsAuto(owner)&&(!S.annId||annSide(S.annId)===annSide(owner))){ if(S.annId!==owner) S.annTool=annToolOf(owner); S.annId=owner; } }
+/* 23/11/2026: várias áreas abertas ao mesmo tempo (tela dividida: questão e lição), cada uma ligada pelo seu ✍; a ativa (barra) é a última em que a caneta encostou */
+S.annOpen=S.annOpen||new Set();
+{ let v=S.annId??null; Object.defineProperty(S,"annId",{configurable:true,enumerable:true,get(){ return v; },set(x){ v=x??null; if(!v) S.annOpen.clear(); }}); } // fechar a anotação ativa sem outra aberta fecha tudo
+function annOpen(o){ return !!o&&(o===S.annId||S.annOpen.has(o)||annIsAuto(o)); }
 function annSwitch(owner){ if(S.annId===owner) return; S.annId=owner; S.annTool=annToolOf(owner); annBarsSync(); }
-function annBarsSync(){ document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar, f=b.querySelector(".ann-float"); if(o===S.annId?!f&&!document.querySelector('#annHost .ann-float[data-o="'+CSS.escape(o)+'"]'):!!f) b.outerHTML=annBar(o,b.dataset.mark==="1"); });
+function annBarsSync(){ document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar, f=b.querySelector(".ann-float"), t=b.querySelector('[data-act="annToggle"]'); if((o===S.annId?!f&&!document.querySelector('#annHost .ann-float[data-o="'+CSS.escape(o)+'"]'):!!f)||t&&(t.getAttribute("aria-pressed")==="true")!==annOpen(o)) b.outerHTML=annBar(o,b.dataset.mark==="1"); });
   const hf=document.querySelector("#annHost .ann-float"); if(hf&&hf.dataset.o!==S.annId){ document.getElementById("annHost").innerHTML=""; const b=S.annId&&document.querySelector('[data-ann-bar="'+CSS.escape(S.annId)+'"]'); if(b&&!b.querySelector(".ann-float")) b.outerHTML=annBar(S.annId,b.dataset.mark==="1"); }
-  document.querySelectorAll("[data-ann-surface]").forEach(x=>{ x.classList.toggle("ann-auto",annIsAuto(x.dataset.owner)); x.classList.toggle("ann-enabled",x.dataset.owner===S.annId||annIsAuto(x.dataset.owner)); });
+  document.querySelectorAll("[data-ann-surface]").forEach(x=>{ x.classList.toggle("ann-auto",annIsAuto(x.dataset.owner)); x.classList.toggle("ann-enabled",annOpen(x.dataset.owner)); });
   annFloatPos(); if(typeof lreadBar==="function") lreadBar(); }
 function annBar(owner,mark){
   annAuto(owner); const auto=annIsAuto(owner);
   const active=S.annId===owner, o=esc(owner), tool=active&&S.annTool||annToolOf(owner), count=annCount(owner);
   let h='<div class="ann-toolbar" data-ann-bar="'+o+'" data-mark="'+(mark?1:0)+'">';
   if(mark){ const m=isMarked(owner); h+='<button type="button" class="btn small '+(m?"primary":"")+'" data-act="markToggle" data-q="'+o+'" aria-pressed="'+m+'" title="'+(m?tr("unmarkQuestion"):tr("markQuestion"))+'">'+(m?"🔖 "+T2("Marcada","Marked"):"☆ "+T2("Marcar","Mark"))+'</button>'; }
-  if(!auto) h+='<button type="button" class="btn small '+(active?"primary":"")+'" data-act="annToggle" data-q="'+o+'" aria-pressed="'+active+'">✍ '+(active?tr("annotationOn"):tr("annotate"))+(count?" · "+count:"")+'</button>';
+  const op=annOpen(owner); if(!auto) h+='<button type="button" class="btn small ann-tg '+(op?"primary":"")+'" data-act="annToggle" data-q="'+o+'" aria-pressed="'+op+'" title="'+(op?T2("Fechar anotação","Close annotation"):tr("annotate"))+'" aria-label="'+(op?T2("Fechar anotação","Close annotation"):tr("annotate"))+'">✍</button>';
   if(active){
     const tb=(t,ic,l)=>'<button type="button" class="btn small '+(tool===t?"primary":"")+'" data-act="annTool" data-v="'+t+'" aria-pressed="'+(tool===t)+'" title="'+l+'">'+ic+' <span class="ann-lbl">'+l+'</span></button>';
     const pal=(tool==="pen"||tool==="marker")?'<span class="ann-palette" role="group" aria-label="'+T2("Cor","Color")+'">'+ANN_COLORS[tool].map(c=>'<button type="button" class="ann-color" data-act="annColor" data-tool="'+tool+'" data-v="'+c+'" style="--swatch:'+c+'" aria-label="'+T2("Cor","Color")+' '+c+'" aria-pressed="'+(annColor(tool)===c)+'"></button>').join("")+'</span>':"";
@@ -1321,7 +1328,7 @@ function annBar(owner,mark){
   return h+'</div>';
 }
 function annotationControls(q){ return S.qs.has(q.id)?annBar(q.id,true):""; }
-function annSurfaceHTML(key,owner,html){ annAuto(owner); return '<div class="ann-surface'+(S.annId===owner||annIsAuto(owner)?" ann-enabled":"")+(annIsAuto(owner)?" ann-auto":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
+function annSurfaceHTML(key,owner,html){ annAuto(owner); return '<div class="ann-surface'+(annOpen(owner)?" ann-enabled":"")+(annIsAuto(owner)?" ann-auto":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
 function annotationSurface(q,html,part){ return S.qs.has(q.id)?annSurfaceHTML(part?q.id+"#"+part:q.id,q.id,html):html; }
 const ANN={observer:null,observed:new WeakSet(),stroke:null,touch:null,hist:[],seq:0,pen:false};
 function annBlocks(surface){ let el=surface.querySelector(".ann-content"); while(el&&el.children.length===1&&/^(DIV|ARTICLE|SECTION)$/.test(el.firstElementChild.tagName)) el=el.firstElementChild; return el?[...el.children]:[]; }
@@ -1449,7 +1456,7 @@ function annInit(root=document){
 }
 // a barra flutuante fica sempre visível; a original vira só o botão "Concluir"
 function annFloatPos(){ let host=document.getElementById("annHost"); if(!host){ host=document.createElement("div"); host.id="annHost"; document.body.appendChild(host); }
-  if(annAutoOn()&&!ANN.stroke&&!ANN.fp){ const lay=$("#layer")?.innerHTML?$("#layer"):null, root=lay&&lay.querySelector(".ann-auto[data-ann-surface]")?lay:$("#view"), cur=S.annId&&root?.querySelector('[data-ann-surface][data-owner="'+CSS.escape(S.annId)+'"]'), first=root?.querySelector(".ann-auto[data-ann-surface]");
+  if(!ANN.stroke&&!ANN.fp){ const lay=$("#layer")?.innerHTML?$("#layer"):null, root=lay&&lay.querySelector(".ann-enabled[data-ann-surface]")?lay:$("#view"), cur=S.annId&&root?.querySelector('[data-ann-surface][data-owner="'+CSS.escape(S.annId)+'"]'), first=root?.querySelector(".ann-enabled[data-ann-surface]");
     const hf=host.querySelector(".ann-float"), bad=hf&&hf.dataset.o!==S.annId, kept=[...document.querySelectorAll("[data-ann-bar]")].some(b=>b.dataset.annBar!==S.annId&&b.querySelector(".ann-float"));
     if((!cur&&first)||bad||kept){ ANN.fp=1; try{ if(!cur&&first){ S.annId=first.dataset.owner; S.annTool=annToolOf(S.annId); } annBarsSync(); }finally{ ANN.fp=0; } return; } }
   const f=document.querySelector("[data-ann-bar] .ann-float"); if(f){ host.innerHTML=""; host.appendChild(f); } else if(!S.annId||!document.querySelector('[data-ann-bar="'+CSS.escape(S.annId)+'"]')) host.innerHTML=""; /* chamada repetida (vista + folha) não apaga a barra já movida */ document.body.classList.toggle("ann-on",!!host.firstElementChild); annLpPos(); }
@@ -1461,7 +1468,7 @@ function annLpPos(){ lpFullPos(); /* tela dividida: barra compacta no rodapé da
 function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
-  document.querySelectorAll("[data-ann-surface]").forEach(s=>{ annAuto(s.dataset.owner); s.classList.toggle("ann-auto",annIsAuto(s.dataset.owner)); s.classList.toggle("ann-enabled",s.dataset.owner===S.annId||annIsAuto(s.dataset.owner)); });
+  document.querySelectorAll("[data-ann-surface]").forEach(s=>{ annAuto(s.dataset.owner); s.classList.toggle("ann-auto",annIsAuto(s.dataset.owner)); s.classList.toggle("ann-enabled",annOpen(s.dataset.owner)); });
   annInit($("#view")); if($("#layer").innerHTML) annInit($("#layer")); lreadBar(); lfSync();
 }
 function annPt(e,g){ return [e.clientX-g.sr.left,e.clientY-g.sr.top,e.pointerType==="pen"||e.pressure>0&&e.pressure!==.5?Math.max(.05,Math.min(1,e.pressure||.5)):.5]; }
@@ -1495,13 +1502,13 @@ function annFinish(e,given){
   st.mig=ANN_MIG; annUpgrade(st,p,g,B);
   annSet(A.key,annotationStrokes(A.key).concat([st])); annDraw(A.surface); annRefreshBars();
 }
-function annRefreshBars(){ document.querySelectorAll("[data-ann-bar],#annHost").forEach(b=>{ if(b.id==="annHost"){ const c=annCount(S.annId||""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); return; } const o=b.dataset.annBar; if(o!==S.annId) return; const btn=b.querySelector('[data-act="annToggle"]'); const c=annCount(o); if(btn&&!btn.closest(".ann-float")) btn.textContent="✍ "+tr("annotationOn")+(c?" · "+c:""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); }); }
+function annRefreshBars(){ document.querySelectorAll("[data-ann-bar],#annHost").forEach(b=>{ if(b.id==="annHost"){ const c=annCount(S.annId||""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); return; } const o=b.dataset.annBar; if(o!==S.annId) return; const btn=b.querySelector('[data-act="annToggle"]'); const c=annCount(o); if(btn&&!btn.closest(".ann-float")) btn.textContent="✍"; b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); }); }
 document.addEventListener("pointerdown",e=>{
   if(ANN.touch?.raf){ cancelAnimationFrame(ANN.touch.raf); ANN.touch.raf=0; }
   if(e.pointerType==="pen"&&!ANN.pen) annPenSeen();
   const inp=e.target.closest?.(".ann-input"); if(!inp) return;
-  const surface=inp.closest("[data-ann-surface]"); if(!surface||surface.dataset.owner!==S.annId&&!surface.classList.contains("ann-auto")) return;
-  if(e.pointerType==="pen"&&surface.dataset.owner!==S.annId&&!ANN.stroke) annSwitch(surface.dataset.owner);
+  const surface=inp.closest("[data-ann-surface]"); if(!surface||surface.dataset.owner!==S.annId&&!surface.classList.contains("ann-enabled")) return;
+  if(e.pointerType!=="touch"&&!(e.pointerType!=="pen"&&surface.classList.contains("ann-auto"))&&surface.dataset.owner!==S.annId&&!ANN.stroke) annSwitch(surface.dataset.owner);
   try{ inp.setPointerCapture(e.pointerId); }catch(_){}
   if(e.pointerType==="touch"||e.pointerType!=="pen"&&surface.classList.contains("ann-auto")){ // dedo rola a tela (rejeição de palma: só a caneta desenha); na lição sempre anotável o mouse também só rola/clica
     if(ANN.touch&&!ANN.touch.done) return; ANN.touch={id:e.pointerId,x0:e.clientX,y0:e.clientY,y:e.clientY,x:e.clientX,t:performance.now(),t0:performance.now(),v:0,moved:false,sc:annScroller(surface),hx:annHScroller(e,surface),mouse:e.pointerType==="mouse"}; return; }
@@ -1516,7 +1523,7 @@ document.addEventListener("pointermove",e=>{
   if(!ANN.stroke&&e.pointerType==="pen") ANN.btnHover=annBtnErase(e);
   // Galaxy Tab/Chrome: com o botão lateral apertado, encostar a caneta NÃO gera pointerdown; chegam só pointermove com buttons=1 (e um contextmenu depois). Isso vira borracha.
   if(!ANN.stroke&&!ANN.penDown&&e.pointerType==="pen"&&(e.buttons&1)){ const surface=e.target.closest?.(".ann-input")?.closest("[data-ann-surface]");
-    if(surface&&(surface.dataset.owner===S.annId||surface.classList.contains("ann-auto"))){ annSwitch(surface.dataset.owner); const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool:"eraser",color:"",width:annSize("eraser"),pointerId:e.pointerId,raw:[annPt(e,g)],ghost:true};
+    if(surface&&(surface.dataset.owner===S.annId||surface.classList.contains("ann-enabled"))){ annSwitch(surface.dataset.owner); const g=annGeo(surface), A={key:surface.dataset.key,surface,geo:g,tool:"eraser",color:"",width:annSize("eraser"),pointerId:e.pointerId,raw:[annPt(e,g)],ghost:true};
       A.start=annotationStrokes(A.key); A.keep=A.start.slice(); A.mapped=new Map(A.start.map(st=>[st,annMap(st,g)])); annErase(A,A.raw[0]); ANN.stroke=A; e.preventDefault(); return; } }
   if(ANN.stroke?.ghost&&e.pointerId===ANN.stroke.pointerId&&!(e.buttons&1)){ annFinish(null,ANN.stroke); ANN.stroke=null; return; }
   const A=ANN.stroke; if(!A||e.pointerId!==A.pointerId) return;
@@ -2146,7 +2153,7 @@ function lpFit(){ const g=$("#view .qgrid.l3"); if(!g) return; if(!LP_Q.matches)
   const top=g.getBoundingClientRect().top+(window.scrollY||0), tb=$("nav.tabs"), tr0=tb&&getComputedStyle(tb).display!=="none"?tb.getBoundingClientRect():null, nh=(tr0&&tr0.top>innerHeight/2?tr0.height:0)+12;
   g.style.setProperty("--qh",Math.max(320,Math.round((window.visualViewport?.height||innerHeight)-top-nh))+"px"); if(window.scrollY) window.scrollTo(0,0); }
 window.addEventListener("resize",()=>{ if($("#view .qgrid.l3")) lpFit(); annLpPos(); });
-function lpPaneHTML(lsn){ return `<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(annAutoOn()?"a":S.annId==="L:"+lsn.id?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`; }
+function lpPaneHTML(lsn){ return `<aside class="qlesson" data-k="${esc(lsn.id+"|"+(S.lpRead?1:0)+(S.lpFull?1:0)+(annOpen("L:"+lsn.id)?1:0)+"|"+(lsn.updated||"")+"|"+(lsn.html||"").length)}" aria-label="${T2("Lição do tema","Topic lesson")}"><div class="qdrag" role="separator" aria-orientation="vertical" title="${T2("Arraste para ajustar · duplo clique restaura","Drag to resize · double-click to reset")}"></div><div class="qlh"><b>📖 ${esc(lsn.title)}</b><span class="row"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${annBar("L:"+lsn.id,false)}<button type="button" class="btn small ghost" data-act="lpRead" title="${T2("Esconde o cabeçalho da lição; a questão continua à esquerda (Esc sai)","Hides the lesson header; the question stays on the left (Esc exits)")}">${S.lpRead?"✕ "+T2("Sair da leitura","Exit reading"):"📖 "+T2("Ler","Read")}</button><button type="button" class="btn small ghost" data-act="lpane" aria-label="${T2("Ocultar painel","Hide panel")}" title="${T2("Ocultar painel","Hide panel")}">✕</button></span></div><div class="qlbody" data-l="${esc(lsn.id)}">${annSurfaceHTML("L:"+lsn.id,"L:"+lsn.id,`<article class="lesson" lang="pt-BR">${lsnHtml(lsn)}</article>`)}</div>${S.lpRead?`<div class="lprBar" role="toolbar"><button type="button" class="btn small ghost lptocb" data-act="tocTog" title="${T2("Mostrar índice","Show contents")}">☰ ${T2("Índice","Contents")}</button><button type="button" class="btn small ghost" data-act="lfind" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button>${S.annId==="L:"+lsn.id?"":`<button type="button" class="btn small ghost" data-act="annToggle" data-q="${esc("L:"+lsn.id)}" title="${T2("Anotar","Annotate")}">✍</button>`}<button type="button" class="btn small ghost" data-act="lpRead" aria-label="${T2("Sair do modo leitura","Exit reading mode")}" title="${T2("Sair do modo leitura","Exit reading mode")}">✕</button></div>`:""}${lpTopicNav(lsn)}</aside>`; }
 function questionHTML(q, it, reveal, simMode, sc){ // sc = prova em página única (rolagem)
   const lsnRow=!simMode&&lessonOf(q.discipline,q.topic); // botão "Lição do tema" junto da explicação, sem precisar subir até as etiquetas
   const {c, lang, fallback} = content(q); if(!c) return "";
@@ -2656,7 +2663,7 @@ function lbtnsWatch(){ if(S.lbObs){ S.lbObs.disconnect(); S.lbObs=null; } S.lbOf
 function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn(), fl=!rd&&S.view==="lesson"&&!!S.lbOff&&!!document.getElementById("lbtns");
   if(!rd&&!fl){ if(b) b.remove(); return; }
   if(!b){ b=document.createElement("div"); b.id="lreadBar"; b.setAttribute("role","toolbar"); document.body.appendChild(b); }
-  const o="L:"+S.lessonId, on=S.annId===o;
+  const o="L:"+S.lessonId, on=annOpen(o);
   b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
   const tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&$("#ltoc")&&!$("#ltoc").hidden?'<button type="button" class="btn small" data-act="tocTog">☰ '+T2("Índice","Contents")+'</button>':"";
   b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
@@ -3210,7 +3217,7 @@ function openSettings(){
    <div class="field"><span class="flabel">${T2("Fundo da lição","Lesson background")}</span><div class="chips">${[["sepia",T2("Sépia","Sepia")],["light",T2("Claro","Light")],["dark",T2("Escuro","Dark")],["off",T2("Seguir o tema","Follow theme")]].map(([k,l])=>`<button type="button" class="chip" data-setll="${k}" aria-pressed="${lessonBg()===k}">${l}</button>`).join("")}</div></div>
    <div class="field"><span class="flabel">${tr("font")}</span><div class="chips">${[[0.92,"A−"],[1,"A"],[1.1,"A+"],[1.2,"A++"]].map(([k,l])=>`<button type="button" class="chip" data-setf="${k}" aria-pressed="${Number(st.fs)===k}">${l}</button>`).join("")}</div></div>
    <div class="toggle"><span>${set().lang==="en"?"Focus mode in sessions (hides menus)":"Modo foco nas sessões (esconde menus)"}</span><button type="button" class="switch" role="switch" data-act="toggleFocus" aria-checked="${st.focus!==false}" aria-label="Modo foco"></button></div>
-   <div class="toggle"><span>${T2("Lição e questão sempre prontas para a caneta (só a caneta escreve; o dedo rola, marca a alternativa e desliza)","Lessons and questions always ready for the pen (only the pen writes; finger scrolls, picks and swipes)")}</span><button type="button" class="switch" role="switch" data-act="toggleAnnAuto" aria-checked="${annPref("auto","1")!=="0"}" aria-label="${T2("Lição sempre pronta para a caneta","Lessons always ready for the pen")}"></button></div>
+   <div class="toggle"><span>${T2("Lição e questão sempre prontas para a caneta (só a caneta escreve; o dedo rola, marca a alternativa e desliza)","Lessons and questions always ready for the pen (only the pen writes; finger scrolls, picks and swipes)")}</span><button type="button" class="switch" role="switch" data-act="toggleAnnAuto" aria-checked="${annPref("auto","0")==="1"}" aria-label="${T2("Lição sempre pronta para a caneta","Lessons always ready for the pen")}"></button></div>
    <div class="row"><button class="btn small" data-act="penTest">🖊 ${T2("Testar S Pen","Test S Pen")}</button></div>
    <div class="box note"><h3>${tr("howAdd")}</h3>${tr("howAddTxt")}</div>
    ${SB&&S.uid?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:12.5px;color:var(--muted)">${esc((window.__email)||"")}</span><button class="btn small" data-act="signOut">${set().lang==="en"?"Sign out":"Sair"}</button></div>`:""}
@@ -3770,7 +3777,7 @@ document.addEventListener("click", async e=>{
   if(act==="startSession"){ const pool=setupPool(S.setup); if(!pool.length) return; S.session=buildSession("study",pool,S.setup); return render(); }
   if(act==="startMarkedReview"){ const pool=markedQuestions(); if(!pool.length)return; S.session=buildSession("review",pool,Object.assign(defaultSetup(),{count:10})); return go("review"); }
   if(act==="markToggle"){ const id=a.dataset.q; markToggle(id); if($("#layer").innerHTML) bankPreview(id); else render(); return; }
-  if(act==="annToggle"){ const id=a.dataset.q; S.annId=S.annId===id?null:id; S.annTool=annToolOf(id); annRefresh(id); return; }
+  if(act==="annToggle"){ const id=a.dataset.q; if(annOpen(id)){ S.annOpen.delete(id); if(S.annId===id){ S.annId=[...S.annOpen].find(o=>document.querySelector('[data-ann-surface][data-owner="'+CSS.escape(o)+'"]'))||null; if(S.annId) S.annTool=annToolOf(S.annId); } } else { S.annOpen.add(id); S.annId=id; S.annTool=annToolOf(id); } annRefresh(id); return; }
   if(act==="penTest"){ return penTest(); }
   if(act==="annKeep"){ try{ localStorage.setItem("gab.ann.keep",annPref("keep","0")==="1"?"0":"1"); }catch(_){} annRefresh(S.annId); return; }
   if(act==="annMin"){ try{ localStorage.setItem("gab.ann.min",a.dataset.v==="1"?"1":"0"); }catch(_){} annRefresh(S.annId); return; }
@@ -3876,8 +3883,8 @@ document.addEventListener("click", async e=>{
   if(act==="stepDate"){ e.preventDefault(); return openStepDate(); }
   if(act==="stepDateSave"){ const v1=$("#sdS1")?.value||"", v2=$("#sdS2")?.value||""; set().stepDate={s1:v1||undefined,s2:v2||undefined}; saveProg(); closeSheet(); return render(); }
   if(act==="startReview"){ const due=dueQs(); if(!due.length) return; S.session=buildSession("review",prioSort(shuffle(due)),{mode:"study",count:0,order:"seq",shuffleO:true}); return go("review"); }
-  if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); S.annId=annKeepNext(s); render(); window.scrollTo({top:0}); return; }
-  if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); S.annId=annKeepNext(s); render(); window.scrollTo({top:0}); return; }
+  if(act==="next"){ const s=S.session; s.i=Math.min(s.i+1,s.items.length-1); annOpenNext(s); render(); window.scrollTo({top:0}); return; }
+  if(act==="prev"){ const s=S.session; s.i=Math.max(0,s.i-1); annOpenNext(s); render(); window.scrollTo({top:0}); return; }
   if(act==="finish"){ const s=S.session;
     if(s.mode==="sim"){ return arm(a, tr("confirmFinish"), ()=>{ s.secs=(now()-s.t0)/1000; s.done=true; let ok=0; s.items.forEach(it=>{ const q=S.qs.get(it.id); if(q&&it.pick!==null){ if(record(q,it.pick,{rev:false})) ok++; } }); S.prog.sims=(S.prog.sims||[]).concat([{ts:now(),n:s.items.length,ok,secs:Math.round(s.secs),topic:s.topic,std:s.std,exam:s.exam||null}]).slice(-30); saveProg(); clearInterval(timerInt); render(); window.scrollTo({top:0}); }); }
     const fs=s.from;
@@ -3897,7 +3904,7 @@ document.addEventListener("click", async e=>{
   if(act==="newSession"){ S.session=null; return go("study"); }
   if(act==="reviewItem"){ const s=S.session; const i=Number(a.dataset.i); s.mode="study"; s.done=false; s.i=i; s.reviewing=true; return render(); }
   if(act==="qlang"){ const id=a.dataset.q, q=S.qs.get(id); if(!q) return; const v=a.dataset.v||(content(q).lang==="pt"?"en":"pt"); if(v===set().lang) delete S.qLang[id]; else S.qLang[id]=v; const y=window.scrollY; if($("#layer").innerHTML){ bankPreview(id); } else { render(); } window.scrollTo({top:y}); return; }
-  if(act==="toggleAnnAuto"){ try{ localStorage.setItem("gab.ann.auto",annPref("auto","1")==="0"?"1":"0"); }catch(_){} S.annId=null; render(); return openSettings(); }
+  if(act==="toggleAnnAuto"){ try{ localStorage.setItem("gab.ann.auto",annPref("auto","0")==="1"?"0":"1"); }catch(_){} S.annId=null; render(); return openSettings(); }
   if(act==="explain") return explain(a.dataset.q, a);
   if(act==="translate") return translateQ(a.dataset.q, a);
   if(act==="fcStart"){ const all=a.dataset.all==="1"; const ids=shuffle((all?ctxQs():dueCards()).map(q=>q.id)); S.fcDeck={ids,i:0,show:false,topic:curTopic()?.id,std:set().std}; return render(); }

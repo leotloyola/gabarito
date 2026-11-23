@@ -692,6 +692,11 @@ html body #view .sqgrid{display:flex;flex-direction:column;gap:12px;min-width:0}
 html body #view .sqgrid .qleft,html body #view .sqgrid .qright{display:flex;flex-direction:column;gap:12px;position:static;top:auto;max-height:none;overflow:visible;min-width:0}
 .sqend{display:flex;justify-content:center;padding:12px 0 56px}
 .sqwrap .lptn{display:none!important}
+details.exg>summary{list-style:none;display:flex;align-items:baseline;gap:10px;cursor:pointer;user-select:none}details.exg>summary::-webkit-details-marker{display:none}
+details.exg>summary h2{margin:0}details.exg>summary small{color:var(--subtle);font:500 12.5px var(--f-ui)}
+.exgc{margin-left:auto;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:99px;background:var(--surface-2,var(--pill));color:var(--muted);font-size:14px;transition:transform .18s}
+details.exg:not([open])>summary .exgc{transform:rotate(-90deg)}details.exg[open]>summary{margin-bottom:6px}
+
 .sqtop,.sqbar,.sqstrip,.sqlist,.sq,.sqgrid{min-width:0;max-width:100%}
 .sqpage{min-width:0;max-width:min(860px,100%)}
 html body #view .qgrid.l3.sqwrap>.qcol{overflow-x:hidden}
@@ -2377,6 +2382,10 @@ function fullExams(dId){ const map=new Map();
   return [...map.entries()].map(([ex,list])=>({ex, list:list.sort((a,b)=>a.n-b.n)})).sort((a,b)=>a.ex.split(" ")[0].localeCompare(b.ex.split(" ")[0]) || yr(b.ex)-yr(a.ex)); }
 function exrRow(ex){ const t=exrStats(ex); if(!t||(!t.ans&&!t.f)) return ""; const r=exrRedo(ex).length;
   return `<div class="exr"><span>${T2("Sua resolução","Your run")}: <b class="ok">✓ ${t.ok}</b> <b class="bad">✗ ${t.bad}</b>${t.f?` <b>🚩 ${t.f}</b>`:""} <span style="color:var(--subtle)">· ${t.ans}/${t.n}</span></span><span class="row" style="gap:6px;flex-wrap:nowrap">${r?`<button class="btn small" data-act="exRedo" data-ex="${esc(ex)}">↺ ${T2("Refazer erradas e 🚩","Redo missed & 🚩")} · ${r}</button>`:""}<button class="btn small ghost" data-act="exZero" data-ex="${esc(ex)}" title="${T2("Apaga acertos, erros e 🚩 desta prova (o resto do progresso fica)","Clears this exam's run (other progress stays)")}">${T2("Zerar","Reset")}</button></span></div>`; }
+// grupos P1/P2 recolhíveis na lista de provas (23/11/2026, pedido do Léo); aberto/fechado gravado em settings.exgrp (disciplina|grupo), vale para todos os aparelhos
+function exgMap(){ return Object.assign({},set()?.exgrp||{}); }
+function exgOpen(k){ return exgMap()[k]!==0; }
+document.addEventListener("toggle",e=>{ const d=e.target; if(!d.matches?.("details.exg")) return; const m=exgMap(); if(d.open) delete m[d.dataset.k]; else m[d.dataset.k]=0; set().exgrp=m; saveProg(); },true);
 function fullExamsHTML(){ const d=curDisc(); if(!d||set().std==="usmle") return ""; const L=fullExams(d.id); if(!L.length) return "";
   const last=ex=>(S.prog.sims||[]).filter(s=>s.exam===ex&&(s.ts||0)>(exrOf(ex).z||0)).slice(-1)[0];
   const fin=exrFinal().length;
@@ -2384,8 +2393,8 @@ function fullExamsHTML(){ const d=curDisc(); if(!d||set().std==="usmle") return 
   const groups=[...new Set(L.map(grp))];
   return `<p class="lede" style="margin:0;font-size:13px">${T2("Questões reais na ordem original. Questões com figura ou anuladas ficaram de fora.","Real questions in the original order. Figure-based or voided items were left out.")}</p>
    ${fin?`<div class="panel sqfin"><div class="row" style="justify-content:space-between;gap:10px;flex-wrap:nowrap"><span><b>🏁 ${T2("Rodada final","Final round")}</b><br><small style="color:var(--subtle)">${T2("Erradas e 🚩 de todas as provas, numa lista só","Missed and 🚩 from all exams, in one list")}</small></span><button class="btn small primary" data-act="exFinal">${T2("Resolver","Start")} · ${fin}</button></div></div>`:""}
-   ${groups.map(g=>`<div class="panel"><h2>${esc(g)}</h2><div class="list">${L.filter(x=>grp(x)===g).map(x=>{ const l=last(x.ex); return `<div class="li" style="cursor:default;align-items:center"><span class="t" style="font-family:var(--f-ui)"><b>${esc(x.ex)}</b><br><small style="color:var(--subtle)">${x.list.length} ${T2("questões","questions")}${l?` · ${T2("última","last")}: ${l.ok}/${l.n}`:""}</small></span>
-     <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="study">${T2("Comentada","Tutor")}</button><button class="btn small primary" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="sim">${T2("Simulado","Timed")}</button></span></div>${exrRow(x.ex)}`; }).join("")}</div></div>`).join("")}`; }
+   ${groups.map(g=>{ const n=L.filter(x=>grp(x)===g).length, k=d.id+"|"+g; return `<details class="panel exg" data-k="${esc(k)}" ${exgOpen(k)?"open":""}><summary><h2>${esc(g)}</h2><small>${n} ${T2(n===1?"prova":"provas",n===1?"exam":"exams")}</small><span class="exgc" aria-hidden="true">▾</span></summary><div class="list">${L.filter(x=>grp(x)===g).map(x=>{ const l=last(x.ex); return `<div class="li" style="cursor:default;align-items:center"><span class="t" style="font-family:var(--f-ui)"><b>${esc(x.ex)}</b><br><small style="color:var(--subtle)">${x.list.length} ${T2("questões","questions")}${l?` · ${T2("última","last")}: ${l.ok}/${l.n}`:""}</small></span>
+     <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="study">${T2("Comentada","Tutor")}</button><button class="btn small primary" data-act="fullExam" data-ex="${esc(x.ex)}" data-mode="sim">${T2("Simulado","Timed")}</button></span></div>${exrRow(x.ex)}`; }).join("")}</div></details>`; }).join("")}`; }
 /* Histórico por prova (23/11/2026, pedido do Léo): S.prog.exr[prova] = {ts, z (zerada em), p:{questão:alternativa}, f:{questão:1 = 🚩 dúvida}}.
    Grava a cada resposta da prova em rolagem, em todas as provas em que a questão aparece. "Refazer erradas e 🚩" e
    "Rodada final" (erradas e 🚩 de todas as provas da disciplina) saem daqui. "Zerar" limpa só isto; o progresso

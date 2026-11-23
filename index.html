@@ -455,6 +455,14 @@ body.g-drag iframe{pointer-events:none}
 /* "Na véspera" + fluxos de decisão + prosa recolhida (17/11/2026) */
 .lesson .call.vespera{background:var(--surface);box-shadow:0 0 0 2px var(--accent) inset;font-size:calc(15px * var(--fs));padding:14px 16px} .lesson .call.vespera .ct{color:var(--accent);font-size:12px}
 .lesson .call.vespera ul{padding-left:18px} .lesson .call.vespera li{margin:5px 0}
+/* "Não confundir" (23/11/2026): tabela de pares que a banca troca, sempre no fim do arquivo; aparece mesmo com a lição recolhida */
+.lesson .call.confundir{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .lesson .call.confundir .ct{color:var(--bad)} .lesson .call.confundir .tbl{margin:6px 0 0}
+.lesson .lfull-sw:not(.open)~.call.confundir{display:block}
+.lesson.rvv{margin-bottom:6px} .lesson.rvv .call.vespera{margin-top:0}
+/* peso do tema: questões em provas reais da UFPR (pseudo-elemento: não entra no texto, não mexe nas anotações) */
+.prow .pwt{color:var(--warn);font-weight:600}
+.wt{display:inline-block;font-family:var(--f-ui);font-size:11px;font-weight:600;line-height:1.5;padding:0 7px;border-radius:99px;background:var(--warn-soft);color:var(--warn);box-shadow:0 0 0 1px var(--warn-line) inset;white-space:nowrap;vertical-align:1px}
+.lesson h2[data-wt]::after,.lesson h3[data-wt]::after{content:attr(data-wt);display:inline-block;margin-left:8px;font-family:var(--f-ui);font-size:11px;font-weight:600;line-height:1.5;padding:0 7px;border-radius:99px;background:var(--warn-soft);color:var(--warn);box-shadow:0 0 0 1px var(--warn-line) inset;white-space:nowrap;vertical-align:3px;letter-spacing:0;text-transform:none}
 .lesson .tree{margin:16px 0;font-size:calc(14px * var(--fs));line-height:1.4}
 .lesson .tree .tq{background:var(--ink);color:var(--surface);border-radius:12px;padding:9px 12px;font-weight:600;text-align:center}
 .lesson .tree .tb{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
@@ -1619,9 +1627,9 @@ function pickerStats(){ const d=curDisc(); const st=set().std; const end=startOf
   for(const q of S.qs.values()){ if(q.discipline!==d.id||!stdM(q,st)) continue;
     const k=q.topic+"|"+(q.sub||""); const e=priOf(q)===3; for(const key of [q.topic, k]){ const a=agg[key]||(agg[key]={n:0,seen:0,ok:0,due:0,e3:0,e3s:0}); a.n++; if(e) a.e3++; const r=rec(q.id); if(r){ a.seen++; if(e) a.e3s++; if(r.ok) a.ok++; if(r.due!=null&&r.due<end) a.due++; } } }
   return agg; }
-function pickRow(act,val,label,a,{cur,lesson,dis,sub}={}){ a=a||{n:0,seen:0,ok:0,due:0}; const en=set().lang==="en";
+function pickRow(act,val,label,a,{cur,lesson,dis,sub,wt}={}){ a=a||{n:0,seen:0,ok:0,due:0}; const en=set().lang==="en";
   const pct=a.seen?Math.round(100*a.ok/a.seen):null; const pc=pct==null?"":pct>=75?"good":pct>=50?"mid":"bad";
-  const meta=dis? (en?"soon":"em breve") : `${a.n} q${a.seen?` · ${a.seen}/${a.n} ${en?"done":"feitas"}`:""}${a.e3?` · ★★★ ${a.e3s||0}/${a.e3}`:""}`;
+  const meta=dis? (en?"soon":"em breve") : `${a.n} q${wt?` · <b class="pwt">${esc(wtTxt(wt))}</b>`:""}${a.seen?` · ${a.seen}/${a.n} ${en?"done":"feitas"}`:""}${a.e3?` · ★★★ ${a.e3s||0}/${a.e3}`:""}`;
   return `<button type="button" class="prow${cur?" cur":""}" data-act="${act}" data-val="${esc(val)}" data-q="${esc(label.toLowerCase())}" ${dis?"disabled":""}>
     <span class="pt"><b>${esc(label)}</b><small>${meta}</small></span>
     <span class="pm">${lesson?`<span class="pl" title="${en?"Lesson":"Lição"}">${ICONS_L}</span>`:""}${a.due?`<span class="pd" title="${en?"Due today":"Revisões hoje"}">${a.due}</span>`:""}${pct!=null?`<span class="pp ${pc}">${pct}%</span>`:""}</span></button>`; }
@@ -1636,7 +1644,7 @@ function pickSheet(title, body, n){ const en=set().lang==="en";
       $("#pickNone").hidden=any; }; }); }
 function topicPickBody(){ const d=curDisc(); if(!d) return null; const t=curTopic(); const agg=pickerStats(); const en=set().lang==="en";
   const sum=ids=>ids.reduce((s,id)=>{ const a=agg[id]; if(a){ s.n+=a.n; s.seen+=a.seen; s.ok+=a.ok; s.due+=a.due; s.e3+=a.e3; s.e3s+=a.e3s; } return s; },{n:0,seen:0,ok:0,due:0,e3:0,e3s:0});
-  const row=x=>pickRow("pickTopic",x.id,nm(x),agg[x.id],{cur:t&&t.id===x.id,lesson:!!lessonOf(d.id,x.id),dis:!topicCount(x.id)});
+  const row=x=>pickRow("pickTopic",x.id,nm(x),agg[x.id],{cur:t&&t.id===x.id,lesson:!!lessonOf(d.id,x.id),dis:!topicCount(x.id),wt:realW(d.id,x.id)});
   const exs=d.exams||[]; let body="", n=(d.topics||[]).length;
   const grp=(label,inner,open,a)=>`<details class="pg" ${open?"open":""}><summary><span>${esc(label)}</span><small>${a.n} q${a.due?` · ${a.due} ${en?"due":"p/ hoje"}`:""}</small></summary>${inner}</details>`;
   if(d.id==="usmle"&&curPer()==="usmle"){ body=(d.topics||[]).map(row).join(""); n=(d.topics||[]).length; }
@@ -2190,6 +2198,19 @@ function examPairs(label){ const out=[]; let cur=null, pre="";
   for(const tok of String(label||"").split(" · ").map(x=>x.trim())){ const m=tok.match(/^Q(\d+)$/i); if(m){ if(cur) out.push({ex:cur,n:Number(m[1])}); continue; }
     if(/^\d{2,4}(\.\d)?$/.test(tok)) cur=(pre?pre+" ":"")+tok; else { cur=tok; const p=tok.match(/^(.*?)\s*\d{2,4}(\.\d)?$/); pre=p?p[1]:""; } }
   return out; }
+// peso do tema: aparições das questões do tema nas provas reais da UFPR (repetida em outro ano conta de novo; sem fixação, Banco ou UWorld)
+function realW(dId,tId){ if(S._rwM!==S.qs||S._rwN!==S.qs.size){ S._rwM=S.qs; S._rwN=S.qs.size; const m={}; for(const q of S.qs.values()){ if(!q.exam||q.origin!=="real"||q.standard==="usmle"||q.discipline==="banco") continue; const k=q.discipline+"|"+q.topic; m[k]=(m[k]||0)+(examPairs(q.exam).length||1); } S._rw=m; } return S._rw[dId+"|"+tId]||0; }
+const wtTxt=n=>T2(`${n} em provas`,`${n} in exams`);
+const WT_TIP=()=>T2("Questões deste tema nas provas antigas da UFPR","Questions on this topic in past UFPR exams");
+function wtPill(dId,tId){ const n=realW(dId,tId); return n?`<span class="wt" title="${esc(WT_TIP())}">${esc(wtTxt(n))}</span>`:""; }
+function wtMeta(dId,tId){ const n=realW(dId,tId); return n?` · <b style="color:var(--warn);font-weight:600" title="${esc(WT_TIP())}">${esc(wtTxt(n))}</b>`:""; }
+// revisão final: "## 05 Arritmias" → tema cujo nome começa por 05 (ou nome igual); text=true põe o peso como texto (PDF)
+function rvWeights(dId,html,text){ const d=discById(dId); if(!d) return html; const norm=x=>String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+  return String(html||"").replace(/<h([23])>([^<]*)<\/h\1>/g,(m,h,tx)=>{ const num=(tx.match(/^\s*(\d{1,2})\s/)||[])[1];
+    const t=(d.topics||[]).find(x=>num?Number((nm(x).match(/^\s*(\d{1,2})\s/)||[])[1])===Number(num):norm(nm(x))===norm(tx)); const n=t?realW(dId,t.id):0; if(!n) return m;
+    return text?`<h${h}>${tx} <span class="wtp">· ${esc(wtTxt(n))}</span></h${h}>`:`<h${h} data-wt="${esc(wtTxt(n))}" title="${esc(WT_TIP())}">${tx}</h${h}>`; }); }
+// revisão final: o "Na véspera" sai da tabela e vai para o topo, numa superfície própria (os blocos da tabela não mudam de índice: anotações ficam no lugar)
+function rvSplit(l){ const h=l.html||"", V=[]; const body=h.replace(/<aside class="call vespera">[\s\S]*?<\/aside>\n?/g,m=>{ V.push(m); return ""; }); return {vesp:l.vesp!=null?l.vesp:V.join("\n"), body}; }
 function fullExams(dId){ const map=new Map();
   for(const q of S.qs.values()){ if(q.discipline!==dId||!q.exam) continue; for(const {ex,n} of examPairs(q.exam)){ if(!map.has(ex)) map.set(ex,[]); map.get(ex).push({q,n}); } }
   const yr=ex=>{ const m=ex.match(/(\d{2,4})(?:\.(\d))?$/); if(!m) return 0; let y=Number(m[1]); if(y<100) y+=2000; return y*10+Number(m[2]||0); };
@@ -2277,7 +2298,8 @@ function reviewsOf(dId){ const d=discById(dId), ex=(d?.exams||[]).map(e=>e.id); 
   if(L.length<2){ S.lessons.delete(`lesson:${dId}:revisao-all`); return L; }
   const id=`lesson:${dId}:revisao-all`, key=L.map(l=>l.id+l.updated).join("|"), old=S.lessons.get(id);
   if(!old||old.key!==key) S.lessons.set(id,{id, kind:"lesson", discipline:dId, topic:"revisao-all", review:"all", synth:true, key, title:T2("Revisão final · disciplina inteira","Final review · whole course"), minutes:L.reduce((s,l)=>s+(l.minutes||0),0)||null, sources:[...new Set(L.flatMap(l=>l.sources||[]))], updated:L.map(l=>l.updated||"").sort().pop(),
-    html:L.map(l=>`<h2>${esc(l.review)}</h2>`+(l.html||"").replace(/<aside class="call dica">[\s\S]*?<\/aside>/,"").replace(/<(\/?)h2>/g,"<$1h3>")).join("\n")});
+    vesp:L.map(l=>rvSplit(l).vesp.replace(/<div class="ct">([^<]*)<\/div>/,(m,t)=>`<div class="ct">${t} · ${esc(l.review)}</div>`)).filter(Boolean).join("\n"),
+    html:L.map(l=>`<h2>${esc(l.review)}</h2>`+rvSplit(l).body.replace(/<aside class="call dica">[\s\S]*?<\/aside>/,"").replace(/<(\/?)h2>/g,"<$1h3>")).join("\n")});
   return [...L,S.lessons.get(id)]; }
 function isReview(l){ return !!l?.review; }
 function reviewExamName(l){ if(l.review==="all") return T2("Todas as provas","All exams"); const e=(discById(l.discipline)?.exams||[]).find(x=>x.id===l.review); return e?nm(e):l.review; }
@@ -2372,9 +2394,9 @@ function reviewListHTML(d){ const R=reviewsOf(d.id); if(!R.length) return "";
   return `<div class="eyebrow" style="margin:0 4px 8px">${T2("Revisão final · tabelas para decorar","Final review · tables to memorize")}</div><div class="panel" style="margin-bottom:14px"><div class="list">${R.map(l=>`<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(reviewExamName(l))}${l.minutes?` · ${l.minutes} min`:""} · ${T2("esconda colunas para treinar","hide columns to drill")}</small></span><span class="st no">▦</span></button>`).join("")}</div></div>`; }
 function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessonsOf(d.id), rvH=reviewListHTML(d);
   const miss=(d.topics||[]).filter(t=>!lessonOf(d.id,t.id));
-  const missH=miss.length?`<div class="eyebrow" style="margin:16px 4px 8px">${T2("Temas sem lição","Topics without a lesson")} · ${miss.length}</div><div class="panel"><div class="list">${miss.map(t=>`<button type="button" class="li" data-act="askLesson" data-d="${esc(d.id)}" data-t="${esc(t.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(nm(t))}</b><br><small style="color:var(--subtle)">${esc(t.exam||"")}${t.exam?" · ":""}${T2("toque para pedir a lição ao Claude","tap to request the lesson from Claude")}</small></span><span class="st no">✉</span></button>`).join("")}</div></div>`:"";
+  const missH=miss.length?`<div class="eyebrow" style="margin:16px 4px 8px">${T2("Temas sem lição","Topics without a lesson")} · ${miss.length}</div><div class="panel"><div class="list">${miss.map(t=>`<button type="button" class="li" data-act="askLesson" data-d="${esc(d.id)}" data-t="${esc(t.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(nm(t))}</b><br><small style="color:var(--subtle)">${esc(t.exam||"")}${t.exam?" · ":""}${realW(d.id,t.id)?esc(wtTxt(realW(d.id,t.id)))+" · ":""}${T2("toque para pedir a lição ao Claude","tap to request the lesson from Claude")}</small></span><span class="st no">✉</span></button>`).join("")}</div></div>`:"";
   if(!L.length) return `${rvH}<p class="empty">${T2("Ainda não há lições nesta disciplina.","No lessons in this discipline yet.")}</p>${missH}`;
-  return `${rvH}<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina em PDF","Download discipline as PDF")}</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic), cv=lsnCov(l.discipline,l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${l.minutes?` · ${l.minutes} min`:""}${cv?` · ${cv.n}/${cv.of} ${T2(cv.hi?"questões ★★+ feitas":"questões feitas",cv.hi?"★★+ questions done":"questions done")}${cv.acc!=null?" · "+lsnAccTxt(cv):""}`:""}</small></span>${cv?lsnCovTag(cv,"st"):`<span class="st no">›</span>`}</button>`; }).join("")}</div></div>${missH}`; }
+  return `${rvH}<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina em PDF","Download discipline as PDF")}</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic), cv=lsnCov(l.discipline,l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${t?wtMeta(d.id,t.id):""}${l.minutes?` · ${l.minutes} min`:""}${cv?` · ${cv.n}/${cv.of} ${T2(cv.hi?"questões ★★+ feitas":"questões feitas",cv.hi?"★★+ questions done":"questions done")}${cv.acc!=null?" · "+lsnAccTxt(cv):""}`:""}</small></span>${cv?lsnCovTag(cv,"st"):`<span class="st no">›</span>`}</button>`; }).join("")}</div></div>${missH}`; }
 // "Ler a lição completa": a prosa abaixo do botão .lfull-sw fica recolhida; estado aberto lembrado por lição
 const LFULL_ON="Recolher a lição completa", LFULL_OFF="Ler a lição completa";
 function lfullSet(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.lfull")||"[]")); }catch(_){ return new Set(); } }
@@ -2388,13 +2410,13 @@ function lpQs(d,t){ const all=[...S.qs.values()].filter(q=>q.discipline===d&&q.t
 // modo treino da revisão: colunas escondidas (índice da coluna; 0 = coluna "Número" das tabelas de 2 colunas), por aparelho
 function rvHide(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.rvh")||"[]")); }catch(_){ return new Set(); } }
 function rvCols(html){ const m=String(html||"").match(/<table class="stack"><thead><tr>([\s\S]*?)<\/tr>/); if(!m) return []; return [...m[1].matchAll(/<th>([\s\S]*?)<\/th>/g)].map(x=>x[1].replace(/<[^>]+>/g,"").trim()); }
-function rvMarkCells(root,H){ root.querySelectorAll("table").forEach(tb=>{ const st=tb.classList.contains("stack"); tb.querySelectorAll("tbody tr").forEach(tr=>[...tr.children].forEach((td,k)=>{ const on=st?k>0&&H.has(k):k===0&&H.has(0); td.classList.toggle("rvx",on); td.classList.remove("peek"); })); }); }
+function rvMarkCells(root,H){ root.querySelectorAll("table").forEach(tb=>{ if(tb.closest(".call")) return; const st=tb.classList.contains("stack"); tb.querySelectorAll("tbody tr").forEach(tr=>[...tr.children].forEach((td,k)=>{ const on=st?k>0&&H.has(k):k===0&&H.has(0); td.classList.toggle("rvx",on); td.classList.remove("peek"); })); }); }
 function rvBarHTML(l){ const cols=rvCols(l.html); if(!cols.length) return ""; const H=rvHide(), hasN=/<table class=""/.test(l.html||"");
   const c=(k,t)=>`<button type="button" class="chip" data-act="rvCol" data-k="${k}" aria-pressed="${H.has(k)}">${esc(t)}</button>`;
   return `<div class="rvbar" role="group" aria-label="${T2("Esconder colunas","Hide columns")}"><span class="flabel">🙈 ${T2("Esconder para treinar:","Hide to drill:")}</span>${cols.slice(1).map((t,i)=>c(i+1,t)).join("")}${hasN?c(0,T2("Números","Numbers")):""}${H.size?`<button type="button" class="chip" data-act="rvCol" data-k="none">${T2("Mostrar tudo","Show all")}</button>`:""}</div>`; }
 function rvApply(){ const a=$("#view article.lesson.review"); if(a) rvMarkCells(a,rvHide()); const b=$("#view .rvbar"), l=S.lessons.get(S.lessonId); if(b&&l) b.outerHTML=rvBarHTML(l); }
 function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-all$/.test(S.lessonId)?(reviewsOf(S.lessonId.split(":")[1]),S.lessons.get(S.lessonId)):null); if(!l){ S.view="study"; return vStudy(v); }
-  const rv=isReview(l);
+  const rv=isReview(l), rvV=rv?rvSplit(l).vesp:"";
   const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const cvL=lsnCov(l.discipline,l.topic);
   const lq=lpQs(l.discipline,l.topic); const nQ=lq.all.length, nOpen=lq.open.length; const lpN=lpCount();
@@ -2406,10 +2428,11 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-a
   const navL=(x,dir)=>x?`<button type="button" class="btn small ${dir>0?"":"ghost"} lnav" data-act="lessonGo" data-id="${esc(x.id)}">${dir<0?"← ":""}<span>${dir<0?T2("Anterior","Previous"):T2("Próxima","Next")}: ${esc(x.title)}</span>${dir>0?" →":""}</button>`:"";
   const practiceTop=nQ?`<button class="btn small primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}">▶ ${T2("Praticar","Practice")} · ${lpN&&lpN<nQ?lpN:nQ}</button>`:"";
   v.innerHTML=`${tuL?tuCrumb(T2("Lição","Lesson")):""}<div class="row" style="justify-content:space-between"><button class="btn small ghost" data-act="lessonBack">← ${tuL?T2("Voltar ao bloco","Back to block"):T2("Voltar","Back")}</button><span class="row" style="gap:8px">${l.minutes?`<span class="mono" style="font-size:12px;color:var(--muted)">~${l.minutes} min</span>`:""}${cvL?`<span class="lcovh">${T2(cvL.hi?"★★+ feitas":"Feitas",cvL.hi?"★★+ done":"Done")} ${cvL.n}/${cvL.of} ${lsnCovTag(cvL)}${cvL.acc!=null?`<span class="lacc ${cvL.acc>=70?"ok":cvL.acc<50?"bad":""}">${lsnAccTxt(cvL)}</span>`:""}</span>`:""}</span></div>
-   <div><div class="eyebrow">${esc(nm(d))} · ${rv?T2("Revisão final","Final review")+" · "+esc(reviewExamName(l)):T2("Lição","Lesson")+(t?.exam?" · "+esc(t.exam):"")}</div><h1>${esc(l.title)}</h1></div>
+   <div><div class="eyebrow">${esc(nm(d))} · ${rv?T2("Revisão final","Final review")+" · "+esc(reviewExamName(l)):T2("Lição","Lesson")+(t?.exam?" · "+esc(t.exam):"")}${!rv&&t?" "+wtPill(d.id,t.id):""}</div><h1>${esc(l.title)}</h1></div>
    <div class="row" id="lbtns">${practiceTop}<button class="btn small" data-act="lessonPdf" title="${T2("Baixa a lição em PDF: escolha o conteúdo, o gabarito, a coluna para anotar e as cores","Download the lesson as PDF: pick content, answer key, notes column and colors")}">⬇ ${T2("Exportar PDF","Export PDF")}</button><button class="btn small" data-act="tocTog" id="tocTog" hidden></button><button class="btn small" data-act="lfind" title="${T2("Buscar um termo nesta lição (Ctrl+F)","Find a term in this lesson (Ctrl+F)")}">🔍 ${T2("Buscar","Find")}</button><button class="btn small" data-act="lread" title="${T2("Esconde menus e barras; a anotação continua disponível (Esc sai)","Hides menus and bars; annotation stays available (Esc exits)")}">📖 ${T2("Modo leitura","Reading mode")}</button>${annBar("L:"+l.id,false)}</div>
+   ${rvV?annSurfaceHTML("L:"+l.id+"#v","L:"+l.id,`<article class="lesson rvv" lang="pt-BR">${rvV}</article>`):""}
    ${rv?rvBarHTML(l):topicLinksHTML(t)}
-   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson${rv?" review":""}" lang="pt-BR">${lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
+   <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson${rv?" review":""}" lang="pt-BR">${rv?rvWeights(l.discipline,rvSplit(l).body):lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    ${rv?"":`<div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
      ${lpChips}
      ${curMode()==="steps"?"":`<div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div>`}</div>`}
@@ -2455,7 +2478,7 @@ function lpSet(on){ LP_S=!!on; try{ localStorage.setItem("gab.lpane",on?"1":"0")
 })();
 WIDE_Q.addEventListener&&WIDE_Q.addEventListener("change",()=>{ if(S.catalog) render(); });
 LP_Q.addEventListener&&LP_Q.addEventListener("change",()=>{ if(S.catalog&&inQSession()) render(); });
-function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=art0||$("#view .lesson"), nav=nav0||$("#ltoc"); if(!art||!nav) return;
+function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=null; } const art=art0||$("#view .lwrap .lesson"), nav=nav0||$("#ltoc"); if(!art||!nav) return;
   let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) hs=[];
   const temas=lessonTemasHTML(art); if(!hs.length&&!temas) return;
   hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
@@ -2523,6 +2546,7 @@ const PDF_CSS=`.pg,.pdfc{--surface:#FFFFFF;--ink:#18181B;--ink-2:#27272A;--muted
 .pdfc ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
 .pdfc ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc ol.flow li.stop::before{background:var(--bad)}
 .pdfc .call.vespera{background:var(--surface);box-shadow:0 0 0 2px var(--accent) inset} .pdfc .call.vespera .ct{color:var(--accent)} .pdfc .call.vespera ul{padding-left:18px}
+.pdfc .call.confundir{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc .call.confundir .ct{color:var(--bad)} .pdfc .wtp{font-size:.62em;font-weight:600;color:var(--warn)}
 .pdfc .tree{font-size:13px;line-height:1.4} .pdfc .tree .tq{background:var(--ink);color:var(--surface);border-radius:12px;padding:8px 12px;font-weight:600;text-align:center}
 .pdfc .tree .tb{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px} .pdfc .tree .tn{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-radius:12px;padding:8px 10px}
 .pdfc .tree .tl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--accent);margin-bottom:3px} .pdfc .tree .tn.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc .tree .tn.stop .tl{color:var(--bad)} .pdfc .tree .tf{margin-top:6px;font-size:12px;color:var(--muted)}
@@ -2651,12 +2675,12 @@ async function pdfFromHtml(label, html, op={}){
 }
 // partes da lição: "Na véspera" (antes do botão) e a lição completa
 function lessonParts(l){ const h=l.html||"", m=h.match(/<button[^>]*class="lfull-sw[^"]*"[^>]*>[^<]*<\/button>/); return m?{v:h.slice(0,m.index),f:h.slice(m.index+m[0].length),split:true}:{v:"",f:h,split:false}; }
-function lessonBody(l,o){ const p=lessonParts(l); if(!p.split) return p.f; return o.what==="vesp"?p.v:p.v+`<h2 class="pq-br">${T2("Lição completa","Full lesson")}</h2>`+p.f; }
+function lessonBody(l,o){ const p=lessonParts(l); if(!p.split) return p.f; return o.what==="vesp"?p.v+(p.f.match(/<aside class="call confundir">[\s\S]*?<\/aside>/g)||[]).join("\n"):p.v+`<h2 class="pq-br">${T2("Lição completa","Full lesson")}</h2>`+p.f; }
 const pdfHasQ=o=>o.what==="lq"||o.what==="q"||o.what==="err";
 const pdfQOnly=o=>o.what==="q"||o.what==="err";
 const pdfSuf=o=>({vesp:T2("Na véspera","Night before"),q:T2("Questões","Questions"),err:T2("Erradas","Missed")})[o.what]||"";
 // revisão: colunas escondidas no app saem em branco no PDF (para preencher com a caneta), se escolhido
-function rvPdfHtml(l,o){ if(o.rvh!=="hide") return l.html||""; const H=rvHide(); if(!H.size) return l.html||""; const b=document.createElement("div"); b.innerHTML=l.html||""; rvMarkCells(b,H); return b.innerHTML; }
+function rvPdfHtml(l,o){ const sp=rvSplit(l), h=sp.vesp+(sp.vesp?"\n":"")+rvWeights(l.discipline,sp.body,true); if(o.rvh!=="hide") return h; const H=rvHide(); if(!H.size) return h; const b=document.createElement("div"); b.innerHTML=h; rvMarkCells(b,H); return b.innerHTML; }
 async function reviewPdf(l,o){ const d=discById(l.discipline);
   return pdfFromHtml(`${d?.period!=null?d.period+"º · ":""}${nm(d)} · ${l.title}`, `<h1>${esc(l.title)}</h1>${rvPdfHtml(l,o)}`, {o, name:fsafe([nm(d), l.review==="all"?"":l.review, T2("Revisão final","Final review")].filter(Boolean).join(" - ")), toc:":scope>h2, :scope>h3"}); }
 async function lessonPdf(l, withQ=true, o=pdfOpt()){
@@ -3233,7 +3257,7 @@ function srResultsHTML(R){
   for(const g of groups){ const d=discById(g.d);
     h+=`<div><div class="eyebrow" style="margin:6px 4px 8px">${d?ddot(d):""}${esc(d?nm(d):g.d)} · ${plur(g.nq,"q","q")}${g.nl?` · ${g.nl} ${T2("em lições","in lessons")}`:""}</div><div class="panel" style="padding-top:4px;padding-bottom:4px">`;
     for(const tp of g.topics){ const t=(d?.topics||[]).find(x=>x.id===tp.t); const key=g.d+"|"+tp.t; const lim=S.srch.more[key]||25;
-      h+=`<details class="pg srt" ${open?"open":""}><summary><span>${esc(t?nm(t):tp.t)}</span><small>${tp.q.length?plur(tp.q.length,"q","q"):""}${tp.q.length&&tp.l.length?" · ":""}${tp.l.length?`📖 ${tp.l.length}`:""}${t?.exam?` · ${esc(t.exam)}`:""}</small></summary><div class="list">`;
+      h+=`<details class="pg srt" ${open?"open":""}><summary><span>${esc(t?nm(t):tp.t)}</span><small>${tp.q.length?plur(tp.q.length,"q","q"):""}${tp.q.length&&tp.l.length?" · ":""}${tp.l.length?`📖 ${tp.l.length}`:""}${t?.exam?` · ${esc(t.exam)}`:""}${t&&realW(g.d,t.id)?` · ${esc(wtTxt(realW(g.d,t.id)))}`:""}</small></summary><div class="list">`;
       tp.l.slice(0,6).forEach(x=>{ const sn=snip(x.text,P.hres,160)||esc(x.text.slice(0,150)); h+=`<button type="button" class="li" data-act="srLesson" data-id="${esc(x.l)}" data-i="${x.i}"><span class="srx" style="-webkit-line-clamp:3"><b>📖 ${esc(x.lt)}${x.i>=0?" › "+esc(x.title):""}</b><br>${sn}</span><span class="st no">›</span></button>`; });
       if(tp.l.length>6) h+=`<p class="empty" style="margin:6px 0">+${tp.l.length-6} ${T2("trechos nesta lição","more excerpts")}</p>`;
       tp.q.slice(0,lim).forEach(({q,strong})=>{ const sn=qRowSnip(q,P.hres); const st=status(q.id);
@@ -3256,7 +3280,7 @@ function srStudy(dId,tId,n){
   S.session=buildSession("study",list,Object.assign(defaultSetup(),{order:"pri",count:n||0,shuffleO:true})); S.session.from="search"; go("study");
 }
 function srLessonHl(){ // destaca o termo na lição aberta pela busca e rola até a seção
-  const h=S.lessonHl; S.lessonHl=null; if(!h) return; const art=$("#view .lesson"); if(!art) return;
+  const h=S.lessonHl; S.lessonHl=null; if(!h) return; const art=$("#view .lwrap .lesson"); if(!art) return;
   const w=document.createTreeWalker(art,NodeFilter.SHOW_TEXT), nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   for(const nd of nodes){ const t=nd.nodeValue; if(t.trim().length<2) continue; const html=hlHtml(t,h.hres); if(html.includes("srh")){ const sp=document.createElement("span"); sp.innerHTML=html; nd.replaceWith(...sp.childNodes); } }
   const hs=art.querySelectorAll(":scope > h2"); const tgt=(h.i>=0&&hs[h.i])||art.querySelector("mark.srh"); lfullReveal(tgt);
@@ -3379,7 +3403,7 @@ function planItem(it){
   const tp=it.tp, name=esc(nm(tp.t));
   if(it.k==="rev") return `<div class="pitem rev"><div class="pt"><b>${ddot(tp.d)}↻ ${name}</b><small>${T2("Rever erros","Review misses")} · ${it.n}</small></div><div class="pa"><button class="btn small" data-act="planRev" data-d="${esc(tp.d.id)}" data-t="${esc(tp.t.id)}">${T2("Rever","Review")}</button></div></div>`;
   if(it.k==="done") return `<div class="pitem ok"><div class="pt"><b>${ddot(tp.d)}✓ ${name}</b><small>${T2("feito hoje","done today")} · ${it.n} ${T2("questões","questions")}</small></div><div class="pa">${planLinks(tp)}</div></div>`;
-  return `<div class="pitem"><div class="pt"><b>${ddot(tp.d)}${name}</b><small>${it.n} ${T2("questões novas","new questions")} · ${planStars(tp.w)}${tp.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(tp.acc*100)}%`:""}</small></div><div class="pa">${planLinks(tp)}</div></div>`;
+  return `<div class="pitem"><div class="pt"><b>${ddot(tp.d)}${name}</b><small>${it.n} ${T2("questões novas","new questions")} · ${planStars(tp.w)}${wtMeta(tp.d.id,tp.t.id)}${tp.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(tp.acc*100)}%`:""}</small></div><div class="pa">${planLinks(tp)}</div></div>`;
 }
 function planHomeHTML(){ const C=planCompute(); if(!C.exams.length) return "";
   const today=C.days.get(C.tk)||[], nNew=today.filter(i=>i.k==="new").reduce((s,i)=>s+i.n,0), nRev=today.filter(i=>i.k==="rev").reduce((s,i)=>s+i.n,0);
@@ -3398,7 +3422,7 @@ function vPlan(v){
       <div class="track" style="margin:12px 0 8px"><i class="ok" style="width:${100*e.ok/e.n}%"></i><i class="bad" style="width:${100*(e.seen-e.ok)/e.n}%"></i></div>
       <div style="font-size:12.5px;color:var(--muted)"><b>${pct(e.seen,e.n)}</b> ${T2("coberto","covered")} (${e.seen}/${e.n}) · ${T2("acerto","accuracy")} <b>${pct(e.ok,e.seen)}</b></div>
       <div class="pstat ${warn?"warn":""}">${warn?`⚠ ${e.over} ${T2("questões não cabem: aumente a meta diária ou libere dias.","questions don't fit: raise the daily goal or free up days.")}`: none?`✓ ${T2("Cobertura-alvo atingida: foque nos erros e na revisão.","Coverage target reached: focus on misses and review.")}`:`${T2("Ritmo","Pace")}: ~${e.quota} ${T2("questões novas/dia em","new questions/day over")} ${e.freeN-(e.reviewDay!=null?1:0)} ${T2("dias de estudo","study days")}`}</div>
-      <details class="ptps"><summary>${T2("Temas","Topics")} (${e.tps.length})</summary>${e.tps.map(x=>`<div class="pitem ${x.done?"ok":""}"><div class="pt"><b>${x.done?"✓ ":""}${esc(nm(x.t))}</b><small>${planStars(x.w)} · ${pct(x.seen,x.n)} ${T2("visto","seen")}${x.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(x.acc*100)}%`:""}</small></div><div class="pa">${planLinks(x)}</div></div>`).join("")}</details></div>`; }).join("");
+      <details class="ptps"><summary>${T2("Temas","Topics")} (${e.tps.length})</summary>${e.tps.map(x=>`<div class="pitem ${x.done?"ok":""}"><div class="pt"><b>${x.done?"✓ ":""}${esc(nm(x.t))}</b><small>${planStars(x.w)}${wtMeta(x.d.id,x.t.id)} · ${pct(x.seen,x.n)} ${T2("visto","seen")}${x.acc!=null?` · ${T2("acerto","accuracy")} ${Math.round(x.acc*100)}%`:""}</small></div><div class="pa">${planLinks(x)}</div></div>`).join("")}</details></div>`; }).join("");
   const a=new Date(start), b=new Date(addDays(start,6));
   v.innerHTML=`<div class="row" style="justify-content:space-between"><div><div class="eyebrow">${T2("Até as provas","Until the exams")}</div><h1>${T2("Plano de estudos","Study plan")}</h1></div><button class="btn small" data-act="planCfg">⚙ ${T2("Configurar","Settings")}</button></div>
    <div class="plexams">${C.exams.length?cards:`<div class="panel"><h2>${T2("Nenhuma prova futura","No upcoming exam")}</h2><p class="lede">${T2("Defina a data das provas em Configurar. O plano distribui os temas (★ primeiro, os mais fracos antes) pelos dias livres, e se atrasar ele remaneja sozinho.","Set the exam dates in Settings. The plan spreads topics (★ and weakest first) over free days and re-plans itself if you fall behind.")}</p></div>`}</div>

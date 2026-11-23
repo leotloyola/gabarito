@@ -715,7 +715,7 @@ body.sqdk{--bg:var(--sq-bg);--surface:var(--sq-sf);--surface-2:var(--sq-s2);--pi
   --accent:var(--sq-ac);--accent-ink:#0B0C0E;--accent-soft:var(--sq-acs);--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;
   --ok:#34D399;--ok-soft:#06281E;--ok-bar:#10B981;--bad:#FB7185;--bad-soft:#2E0C16;--bad-bar:#E11D48;--warn:#FCD34D;--warn-soft:#271A04;--warn-line:#78350F;--shadow:none;--shadow-md:none;color-scheme:dark;background:var(--bg);color:var(--ink)}
 body.sqdk .top{background:color-mix(in srgb,var(--bg) 86%,transparent)}
-body.sqdk .ann-svg.mk{mix-blend-mode:normal;opacity:.42}
+body.sqdk :is(.sqpage,.sqwrap>.qcol) .ann-svg.mk{mix-blend-mode:normal;opacity:.42} /* só no fundo escuro da prova; a lição ao lado (sépia) mantém o grifo vivo */
 body.sqdk :is(.sqpage,.sqwrap>.qcol) .ann-svg.ink path[fill="#111827"]{fill:#F4F4F5} /* caneta preta vira clara no fundo escuro */
 body.sqdk .sqflag[aria-pressed="true"]{color:#FDA4AF}
 

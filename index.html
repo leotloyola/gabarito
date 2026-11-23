@@ -691,6 +691,11 @@ html body #view .sqgrid{display:flex;flex-direction:column;gap:12px;min-width:0}
 html body #view .sqgrid .qleft,html body #view .sqgrid .qright{display:flex;flex-direction:column;gap:12px;position:static;top:auto;max-height:none;overflow:visible;min-width:0}
 .sqend{display:flex;justify-content:center;padding:12px 0 56px}
 .sqwrap .lptn{display:none!important}
+.sqtop,.sqbar,.sqstrip,.sqlist,.sq,.sqgrid{min-width:0;max-width:100%}
+.sqpage{min-width:0;max-width:min(860px,100%)}
+html body #view .qgrid.l3.sqwrap>.qcol{overflow-x:hidden}
+.sqcur{flex:none;font:600 12.5px var(--f-ui);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
 /* prova em rolagem: tema escuro com a cor da disciplina (variáveis --sq-* calculadas em sqTheme) */
 body.sqdk{--bg:var(--sq-bg);--surface:var(--sq-sf);--surface-2:var(--sq-s2);--pill:color-mix(in srgb,var(--sq-ln) 70%,transparent);--ink:#F4F4F5;--ink-2:#E7E7EA;--muted:#B9B9C2;--subtle:#9A9AA5;--line:var(--sq-ln);--hair:rgba(255,255,255,.07);
   --accent:var(--sq-ac);--accent-ink:#0B0C0E;--accent-soft:var(--sq-acs);--usmle:#A5B4FC;--usmle-soft:#1E1B4B;--usmle-line:#3730A3;
@@ -2024,7 +2029,7 @@ function vPlayer(v){
 function sqStats(s){ let ok=0,bad=0,ans=0; for(const it of s.items){ if(it.pick===null) continue; ans++; if(s.mode==="study"){ const q=S.qs.get(it.id); if(q&&it.pick===q.correct) ok++; else bad++; } } return {ok,bad,ans}; }
 function sqScore(s){ const t=sqStats(s), n=s.items.length; return s.mode==="study"?`<span class="ok">✓ ${t.ok}</span> <span class="bad">✗ ${t.bad}</span> <span class="mu">· ${t.ans}/${n}</span>`:`<span class="mu">${t.ans}/${n} ${T2("respondidas","answered")}</span>`; }
 function sqStrip(s){ return s.items.map((it,i)=>{ const q=S.qs.get(it.id); const st=it.pick===null?"":s.mode!=="study"?" pk":(q&&it.pick===q.correct?" ok":" bad"); return `<button type="button" class="sqn${st}${i===s.i?" cur":""}${exrFlagged(it.id)?" fl":""}" data-act="sqGo" data-i="${i}" aria-label="${tr("q")} ${i+1}">${i+1}</button>`; }).join(""); }
-function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button><b class="sqex">${esc(s.exam||"")}</b><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}<button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
+function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button><b class="sqex">${esc(s.exam||"")}</b><span class="sqcur" id="sqcur">${tr("q")} ${s.i+1}/${s.items.length}</span><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}<button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
 function sqItem(s,i){ const it=s.items[i], q=S.qs.get(it.id); if(!q) return ""; const reveal=s.mode==="study"&&it.pick!==null;
   return `<section class="sq${reveal?(it.pick===q.correct?" ok":" bad"):""}" id="sq-${i}" data-i="${i}"><div class="sqh"><span class="sqk">${tr("q")} ${i+1}</span><span class="sqt">${esc(topicName(q.discipline,q.topic)||"")}</span>${q.exam?`<button type="button" class="sqflag" data-act="sqFlag" data-i="${i}" aria-pressed="${exrFlagged(q.id)}" title="${T2("Marcar dúvida (acertei no chute): entra no Refazer e na Rodada final","Flag as unsure: goes into Redo and Final round")}">🚩<span>${exrFlagged(q.id)?T2("Dúvida","Unsure"):T2("Marcar dúvida","Flag")}</span></button>`:""}</div>${questionHTML(q,it,reveal,s.mode==="sim",true)}</section>`; }
 function sqScroller(){ return $("#view .sqwrap>.qcol"); } // null = a própria página rola
@@ -2088,8 +2093,11 @@ function sqRvMark(scroll){ const s=S.session, art=$("#view .sqwrap .qlesson arti
   if(scroll&&tgt){ const sc=tgt.closest(".qlbody"); if(!sc) return; const a=sc.getBoundingClientRect(), r=tgt.getBoundingClientRect(); if(r.top<a.top+40||r.bottom>a.bottom-40) sc.scrollBy({top:r.top-a.top-Math.min(140,a.height*.25),behavior:"smooth"}); } }
 // sem modo foco, o cabeçalho do app fica preso no topo: a faixa da prova encosta logo abaixo dele
 function sqTopPos(){ const h=$("#view .sqtop"); if(!h) return; const tb=$(".top"); const y=!sqScroller()&&tb&&getComputedStyle(tb).display!=="none"&&getComputedStyle(tb).position==="sticky"?Math.round(tb.getBoundingClientRect().height):0; h.style.top=y+"px"; }
-function sqStripCur(){ const st=$("#sqstrip"); if(!st) return; const s=S.session; st.querySelectorAll(".sqn.cur").forEach(b=>b.classList.remove("cur")); const b=st.querySelector('.sqn[data-i="'+s.i+'"]'); if(!b) return; b.classList.add("cur");
-  const l=b.offsetLeft-st.offsetLeft, r=l+b.offsetWidth; if(l<st.scrollLeft+8||r>st.scrollLeft+st.clientWidth-8) st.scrollLeft=Math.max(0,l-st.clientWidth/2+b.offsetWidth/2); }
+function sqStripCur(){ const s=S.session; const cu=$("#sqcur"); if(cu) cu.textContent=`${tr("q")} ${s.i+1}/${s.items.length}`;
+  const st=$("#sqstrip"); if(!st) return; st.querySelectorAll(".sqn.cur").forEach(b=>b.classList.remove("cur")); const b=st.querySelector('.sqn[data-i="'+s.i+'"]'); if(!b) return; b.classList.add("cur");
+  // a faixa desliza para a esquerda: a questão da vez fica a ~1/3 da largura, com as anteriores visíveis à esquerda
+  const sr=st.getBoundingClientRect(), br=b.getBoundingClientRect(), x=br.left-sr.left+st.scrollLeft, want=Math.max(0,Math.min(st.scrollWidth-st.clientWidth,x-st.clientWidth/3));
+  if(br.left<sr.left+8||br.right>sr.right-8||Math.abs(st.scrollLeft-want)>st.clientWidth/3) st.scrollTo({left:want,behavior:"smooth"}); }
 function sqGo(i,smooth=true){ const s=S.session; i=Math.max(0,Math.min(i,s.items.length-1)); const el=$("#view #sq-"+i), sc=sqScroller(); if(!el) return;
   const d=el.getBoundingClientRect().top-sqTopOf(sc)-sqHeadB(sc)-8; const o={top:d,behavior:smooth?"smooth":"auto"}; if(sc) sc.scrollBy(o); else window.scrollBy(o); sqSetCur(i); }
 function sqSetCur(i){ const s=S.session; if(!s||!s.scroll) return; if(i!==s.i){ s.i=i; const it=s.items[i]; if(it&&it.t0==null&&it.pick===null) it.t0=now(); posSave(); } sqStripCur(); sqPane(); }

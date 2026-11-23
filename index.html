@@ -2039,15 +2039,15 @@ function sqHeadB(sc){ const h=$("#view .sqtop"); return h?h.getBoundingClientRec
 function sqLesson(s){ const L=i=>{ const q=S.qs.get(s.items[i]?.id); return q&&lessonOf(q.discipline,q.topic); };
   for(let i=s.i;i>=0;i--){ const l=L(i); if(l) return l; } for(let i=s.i+1;i<s.items.length;i++){ const l=L(i); if(l) return l; } return null; }
 /* Cor própria da prova em rolagem (23/11/2026, pedido do Léo): fundo escuro tingido com a cor da disciplina.
-   A mistura com quase-preto é ajustada até a luminância ficar baixa (≤ 0,03), então o texto claro passa
+   A mistura com quase-preto é ajustada até a luminância ficar baixa (≤ 0,014; escurecido a pedido do Léo), então o texto claro passa
    do contraste AA em qualquer cor de disciplina (inclusive amarelos/verdes claros); o destaque é a cor da
    disciplina clareada até ler bem sobre o fundo. A lição ao lado mantém o próprio fundo (sépia etc.). */
 function sqTheme(){ const s=S.session, q=S.qs.get(s?.items?.[0]?.id), d=q&&discById(q.discipline); const m=String(discColor(d)||"").match(/^#?([0-9a-f]{6})$/i);
-  const c=m?[0,2,4].map(i=>parseInt(m[1].substr(i,2),16)):[15,118,110], K=[9,11,14];
+  const c=m?[0,2,4].map(i=>parseInt(m[1].substr(i,2),16)):[15,118,110], K=[5,6,8];
   const mix=(a,b,t)=>a.map((x,i)=>Math.round(x*(1-t)+b[i]*t)), lin=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }, lum=a=>.2126*lin(a[0])+.7152*lin(a[1])+.0722*lin(a[2]);
   const at=L=>{ let t=.62, a=mix(K,c,t); while(lum(a)>L&&t>.02){ t*=.88; a=mix(K,c,t); } return a; }, hex=a=>"#"+a.map(x=>x.toString(16).padStart(2,"0")).join("");
   let ac=c; for(let k=0;k<24&&lum(ac)<.38;k++) ac=mix(ac,[255,255,255],.14);
-  const st=document.body.style; st.setProperty("--sq-bg",hex(at(.028))); st.setProperty("--sq-sf",hex(at(.05))); st.setProperty("--sq-s2",hex(at(.075))); st.setProperty("--sq-ln",hex(at(.12))); st.setProperty("--sq-ac",hex(ac)); st.setProperty("--sq-acs",hex(at(.06)));
+  const st=document.body.style; st.setProperty("--sq-bg",hex(at(.014))); st.setProperty("--sq-sf",hex(at(.03))); st.setProperty("--sq-s2",hex(at(.05))); st.setProperty("--sq-ln",hex(at(.09))); st.setProperty("--sq-ac",hex(ac)); st.setProperty("--sq-acs",hex(at(.04)));
   document.body.classList.add("sqdk"); }
 function vScroll(v){
   const s=S.session; clearInterval(timerInt);

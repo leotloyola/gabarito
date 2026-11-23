@@ -211,6 +211,12 @@ function fixture(){
       if(r.items!==1||r.items2!==3) throw new Error("lista "+r.items+"/"+r.items2); if(!r.notInTopics) throw new Error("revisão entre os temas"); if(r.bar!==5) throw new Error("chips "+r.bar);
       if(!r.noPractice) throw new Error("praticar na revisão"); if(r.hid!==3) throw new Error("escondidas "+r.hid); if(!r.peek) throw new Error("não espia"); if(!r.pdf||!/P2 - Revisão final\.pdf$/.test(r.name)) throw new Error("pdf "+r.name);
       if(!r.all) throw new Error("visão da disciplina"); if(!r.discHas) throw new Error("pdf da disciplina sem revisão"); if(!r.cleared) throw new Error("mostrar tudo"); });
+    if(vp.width>600) await step("revisão final: cabeçalho da tabela preso ao rolar", async()=>{ const r=await p.evaluate(async()=>{ const rows=Array.from({length:40},(_,i)=>`<tr><td data-label="Condição">C${i}</td><td data-label="Q">texto longo ${i}</td><td data-label="T">T</td><td data-label="N">N</td><td data-label="P">P</td></tr>`).join("");
+        S.lessons.set("lesson:da:revisao-P2",{id:"lesson:da:revisao-P2",kind:"lesson",discipline:"da",topic:"revisao-P2",review:"P2",title:"Revisão final · P2",minutes:5,html:`<h2>Sec</h2><div class="tbl"><table class="stack"><thead><tr><th>Condição</th><th>Quando</th><th>Tratamento</th><th>Número</th><th>Pegadinha</th></tr></thead><tbody>${rows}</tbody></table></div><p>fim</p>`});
+        S.lessonId="lesson:da:revisao-P2"; S.session=null; go("lesson"); await new Promise(r=>setTimeout(r,80)); const th=document.querySelector("#view article.lesson.review thead th"), tb=document.querySelector("#view article.lesson.review table");
+        window.scrollTo(0,tb.getBoundingClientRect().top+window.scrollY+600); await new Promise(r=>setTimeout(r,80)); const a=document.querySelector("#view article.lesson.review"), st=parseFloat(a.style.getPropertyValue("--rvst"))||0, top=th.getBoundingClientRect().top;
+        S.lessons.delete("lesson:da:revisao-P2"); window.scrollTo(0,0); go("home"); return {top:Math.round(top),st}; });
+      if(Math.abs(r.top-r.st)>2) throw new Error("cabeçalho não ficou preso: "+JSON.stringify(r)); });
     await step("peso do tema, véspera e não confundir", async()=>{ const r=await p.evaluate(async()=>{ const o={};
         o.w=realW("da","t1"); o.wb=realW("db","t3");
         const nc='<aside class="call confundir"><div class="ct">Não confundir</div><div class="tbl"><table class="stack"><thead><tr><th>Isto</th><th>Não confundir com</th><th>Diferença</th></tr></thead><tbody><tr><td>a</td><td>b</td><td>c</td></tr></tbody></table></div></aside>';

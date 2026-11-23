@@ -600,6 +600,7 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 .ltoc ol{list-style:none;margin:8px 0 2px;padding:0;display:flex;flex-direction:column;gap:2px}
 .ltoc button{all:unset;cursor:pointer;display:block;font-size:13px;line-height:1.35;color:var(--muted);padding:6px 10px;border-radius:10px;box-sizing:border-box;width:100%}
 .ltoc button.sub{padding-left:22px;font-size:12.5px}
+.ltoc button.vesp{font-weight:600;color:var(--accent)}
 .ltoc button:hover{background:var(--pill);color:var(--ink)}
 .ltoc button.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
 .lesson h2,.lesson h3{scroll-margin-top:84px}
@@ -2458,8 +2459,13 @@ function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=nul
   let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) hs=[];
   const temas=lessonTemasHTML(art); if(!hs.length&&!temas) return;
   hs.forEach((h,i)=>h.id="sec-"+i); const en=set().lang==="en";
-  const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${i}" class="${h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h.textContent)}</button></li>`).join("");
-  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button>${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${hs.length} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`:""}${temas}`; nav.hidden=false; tocTogLbl();
+  // "Na véspera" (bloco do topo, antes de "Ler a lição completa") entra como 1ª linha do índice
+  let vb=art.querySelector(".call.vespera"); while(vb&&vb.parentElement!==art) vb=vb.parentElement;
+  if(vb&&hs.length&&vb.compareDocumentPosition(hs[0])&Node.DOCUMENT_POSITION_FOLLOWING){ vb.id="sec-v"; hs=[vb,...hs]; } else vb=null;
+  const vtx=vb?((vb.querySelector(".ct")?.textContent||"").split("·")[0].trim()||(en?"Night before":"Na véspera")):"";
+  const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${h===vb?"v":i-(vb?1:0)}" class="${h===vb?"vesp":h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h===vb?vtx:h.textContent)}</button></li>`).join("");
+  const nsec=hs.length-(vb?1:0);
+  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button>${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${nsec} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`:""}${temas}`; nav.hidden=false; tocTogLbl();
   nav.querySelector(".ltemas")?.addEventListener("toggle",e=>{ try{ localStorage.setItem("gab.temas",e.target.open?"1":"0"); }catch(_){} });
   if(!hs.length) return;
   const btns=nav.querySelectorAll("details:not(.ltemas) ol button"); let cur=-1;

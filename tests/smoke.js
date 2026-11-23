@@ -315,9 +315,13 @@ function fixture(){
         document.querySelector('[data-act="lread"]').click(); out.lread=!document.querySelector('#lreadBar [data-act="annToggle"]')&&S.annId==="L:lesson:da:t1"; document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); localStorage.setItem("gab.lread","0"); S.lread=false;
         localStorage.setItem("gab.ann.auto","0"); S.annId=null; go("lesson"); out.off=!!document.querySelector('#view .row [data-act="annToggle"]')&&!document.querySelector(".lwrap .ann-enabled"); localStorage.setItem("gab.ann.auto","1");
         if(LP_Q.matches){ localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; S.setup=null; S.tuB=null; set().topic="t1"; go("study"); document.querySelector('[data-act="startSession"]').click(); const s=S.session; s.items[s.i].pick=0; render(); document.querySelector('#view .qrow-lesson[data-act="lesson"]')?.click(); await W(50);
-          // 22/11/2026: as duas colunas ficam anotáveis ao mesmo tempo, sem botão ✍; a caneta escolhe a coluna
+          // 23/11/2026: anotação manual (✍ só ícone) em cada coluna; as duas podem ficar abertas juntas; a caneta escolhe a coluna ativa
+          localStorage.setItem("gab.ann.auto","0"); S.annId=null; S.annOpen.clear(); render(); await W(30);
+          const tgL=()=>document.querySelector('#view .qlesson [data-act="annToggle"]'), tgQ=()=>document.querySelector('#view .qleft [data-act="annToggle"]');
+          out.icons=!!tgL()&&!!tgQ()&&tgL().textContent.trim()==="✍"&&tgQ().textContent.trim()==="✍"&&!document.querySelector("#view .ann-enabled");
+          tgL().click(); await W(20); tgQ().click(); await W(30);
           const lsf=document.querySelector("#view .qlesson .ann-surface"), qsf=document.querySelector("#view .qleft .ann-surface");
-          out.split=!!lsf&&!!qsf&&lsf.classList.contains("ann-enabled")&&qsf.classList.contains("ann-enabled")&&!document.querySelector('#view .qlesson [data-act="annToggle"]')&&!document.querySelector('#view .qleft [data-act="annToggle"]');
+          out.split=!!lsf&&!!qsf&&lsf.classList.contains("ann-enabled")&&qsf.classList.contains("ann-enabled")&&tgL()?.getAttribute("aria-pressed")==="true"&&tgQ()?.getAttribute("aria-pressed")==="true";
           const penAt=(sf,id)=>{ const i=sf.querySelector(".ann-input"), R=i.getBoundingClientRect(), x=R.left+20, y=R.top+Math.min(30,R.height/2); const e=(t,xx)=>i.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,pointerId:id,pointerType:"pen",clientX:xx,clientY:y,pressure:.6,buttons:t==="pointerup"?0:1})); e("pointerdown",x); for(let k=1;k<8;k++) e("pointermove",x+k*12); e("pointerup",x+96); };
           const qid=s.items[s.i].id, qk=qsf.dataset.key, n0=annotationStrokes(qk).length;
           penAt(qsf,41); await W(30); out.qPrio=S.annId===qid&&annotationStrokes(qk).length===n0+1;
@@ -325,9 +329,11 @@ function fixture(){
           document.querySelector('#annHost [data-act="annTool"][data-v="marker"]').click(); out.qTool=S.annTool==="marker";
           penAt(document.querySelector("#view .qlesson .ann-surface"),42); await W(30); out.back=String(S.annId).startsWith("L:")&&S.annTool==="pen"&&document.querySelector("#annHost .ann-float")?.dataset.o===S.annId;
           penAt(document.querySelector("#view .qleft .ann-surface"),43); await W(30); out.qKeep=S.annId===qid&&S.annTool==="marker";
+          tgQ().click(); await W(30); out.closeQ=!document.querySelector("#view .qleft .ann-surface.ann-enabled")&&!!document.querySelector("#view .qlesson .ann-surface.ann-enabled")&&String(S.annId).startsWith("L:");
+          tgL().click(); await W(30); out.closeL=!document.querySelector("#view .ann-enabled")&&!S.annId;
           delete S.prog.annotations[qk]; localStorage.removeItem("gab.ann.tool.Q"); localStorage.removeItem("gab.ann.tool.L");
           localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; }
-        S.annId=null; delete S.prog.annotations["L:lesson:da:t1"]; localStorage.setItem("gab.ann.auto","0"); go("home"); return out; });
+        S.annId=null; S.annOpen.clear(); delete S.prog.annotations["L:lesson:da:t1"]; localStorage.setItem("gab.ann.auto","0"); go("home"); return out; });
       const bad=Object.entries(r).filter(([k,v])=>!v); if(bad.length) throw new Error("sempre anotável: "+JSON.stringify(r)); });
     await step("borracha não rola a lição", async()=>{
       await p.evaluate(()=>{ S.annId=null; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.querySelector('.row [data-act="annToggle"]').click(); const se=document.scrollingElement; se.scrollTop=600; });

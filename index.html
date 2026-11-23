@@ -674,7 +674,8 @@ html.toc-off .lwrap>.gdrag{display:none!important}
 .sqtop{position:sticky;top:0;z-index:8;background:var(--bg);margin:-6px 0 0;padding:max(6px,env(safe-area-inset-top,0px)) 0 8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 0 var(--line)}
 .sqwrap .sqtop{margin:0;padding:4px 0 8px}
 .sqbar{display:flex;align-items:center;gap:8px;min-width:0}
-.sqex{font-family:var(--f-ui);font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sqexn{flex:none;min-width:30px;padding:2px 8px;font-size:18px;line-height:1}.sqexn[disabled]{opacity:.3}
+.sqex{font-family:var(--f-ui);font-size:14px;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sqsc{font:600 13px var(--f-ui);font-variant-numeric:tabular-nums;white-space:nowrap}.sqsc .ok{color:var(--ok)}.sqsc .bad{color:var(--bad)}.sqsc .mu{color:var(--muted);font-weight:500}
 .sqstrip{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 3px;scroll-behavior:smooth}.sqstrip::-webkit-scrollbar{display:none}
 .sqn{flex:none;min-width:30px;height:28px;padding:0 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 12px var(--f-ui);font-variant-numeric:tabular-nums;cursor:pointer}
@@ -694,7 +695,8 @@ html body #view .sqgrid .qleft,html body #view .sqgrid .qright{display:flex;flex
 .sqtop,.sqbar,.sqstrip,.sqlist,.sq,.sqgrid{min-width:0;max-width:100%}
 .sqpage{min-width:0;max-width:min(860px,100%)}
 html body #view .qgrid.l3.sqwrap>.qcol{overflow-x:hidden}
-.sqcur{flex:none;font:600 12.5px var(--f-ui);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:480px){ .sqsc .mu,.sqcur{display:none} .sqbar{gap:4px} .sqsc{margin-left:auto} }
+.sqcur{margin-left:auto;flex:none;font:600 12.5px var(--f-ui);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* prova em rolagem: tema escuro com a cor da disciplina (variáveis --sq-* calculadas em sqTheme) */
 body.sqdk{--bg:var(--sq-bg);--surface:var(--sq-sf);--surface-2:var(--sq-s2);--pill:color-mix(in srgb,var(--sq-ln) 70%,transparent);--ink:#F4F4F5;--ink-2:#E7E7EA;--muted:#B9B9C2;--subtle:#9A9AA5;--line:var(--sq-ln);--hair:rgba(255,255,255,.07);
@@ -2029,7 +2031,11 @@ function vPlayer(v){
 function sqStats(s){ let ok=0,bad=0,ans=0; for(const it of s.items){ if(it.pick===null) continue; ans++; if(s.mode==="study"){ const q=S.qs.get(it.id); if(q&&it.pick===q.correct) ok++; else bad++; } } return {ok,bad,ans}; }
 function sqScore(s){ const t=sqStats(s), n=s.items.length; return s.mode==="study"?`<span class="ok">✓ ${t.ok}</span> <span class="bad">✗ ${t.bad}</span> <span class="mu">· ${t.ans}/${n}</span>`:`<span class="mu">${t.ans}/${n} ${T2("respondidas","answered")}</span>`; }
 function sqStrip(s){ return s.items.map((it,i)=>{ const q=S.qs.get(it.id); const st=it.pick===null?"":s.mode!=="study"?" pk":(q&&it.pick===q.correct?" ok":" bad"); return `<button type="button" class="sqn${st}${i===s.i?" cur":""}${exrFlagged(it.id)?" fl":""}" data-act="sqGo" data-i="${i}" aria-label="${tr("q")} ${i+1}">${i+1}</button>`; }).join(""); }
-function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button><b class="sqex">${esc(s.exam||"")}</b><span class="sqcur" id="sqcur">${tr("q")} ${s.i+1}/${s.items.length}</span><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}<button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
+// ‹ › ao lado do nome: prova anterior/próxima da mesma disciplina, na ordem da lista "Provas na íntegra" (mesmo modo)
+function sqExSib(s,dir){ if(!s.exam||s.redo) return null; const q=S.qs.get(s.items[0]?.id); if(!q) return null; const L=fullExams(q.discipline), k=L.findIndex(x=>x.ex===s.exam); return k<0?null:L[k+dir]||null; }
+function sqExNav(s,dir){ if(!s.exam||s.redo) return ""; const x=sqExSib(s,dir), t=dir<0?T2("Prova anterior","Previous exam"):T2("Próxima prova","Next exam");
+  return `<button type="button" class="btn small ghost sqexn" data-act="sqExam" data-d="${dir}" ${x?"":"disabled"} aria-label="${t}" title="${x?t+": "+esc(x.ex):t}">${dir<0?"‹":"›"}</button>`; }
+function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button>${sqExNav(s,-1)}<b class="sqex">${esc(s.exam||"")}</b>${sqExNav(s,1)}<span class="sqcur" id="sqcur">${tr("q")} ${s.i+1}/${s.items.length}</span><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}<button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
 function sqItem(s,i){ const it=s.items[i], q=S.qs.get(it.id); if(!q) return ""; const reveal=s.mode==="study"&&it.pick!==null;
   return `<section class="sq${reveal?(it.pick===q.correct?" ok":" bad"):""}" id="sq-${i}" data-i="${i}"><div class="sqh"><span class="sqk">${tr("q")} ${i+1}</span><span class="sqt">${esc(topicName(q.discipline,q.topic)||"")}</span>${q.exam?`<button type="button" class="sqflag" data-act="sqFlag" data-i="${i}" aria-pressed="${exrFlagged(q.id)}" title="${T2("Marcar dúvida (acertei no chute): entra no Refazer e na Rodada final","Flag as unsure: goes into Redo and Final round")}">🚩<span>${exrFlagged(q.id)?T2("Dúvida","Unsure"):T2("Marcar dúvida","Flag")}</span></button>`:""}</div>${questionHTML(q,it,reveal,s.mode==="sim",true)}</section>`; }
 function sqScroller(){ return $("#view .sqwrap>.qcol"); } // null = a própria página rola
@@ -3764,6 +3770,7 @@ document.addEventListener("click", async e=>{
   if(act==="exRedo"){ const ex=a.dataset.ex; return startRedo(exrRedo(ex),ex+" · "+T2("erradas e 🚩","missed & 🚩"),"ex"); }
   if(act==="exFinal") return startRedo(exrFinal(),"🏁 "+T2("Rodada final","Final round")+" · "+nm(curDisc()),"final");
   if(act==="exZero"){ const ex=a.dataset.ex; return arm(a,T2("Zerar? toque de novo","Reset? tap again"),()=>{ exrZero(ex); toast(T2("Histórico desta prova zerado","Exam history reset")); render(); }); }
+  if(act==="sqExam"){ const s=S.session, x=s&&sqExSib(s,Number(a.dataset.d)); if(!x) return; const q=S.qs.get(s.items[0].id); if(q&&curDisc()?.id!==q.discipline){ set().disc=q.discipline; } return startFullExam(x.ex,s.mode==="sim"?"sim":"study"); }
   if(act==="sqPM"){ sqPMSet(a.dataset.v); return render(); }
   if(act==="lspot"){ const s=S.session; if(s?.scroll&&!s.done){ const i=s.items.findIndex(it=>it.id===a.dataset.q); if(i>=0) sqSetCur(i); if($("#view .sqwrap .qlesson.sqrv")){ S.sqPM="l"; render(); } } return lspotOpen(a.dataset.q); }
   if(act==="lpane"){ lpSet(!lpOn()); S.lpRead=false; S.lpFull=false; return render(); }

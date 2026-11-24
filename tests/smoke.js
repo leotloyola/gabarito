@@ -77,6 +77,11 @@ function fixture(){
       if(r.bottom||!r.nx||!r.pv||r.h<40||r.w<40||!r.row||!r.fit||r.over>0) throw new Error("setas: "+JSON.stringify(r)); });
     await step("image zoom", async()=>{ await p.evaluate(()=>{ S.session=null; S.setup=null; set().topic="t1"; go("study"); }); await p.click('[data-act="startSession"]'); const has=await p.evaluate(()=>!!document.querySelector('[data-act="imgZoom"]')); if(has){ await p.click('[data-act="imgZoom"]'); await p.waitForSelector(".zoomwrap img"); await p.goBack(); } await p.click('[data-pick="0"]'); });
     await step("report sheet", async()=>{ await p.click('details.qmore>summary'); await p.click('[data-act="report"]'); await p.click('[data-act="repAlt"]:not([disabled])'); await p.click('[data-act="repSend"]'); });
+    await step("melhorar justificativa", async()=>{ await p.click('details.qmore>summary'); await p.click('[data-act="better"]'); await p.fill('#betTxt','não entendi o item 3'); await p.click('[data-act="betSend"]');
+      const r=await p.evaluate(()=>{ const id=S.session.items[S.session.i].id, b=S.prog.better[id]; const q1=betQueued(id), tag=!!document.querySelector('.tag.bet');
+        S.catalog.improved={[id]:{ts:Date.now()+1000,reply:"ok"}}; const q2=betQueued(id); delete S.catalog.improved; return {on:b.on,note:b.note,q1,q2,tag,clock:progClock(S.prog)>=b.ts,merge:!!syncMerge({better:{[id]:b}},{}).better[id]}; });
+      if(!r.on||r.note!=="não entendi o item 3"||!r.q1||r.q2||!r.tag||!r.clock||!r.merge) throw new Error(JSON.stringify(r));
+      await p.click('details.qmore>summary'); await p.click('[data-act="better"]'); await p.click('[data-act="betDel"]'); const off=await p.evaluate(()=>betList().length); if(off) throw new Error("não saiu da fila"); });
     await step("lição ao lado no tablet", async()=>{ if(vp.width<900) return;
       const r=await p.evaluate(async()=>{ localStorage.removeItem("gab.lpane"); LP_S=null; S.session=null; S.setup=null; S.tuB=null; set().topic="t1"; go("study");
         document.querySelector('[data-act="startSession"]').click(); const s=S.session; s.items[s.i].pick=0; render();

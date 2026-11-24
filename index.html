@@ -676,7 +676,7 @@ html.toc-off .lwrap>.gdrag{display:none!important}
 .sqpage{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .sqtop{position:sticky;top:0;z-index:8;background:var(--bg);margin:-6px 0 0;padding:max(6px,env(safe-area-inset-top,0px)) 0 8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 0 var(--line)}
 .sqwrap .sqtop{margin:0;padding:4px 0 8px}
-.sqbar{display:flex;align-items:center;gap:8px;min-width:0}
+.sqbar{display:flex;align-items:center;gap:8px;min-width:0}.sqann{display:contents}.sqann .ann-toolbar{margin:0;flex-wrap:nowrap}
 .sqexn{flex:none;min-width:30px;padding:2px 8px;font-size:18px;line-height:1}.sqexn[disabled]{opacity:.3}
 .sqex{font-family:var(--f-ui);font-size:14px;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sqsc{font:600 13px var(--f-ui);font-variant-numeric:tabular-nums;white-space:nowrap}.sqsc .ok{color:var(--ok)}.sqsc .bad{color:var(--bad)}.sqsc .mu{color:var(--muted);font-weight:500}
@@ -710,7 +710,7 @@ details.exg:not([open])>summary .exgc{transform:rotate(-90deg)}details.exg[open]
 .sqtop,.sqbar,.sqstrip,.sqlist,.sq,.sqgrid{min-width:0;max-width:100%}
 .sqpage{min-width:0;max-width:min(860px,100%)}
 html body #view .qgrid.l3.sqwrap>.qcol{overflow-x:hidden}
-@media(max-width:480px){ .sqsc .mu,.sqcur{display:none} .sqbar{gap:4px} .sqsc{margin-left:auto} }
+@media(max-width:480px){ .sqsc .mu,.sqcur{display:none} .sqbar{gap:4px} .sqsc{margin-left:auto} .sqann .ann-tg,.sqtop .qfsd>summary{padding-inline:8px} }
 .sqcur{margin-left:auto;flex:none;font:600 12.5px var(--f-ui);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* prova em rolagem: tema escuro com a cor da disciplina (variáveis --sq-* calculadas em sqTheme) */
@@ -1331,13 +1331,21 @@ function annBar(owner,mark){
   return h+'</div>';
 }
 function annotationControls(q){ return S.qs.has(q.id)?annBar(q.id,true):""; }
-function annSurfaceHTML(key,owner,html){ annAuto(owner); return '<div class="ann-surface'+(annOpen(owner)?" ann-enabled":"")+(annIsAuto(owner)?" ann-auto":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
+function annSurfaceHTML(key,owner,html,keyed){ annAuto(owner); return '<div class="ann-surface'+(annOpen(owner)?" ann-enabled":"")+(annIsAuto(owner)?" ann-auto":"")+'" data-ann-surface data-key="'+esc(key)+'" data-owner="'+esc(owner)+'"'+(keyed?' data-keyed="1"':'')+'><div class="ann-content">'+html+'</div><svg class="ann-svg mk" aria-hidden="true"></svg><svg class="ann-svg ink" aria-hidden="true"></svg><div class="ann-input"></div></div>'; }
 function annotationSurface(q,html,part){ return S.qs.has(q.id)?annSurfaceHTML(part?q.id+"#"+part:q.id,q.id,html):html; }
 const ANN={observer:null,observed:new WeakSet(),stroke:null,touch:null,hist:[],seq:0,pen:false};
-function annBlocks(surface){ let el=surface.querySelector(".ann-content"); while(el&&el.children.length===1&&/^(DIV|ARTICLE|SECTION)$/.test(el.firstElementChild.tagName)) el=el.firstElementChild; return el?[...el.children]:[]; }
-function annGeo(surface){ const sr=surface.getBoundingClientRect(); return {W:sr.width,H:sr.height,sr,bl:annBlocks(surface).map(b=>{ const r=b.getBoundingClientRect(); return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height,el:b}; })}; }
+/* Prova inteira anotável (24/11/2026, pedido do Léo): uma superfície só cobre a prova; os traços se prendem a blocos com nome
+   estável (data-ab: enunciado, cada alternativa, cada justificativa, pegadinha), não à posição na lista, porque responder,
+   abrir "⋯ Mais" ou mudar o tamanho da letra acrescenta, esconde ou move blocos. Bloco escondido = traço escondido. */
+function annBlocks(surface){ if(surface.dataset.keyed) return [...surface.querySelectorAll("[data-ab]")]; let el=surface.querySelector(".ann-content"); while(el&&el.children.length===1&&/^(DIV|ARTICLE|SECTION)$/.test(el.firstElementChild.tagName)) el=el.firstElementChild; return el?[...el.children]:[]; }
+function annGeo(surface){ const sr=surface.getBoundingClientRect(), kd=!!surface.dataset.keyed; let bl=annBlocks(surface).map(b=>{ const r=b.getBoundingClientRect(); return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height,el:b,k:kd?b.dataset.ab:undefined}; });
+  if(kd) bl=bl.filter(b=>b.w||b.h); const g={W:sr.width,H:sr.height,sr,bl,keyed:kd}; if(kd) g.ix=new Map(bl.map((b,i)=>[b.k,i])); return g; }
+// traço salvo com nomes de bloco → índices do desenho atual (null = bloco escondido ou ausente)
+function annRes(st,g){ if(!g.keyed||st.bk==null) return st; const f=k=>g.ix.has(k)?g.ix.get(k):null, b=f(st.bk); if(b==null) return null; const n={...st,b};
+  if(st.r){ const x=f(st.r.bk); if(x==null) return null; n.r={...st.r,b:x}; } if(st.a){ const x=f(st.a.bk); if(x==null) return null; n.a={...st.a,b:x}; } return n; }
+function annKeyed(st,g){ if(!g.keyed) return; const k=i=>g.bl[i]?.k; if(st.b>=0) st.bk=k(st.b); if(st.r) st.r.bk=k(st.r.b); if(st.a) st.a.bk=k(st.a.b); }
 function annMap(st,g){
-  if(st.hide) return [];
+  if(st.hide) return []; st=annRes(st,g); if(!st) return [];
   if(st.v===3){ const m=annMapText(st,g); if(m) return m; }
   if(st.v!==2&&st.v!==3) return (st.points||[]).map(p=>[p[0]*g.W,p[1]*g.H,.5]);
   const B=st.b>=0&&g.bl.length?g.bl[Math.min(st.b,g.bl.length-1)]:{x:0,y:0,w:g.W,h:g.H}; if(!B.w&&!B.h) return [];
@@ -1380,7 +1388,7 @@ function annUpgrade(st,p,g,B){ try{ const an=annAnchor(st.tool,p,g); if(!an) ret
 // o texto quebra igual àquela hora e o traço é ligado às palavras que ele realmente cobria. Fragmentos de
 // marca-texto que não cobriam palavra nenhuma ficam escondidos (hide).
 const ANN_MIG=2;
-function annMigrate(surface,g){ const key=surface.dataset.key, list=annotationStrokes(key);
+function annMigrate(surface,g){ if(g.keyed) return; const key=surface.dataset.key, list=annotationStrokes(key);
   const need=list.filter(st=>st.tool!=="eraser"&&(st.mig||0)<ANN_MIG&&st.pts&&st.bw&&st.b>=0&&st.b<g.bl.length); if(!need.length) return;
   const groups=new Map(); for(const st of need){ const k=st.b+"|"+st.bw; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(st); }
   const done=new Map();
@@ -1502,7 +1510,7 @@ function annFinish(e,given){
   const g=A.geo, y0=p[0][1]; let bi=-1,best=1e9; g.bl.forEach((b,i)=>{ const d=y0<b.y?b.y-y0:y0>b.y+b.h?y0-b.y-b.h:0; if(d<best){best=d;bi=i;} });
   const B=bi>=0?g.bl[bi]:{x:0,y:0,w:g.W,h:g.H};
   const st={v:2,tool:A.tool,color:A.color,width:A.width,b:bi,bw:annF(B.w),bh:annF(B.h),pts:p.map(q=>[annF(q[0]-B.x),annF(q[1]-B.y),Math.round(q[2]*100)/100])};
-  st.mig=ANN_MIG; annUpgrade(st,p,g,B);
+  st.mig=ANN_MIG; annUpgrade(st,p,g,B); annKeyed(st,g);
   annSet(A.key,annotationStrokes(A.key).concat([st])); annDraw(A.surface); annRefreshBars();
 }
 function annRefreshBars(){ document.querySelectorAll("[data-ann-bar],#annHost").forEach(b=>{ if(b.id==="annHost"){ const c=annCount(S.annId||""); b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); return; } const o=b.dataset.annBar; if(o!==S.annId) return; const btn=b.querySelector('[data-act="annToggle"]'); const c=annCount(o); if(btn&&!btn.closest(".ann-float")) btn.textContent="✍"; b.querySelectorAll('[data-act="annUndo"]').forEach(x=>x.disabled=!(c||ANN.hist.length)); b.querySelectorAll('[data-act="annClear"]').forEach(x=>x.disabled=!c); }); }
@@ -2059,7 +2067,9 @@ function sqExNav(s,dir){ if(!s.exam||s.redo) return ""; const x=sqExSib(s,dir), 
   return `<button type="button" class="btn small ghost sqexn" data-act="sqExam" data-d="${dir}" ${x?"":"disabled"} aria-label="${t}" title="${x?t+": "+esc(x.ex):t}">${dir<0?"‹":"›"}</button>`; }
 // tamanho da letra das questões (Léo, 24/11): Aa no topo abre A− / % / A+; vale na prova em rolagem e na questão a questão
 function qfsHTML(){ const v=Math.round((set().qfs||1)*100); return `<details class="qfsd"><summary class="btn small ghost fsbtn" title="${T2("Tamanho da letra das questões","Question text size")}" aria-label="${T2("Tamanho da letra","Text size")}">Aa</summary><div class="qfs-in"><button type="button" class="btn small ghost" data-act="qfs" data-d="-1" aria-label="${T2("Diminuir letra","Smaller text")}">A−</button><span class="qfs-v" id="qfsv">${v}%</span><button type="button" class="btn small ghost" data-act="qfs" data-d="1" aria-label="${T2("Aumentar letra","Larger text")}">A+</button></div></details>`; }
-function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button>${sqExNav(s,-1)}<b class="sqex">${esc(s.exam||"")}</b>${sqExNav(s,1)}<span class="sqcur" id="sqcur">${tr("q")} ${s.i+1}/${s.items.length}</span><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}${qfsHTML()}<button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
+// anotação da prova inteira: uma chave por disciplina + prova; o ✍ do topo liga a caneta na página toda
+function sqAnnKey(s){ const q=S.qs.get(s?.items?.[0]?.id); return "X:"+(q?.discipline||"")+":"+(s?.exam||""); }
+function sqHead(s){ return `<div class="sqtop"><div class="sqbar"><button class="btn small ghost fsbtn" data-act="exit" aria-label="${tr("exitSession")}" title="${tr("exitSession")}">✕</button>${sqExNav(s,-1)}<b class="sqex">${esc(s.exam||"")}</b>${sqExNav(s,1)}<span class="sqcur" id="sqcur">${tr("q")} ${s.i+1}/${s.items.length}</span><span class="sqsc" id="sqsc">${sqScore(s)}</span>${s.mode==="sim"?`<span class="timer" id="timer">${fmtTime((now()-s.t0)/1000)}</span>`:""}${qfsHTML()}<span class="sqann">${annBar(sqAnnKey(s),false)}</span><button class="btn small primary" data-act="finish">${tr("finish")}</button></div><div class="sqstrip" id="sqstrip" role="navigation" aria-label="${T2("Questões","Questions")}">${sqStrip(s)}</div></div>`; }
 function sqItem(s,i){ const it=s.items[i], q=S.qs.get(it.id); if(!q) return ""; const reveal=s.mode==="study"&&it.pick!==null;
   return `<section class="sq${reveal?(it.pick===q.correct?" ok":" bad"):""}" id="sq-${i}" data-i="${i}"><div class="sqh"><span class="sqk">${tr("q")} ${i+1}</span><span class="sqt">${esc(topicName(q.discipline,q.topic)||"")}</span>${q.exam?`<button type="button" class="sqflag" data-act="sqFlag" data-i="${i}" aria-pressed="${exrFlagged(q.id)}" title="${T2("Marcar dúvida (acertei no chute): entra no Refazer e na Rodada final","Flag as unsure: goes into Redo and Final round")}">🚩<span>${exrFlagged(q.id)?T2("Dúvida","Unsure"):T2("Marcar dúvida","Flag")}</span></button>`:""}</div>${questionHTML(q,it,reveal,s.mode==="sim",true)}</section>`; }
 function sqScroller(){ return $("#view .sqwrap>.qcol"); } // null = a própria página rola
@@ -2085,7 +2095,7 @@ function vScroll(v){
   const anyL=s.mode!=="sim"&&LP_Q.matches&&s.items.some(it=>{ const q=S.qs.get(it.id); return q&&lessonOf(q.discipline,q.topic); });
   const rv=s.mode!=="sim"&&LP_Q.matches?sqRvOf(s):null, side=(anyL||rv)&&lpOn(), lsn=side&&anyL?sqLesson(s):null, pm=rv&&(sqPM()==="rv"||!lsn)?"rv":"l";
   s.items.forEach((it,i)=>{ if(i===s.i&&it.t0==null&&it.pick===null) it.t0=now(); });
-  const body=`${sqHead(s)}<div class="sqlist">${s.items.map((_,i)=>sqItem(s,i)).join("")}</div><div class="sqend"><button class="btn primary" data-act="finish">${tr("finish")}</button></div>`;
+  const body=`${sqHead(s)}${annSurfaceHTML(sqAnnKey(s),sqAnnKey(s),`<div class="sqlist">${s.items.map((_,i)=>sqItem(s,i)).join("")}</div>`,true)}<div class="sqend"><button class="btn primary" data-act="finish">${tr("finish")}</button></div>`;
   const tog=sqPmTog(rv,lsn,pm), pane=!side?"":pm==="rv"?sqRvPaneHTML(rv,tog):lpPaneHTML(lsn).replace('<div class="qlh"><b>','<div class="qlh">'+tog+'<b>');
   v.innerHTML=side?`<div class="qgrid l3 sqwrap"><div class="qcol">${body}</div>${pane}</div>`:`<div class="sqpage">${body}</div>`;
   sqTheme();
@@ -2143,7 +2153,7 @@ function sqTrack(){ const s=S.session; if(!s||!s.scroll||s.done||!inQSession()||
 function pickKeep(y0,find){ if(y0==null) return; const fix=()=>{ const el=find(); if(!el) return; const d=el.getBoundingClientRect().top-y0; if(Math.abs(d)<1) return; let sc=el.parentElement; while(sc&&sc!==document.body&&sc!==document.documentElement){ const o=getComputedStyle(sc).overflowY; if((o==="auto"||o==="scroll")&&sc.scrollHeight>sc.clientHeight) break; sc=sc.parentElement; } if(sc&&sc!==document.body&&sc!==document.documentElement) sc.scrollTop+=d; else window.scrollBy(0,d); }; const pos=()=>window.scrollY+"|"+($("#view .sqwrap>.qcol")?.scrollTop||0); fix(); const p0=pos(); requestAnimationFrame(()=>{ if(pos()===p0) fix(); }); }
 function sqPick(sec,p){ const s=S.session, i=+sec.dataset.i, it=s.items[i], q=S.qs.get(it?.id); if(!q) return;
   const pb=sec.querySelector('[data-pick="'+p+'"]'), y0=pb?pb.getBoundingClientRect().top:null; it.pick=p; if(s.mode==="study") record(q,p,{rev:false, ms:it.t0?now()-it.t0:null}); exrPick(q,p);
-  if(s.i!==i){ s.i=i; } sec.outerHTML=sqItem(s,i); const ns=$("#view #sq-"+i); if(ns) annInit(ns);
+  if(s.i!==i){ s.i=i; } sec.outerHTML=sqItem(s,i); const ns=$("#view #sq-"+i), asf=ns?.closest("[data-ann-surface]"); if(asf) annInit(asf);
   const sc=$("#sqsc"); if(sc) sc.innerHTML=sqScore(s); const st=$("#sqstrip"); if(st){ const x=st.scrollLeft; st.innerHTML=sqStrip(s); st.scrollLeft=x; }
   const ra=$("#view .sqwrap .qlesson article.lesson.review"); if(ra&&ra._m){ ra._m[i]=undefined; sqRvMark(false); }
   hydrateAI(q); posSave(); pickKeep(y0,()=>$("#view #sq-"+i+' [data-pick="'+p+'"]')); }
@@ -2182,12 +2192,12 @@ function questionHTML(q, it, reveal, simMode, sc){ // sc = prova em página úni
     const o=c.opts[orig]; let cls="opt", mark="";
     if(reveal){ if(orig===q.correct){cls+=" correct";mark=orig===pick?tr("answer")+" · ✓":tr("answer");} else if(orig===pick){cls+=" wrong";mark=tr("yourAns");} }
     else if(simMode && orig===pick){ cls+=" picked"; }
-    return `<button type="button" class="${cls}" data-pick="${orig}" ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div></button>`;
+    return `<button type="button" class="${cls}" data-pick="${orig}"${sc?` data-ab="${esc(q.id)}:o${orig}"`:""} ${reveal?"disabled":""}><div class="orow"><span class="letter">${L[pos]}</span><span class="otext">${safe(o.t)}</span>${mark?`<span class="mark">${mark}</span>`:""}</div></button>`;
   }).join("");
   const fb = (fallback && q.standard!=="usmle") ? `<div class="banner info"><div>${set().lang==="pt"?tr("onlyIn"):tr("onlyInEn")}</div>${S.sample?`<div class="row" style="margin-top:8px"><button class="btn small" data-act="translate" data-q="${esc(q.id)}">${tr("translate")}</button></div>`:""}<div id="tr-${esc(q.id)}"></div></div>` : "";
   const explanation = orig=>{
     const o=c.opts[orig], letter=L[perm.indexOf(orig)];
-    return `<div class="answer-comment"><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${safe(optFull(q,o)||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div></div>`; // justificativa única: why + more sem repetir
+    return `<div class="answer-comment"${sc?` data-ab="${esc(q.id)}:w${orig}"`:""}><div class="answer-comment-title">${esc(letter)} · ${safe(o.t)}</div><div class="answer-comment-text">${safe(optFull(q,o)||T2("Comentário ainda não disponível.","Explanation not yet available."))}</div></div>`; // justificativa única: why + more sem repetir
   };
   const otherOptions=perm.filter(orig=>orig!==q.correct&&orig!==pick);
   const feedback = reveal ? `<section class="answer-feedback" aria-label="${T2("Correção comentada","Answer explanation")}">
@@ -2196,7 +2206,7 @@ function questionHTML(q, it, reveal, simMode, sc){ // sc = prova em página úni
     ${!sc&&otherOptions.length?`<div class="answer-distractors"><h3>${T2("Demais alternativas","Other options")}</h3><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></div>`:""}
   </section>` : "";
   // prova em rolagem (23/11/2026, pedido do Léo): acertou → só a explicação da correta aberta, demais alternativas e pegadinha recolhidas; errou → tudo aberto
-  const scRest = sc&&reveal ? `${otherOptions.length?`<div class="answer-distractors"><h3>${T2("Demais alternativas","Other options")}</h3><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></div>`:""}${c.peg?`<div class="box peg"><h3>${tr("trap")}</h3>${safe(pegFull(q,c))}</div>`:""}` : "";
+  const scRest = sc&&reveal ? `${otherOptions.length?`<div class="answer-distractors"><h3>${T2("Demais alternativas","Other options")}</h3><div class="answer-distractor-list">${otherOptions.map(explanation).join("")}</div></div>`:""}${c.peg?`<div class="box peg" data-ab="${esc(q.id)}:p"><h3>${tr("trap")}</h3>${safe(pegFull(q,c))}</div>`:""}` : "";
   const scIn = scRest&&pick===q.correct; // acertou: justificativa completa vai para o ⋯ Mais (pedido do Léo, 23/11)
   const scMore = scRest&&!scIn ? `<details class="sqrest"${pick!==q.correct?" open":""}><summary class="btn small ghost"><span class="sqr-o">▾ ${T2("Recolher","Collapse")}</span><span class="sqr-c">▸ ${T2("Ver a justificativa completa","See full explanation")}${otherOptions.length?` · ${otherOptions.length} ${T2(otherOptions.length===1?"alternativa":"alternativas","options")}`:""}${c.peg?` + ${T2("pegadinha","trap")}`:""}</span></summary>${scRest}</details>` : "";
   const after = reveal ? `
@@ -2215,7 +2225,7 @@ function questionHTML(q, it, reveal, simMode, sc){ // sc = prova em página úni
   const lp=!sc&&!!lsn&&LP_Q.matches&&lpOn();
   const pane=lp?lpPaneHTML(lsn):"";
   const lpTag=lsn&&LP_Q.matches&&!lpOn()?`<button type="button" class="tag" data-act="lpane" style="cursor:pointer">◧ ${T2("Lição ao lado","Lesson panel")}</button>`:"";
-  return `<div class="${sc?"sqgrid":"qgrid"}${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${annotationControls(q)}</div>${fb}${annotationSurface(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${annotationSurface(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}${pre}</div>${lp?"</div>":""}${pane}</div>`;
+  return `<div class="${sc?"sqgrid":"qgrid"}${q.standard==="usmle"?" uw":""}${lp?" l3":""}">${lp?'<div class="qcol">':""}<div class="qleft"><div class="tags">${qlb}${tags.join("")}${lpTag}${lsn?`<button type="button" class="tag" data-act="lesson" data-id="${esc(lsn.id)}" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);box-shadow:0 0 0 1px #99F6E4 inset">📖 ${T2("Lição","Lesson")}</button>`:""}${sc?"":annotationControls(q)}</div>${fb}${(sc?(q,h)=>`<div data-ab="${esc(q.id)}:s">${h}</div>`:annotationSurface)(q,`<p class="stem" lang="${lang==="en"?"en":"pt-BR"}">${stemHtml(c.stem)}</p>${qImg(q)}${driveFig(c.stem)}`)}</div><div class="qright">${(sc?(q,h)=>h:annotationSurface)(q,`<div class="opts" lang="${lang==="en"?"en":"pt-BR"}">${opts}</div>${after}`,"r")}${pre}</div>${lp?"</div>":""}${pane}</div>`;
 }
 /* ---------- PERGUNTAR AO CLAUDE (monta o prompt no navegador; nada é enviado a servidor do app) ---------- */
 function askPrompt(id){

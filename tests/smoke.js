@@ -377,6 +377,27 @@ function fixture(){
       const r=await p.evaluate(()=>{ const st=document.querySelector("#sq-0 .stem"), f0=parseFloat(getComputedStyle(st).fontSize); document.querySelector(".sqtop .qfsd").open=true; document.querySelector('.sqtop [data-act="qfs"][data-d="1"]').click(); document.querySelector('.sqtop [data-act="qfs"][data-d="1"]').click(); const f1=parseFloat(getComputedStyle(st).fontSize), v=set().qfs, lab=document.getElementById("qfsv").textContent; const tagH=[]; for(const z of [.8,1.6]){ document.documentElement.style.setProperty("--qfs",z); const t=document.querySelector("#sq-0 .tags .tag"); tagH.push(Math.round(t.getBoundingClientRect().height)); } document.documentElement.style.setProperty("--qfs",v); if(tagH.some(h=>h>40)) throw new Error("selo deformado: "+tagH);
         S.session=null; go("study"); set().qfs=1; applyTheme(); set().std="all"; return {f0,f1,v,lab}; });
       if(!(r.f1>r.f0*1.15)||r.v!==1.2||r.lab!=="120%") throw new Error(JSON.stringify(r)); });
+    await step("prova inteira anotável (✍ do topo)", async()=>{ await p.evaluate(()=>{ S.annId=null; S.prog.exr={}; S.session=null; S.studyTab="full"; set().std="ufpr"; set().qfs=1; applyTheme(); go("study"); }); await p.click('[data-act="fullExam"][data-mode="study"]'); await p.waitForTimeout(120);
+      const r=await p.evaluate(async()=>{ const wait=ms=>new Promise(r=>setTimeout(r,ms)), s=S.session, key=sqAnnKey(s); delete (S.prog.annotations||{})[key];
+        const sfs=document.querySelectorAll("#view [data-ann-surface]"), one=sfs.length===1&&sfs[0].dataset.key===key&&!!sfs[0].querySelector(".sqlist"), perQ=!!document.querySelector("#view .sq .ann-toolbar"), off=!sfs[0].classList.contains("ann-enabled");
+        document.querySelector('.sqtop [data-act="annToggle"]').click(); await wait(30); const sf=document.querySelector("#view [data-ann-surface]"), on=sf.classList.contains("ann-enabled");
+        const q1=S.qs.get(s.items[1].id), stem=document.querySelector("#sq-1 .stem"), inp=sf.querySelector(".ann-input"); stem.scrollIntoView({block:"center"}); await wait(30);
+        const rg=document.createRange(); rg.setStart(stem.firstChild,0); rg.setEnd(stem.firstChild,Math.min(6,stem.firstChild.data.length)); const w=rg.getBoundingClientRect(), y=w.bottom+2;
+        const f=(t,x,yy)=>inp.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,pointerId:9,pointerType:"pen",clientX:x,clientY:yy,pressure:.6,buttons:t==="pointerup"?0:1}));
+        f("pointerdown",w.left,y); for(let i=1;i<8;i++) f("pointermove",w.left+i*(w.width/7),y); f("pointerup",w.right,y);
+        const st=annotationStrokes(key), keyed=st.length===1&&st[0].bk===q1.id+":s";
+        const pathY=()=>{ const pth=sf.querySelector("svg.ink path"); if(!pth) return null; const b=pth.getBoundingClientRect(); return b.top; };
+        const d0=pathY()-stem.getBoundingClientRect().top;
+        // responder a questão de cima (abre justificativa: a altura muda) e aumentar a letra: o traço acompanha o enunciado
+        const q0=S.qs.get(s.items[0].id); document.querySelector('#sq-0 [data-pick="'+((q0.correct+1)%5)+'"]').click(); await wait(60);
+        document.documentElement.style.setProperty("--qfs",1.4); await wait(80); annDraw(document.querySelector("#view [data-ann-surface]"));
+        const stem2=document.querySelector("#sq-1 .stem"), d1=pathY()-stem2.getBoundingClientRect().top;
+        document.documentElement.style.setProperty("--qfs",1); const mo=document.querySelector("#sq-0 details.sqrest"); if(mo){ mo.open=false; await wait(60); }
+        const d2=pathY()-document.querySelector("#sq-1 .stem").getBoundingClientRect().top;
+        document.querySelector('.sqtop [data-act="annToggle"]').click(); await wait(20); const closed=!document.querySelector("#view [data-ann-surface]").classList.contains("ann-enabled");
+        delete S.prog.annotations[key]; S.annId=null; S.prog.exr={}; S.session=null; set().std="all"; go("home");
+        return {one,perQ,off,on,keyed,d0,d1,d2,closed}; });
+      if(!r.one||r.perQ||!r.off||!r.on||!r.keyed||!r.closed||r.d0==null||Math.abs(r.d1-r.d0)>12||Math.abs(r.d2-r.d0)>12) throw new Error(JSON.stringify(r)); });
     await step("prova em rolagem: 🚩, refazer, rodada final, zerar, revisão ao lado", async()=>{ await p.evaluate(()=>{ S.session=null; S.prog.exr={}; S.studyTab="full"; set().std="ufpr"; go("study"); }); await p.click('[data-act="fullExam"][data-mode="study"]'); await p.waitForTimeout(100);
       const r=await p.evaluate(async()=>{ const s=S.session, ex=s.exam, q0=S.qs.get(s.items[0].id), q2=S.qs.get(s.items[2].id); S.prog.exr={};
         document.querySelector('#sq-0 [data-pick="'+((q0.correct+1)%5)+'"]').click(); document.querySelector('#sq-2 [data-pick="'+q2.correct+'"]').click(); const rest2=document.querySelector('#sq-2 details.sqmore .sqmore-rest'), r2b=document.querySelector('#sq-2 details.sqrest'), rest0=document.querySelector('#sq-0 details.sqrest'); if(!rest2||r2b||!rest0||!rest0.open) throw new Error('justificativa recolhida: '+[!!rest2,!!r2b,!!rest0,rest0&&rest0.open]); document.querySelector('#sq-2 [data-act="sqFlag"]').click();

@@ -2433,7 +2433,10 @@ function startRedo(qs,label,kind){ if(!qs.length) return toast(T2("Nada para ref
   S.session=buildSession("study",qs,su); S.session.exam=label; S.session.scroll=true; S.session.redo=kind; go("study"); }
 function startFullExam(ex, mode){ const d=curDisc(); const x=fullExams(d.id).find(e=>e.ex===ex); if(!x) return;
   const qs=x.list.map(i=>i.q); const su=Object.assign(defaultSetup(),{mode, count:0, shuffleQ:false, shuffleO:false}); S.setup=su;
-  S.session=buildSession("study", qs, su); S.session.exam=ex; S.session.scroll=true; go("study"); } // página única com rolagem (23/11/2026)
+  S.session=buildSession("study", qs, su); S.session.exam=ex; S.session.scroll=true;
+  // reabrir a prova traz as respostas já dadas (progress.exr); só "Zerar esta prova" apaga (Léo, 24/11)
+  const o=exrOf(ex); S.session.items.forEach(it=>{ const p=o.p[it.id], q=S.qs.get(it.id); if(p!=null&&q&&p<(q.i18n.pt||q.i18n.en).opts.length) it.pick=p; });
+  const nx=S.session.items.findIndex(it=>it.pick===null); S.session.i=nx>0?nx:0; go("study"); } // página única com rolagem (23/11/2026)
 // incidência: cada aparição em prova (questão repetida em anos diferentes conta de novo)
 function incidence(dId, exId){ const d=discById(dId); if(!d) return {rows:[],total:0}; const by={}; let total=0;
   const okT=new Set((d.topics||[]).filter(t=>!exId||t.exam===exId).map(t=>t.id));

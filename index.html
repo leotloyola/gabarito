@@ -2134,12 +2134,14 @@ function sqTrack(){ const s=S.session; if(!s||!s.scroll||s.done||!inQSession()||
   const line=top+hb+Math.min(160,vis*.3); let cur=0; for(const el of document.querySelectorAll("#view .sq")){ if(el.getBoundingClientRect().top<=line) cur=+el.dataset.i; else break; } if(cur!==s.i) sqSetCur(cur); }
 { let raf=0; document.addEventListener("scroll",()=>{ if(raf||!S.session?.scroll) return; raf=requestAnimationFrame(()=>{ raf=0; sqTrack(); }); },{passive:true,capture:true}); window.addEventListener("resize",()=>{ if(S.session?.scroll){ sqTopPos(); } }); }
 // responder: redesenha só a questão respondida e o topo (a página não pula)
+// mantém a alternativa tocada no mesmo ponto da tela depois de redesenhar (Léo, 24/11: no celular a tela pulava)
+function pickKeep(y0,find){ if(y0==null) return; const fix=()=>{ const el=find(); if(!el) return; const d=el.getBoundingClientRect().top-y0; if(Math.abs(d)<1) return; let sc=el.parentElement; while(sc&&sc!==document.body&&sc!==document.documentElement){ const o=getComputedStyle(sc).overflowY; if((o==="auto"||o==="scroll")&&sc.scrollHeight>sc.clientHeight) break; sc=sc.parentElement; } if(sc&&sc!==document.body&&sc!==document.documentElement) sc.scrollTop+=d; else window.scrollBy(0,d); }; const pos=()=>window.scrollY+"|"+($("#view .sqwrap>.qcol")?.scrollTop||0); fix(); const p0=pos(); requestAnimationFrame(()=>{ if(pos()===p0) fix(); }); }
 function sqPick(sec,p){ const s=S.session, i=+sec.dataset.i, it=s.items[i], q=S.qs.get(it?.id); if(!q) return;
-  it.pick=p; if(s.mode==="study") record(q,p,{rev:false, ms:it.t0?now()-it.t0:null}); exrPick(q,p);
+  const pb=sec.querySelector('[data-pick="'+p+'"]'), y0=pb?pb.getBoundingClientRect().top:null; it.pick=p; if(s.mode==="study") record(q,p,{rev:false, ms:it.t0?now()-it.t0:null}); exrPick(q,p);
   if(s.i!==i){ s.i=i; } sec.outerHTML=sqItem(s,i); const ns=$("#view #sq-"+i); if(ns) annInit(ns);
   const sc=$("#sqsc"); if(sc) sc.innerHTML=sqScore(s); const st=$("#sqstrip"); if(st){ const x=st.scrollLeft; st.innerHTML=sqStrip(s); st.scrollLeft=x; }
   const ra=$("#view .sqwrap .qlesson article.lesson.review"); if(ra&&ra._m){ ra._m[i]=undefined; sqRvMark(false); }
-  hydrateAI(q); posSave(); if(s.mode==="study"){ const r=ns&&ns.querySelector(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); } }
+  hydrateAI(q); posSave(); pickKeep(y0,()=>$("#view #sq-"+i+' [data-pick="'+p+'"]')); }
 // tablet com a lição ao lado: a grade ocupa só a altura visível (do topo da questão até a barra ←/→), e cada coluna rola sozinha
 // botão discreto no canto inferior esquerdo (espelha o da caneta): amplia a lição ao lado para a tela inteira e volta
 // lição em tela cheia (⤢) no tablet deitado/PC: índice lateral como na página, recolhível com » (☰ reabre)
@@ -3764,8 +3766,9 @@ document.addEventListener("click", async e=>{
   const su=e.target.closest("[data-su]"); if(su){ const k=su.dataset.su, v=su.dataset.val; S.setup[k]= k==="count"?Number(v):v; setupKeep(); render(); return; }
   const sw=e.target.closest("[data-sw]"); if(sw){ const k=sw.dataset.sw; S.setup[k]=!S.setup[k]; setupKeep(); render(); return; }
   const pk=e.target.closest("[data-pick]"); if(pk && !pk.disabled){ const s=S.session; if(!s) return; if(s.scroll&&!s.done){ const sec=pk.closest(".sq"); if(sec) sqPick(sec,Number(pk.dataset.pick)); return; } const it=s.items[s.i]; const q=S.qs.get(it.id); const p=Number(pk.dataset.pick);
-     if(s.mode==="study"){ it.pick=p; record(q,p,{rev:s.kind==="review", ms:it.t0?now()-it.t0:null}); render(); const r=$(".result"); r&&r.scrollIntoView({behavior:"smooth",block:"nearest"}); }
-     else { it.pick=p; render(); }
+     const y0=pk.getBoundingClientRect().top, keep=()=>pickKeep(y0,()=>$('#view [data-pick="'+p+'"]'));
+     if(s.mode==="study"){ it.pick=p; record(q,p,{rev:s.kind==="review", ms:it.t0?now()-it.t0:null}); render(); keep(); }
+     else { it.pick=p; render(); keep(); }
      return; }
   const sl=e.target.closest("[data-setl]"); if(sl){ set().lang=sl.dataset.setl; saveProg(); render(); openSettings(); return; }
   const stt=e.target.closest("[data-sett]"); if(stt){ set().theme=stt.dataset.sett; applyTheme(); saveProg(); openSettings(); return; }

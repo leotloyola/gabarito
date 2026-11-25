@@ -248,6 +248,7 @@ details.recmore>summary::after{content:" ▾"}details.recmore[open]>summary::aft
 .field select,.field input,.field textarea{font:inherit;color:var(--ink);background:var(--surface-2);border:0;box-shadow:0 0 0 1px var(--hair) inset;border-radius:14px;padding:11px 14px;min-height:46px;width:100%}
 .field textarea{min-height:120px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.lpex{display:flex;flex-direction:column;gap:6px}
 .chip{border:0;background:var(--pill);color:var(--ink-2);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:500;transition:background .15s ease}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chip[aria-pressed="true"] span{color:color-mix(in srgb,var(--surface) 70%,transparent)!important}
@@ -2306,7 +2307,7 @@ function vResult(v){
     const lsn=(s.lid&&S.lessons.get(s.lid))||(one?lessonFor(q0.discipline,q0.topic):null);
     const d=lsn?lsn.discipline:one?q0.discipline:null, t=lsn?lsn.topic:one?q0.topic:null;
     const L=d?lessonsOf(d):[], k=lsn?L.findIndex(l=>l.id===lsn.id):-1, nx=k>=0?L[k+1]:null;
-    const left=d&&t?lpQs(d,t).open.length:0;
+    const left=d&&t?lpQs(d,t,true).open.length:0;
     const B=[];
     if(lsn) B.push(`<button class="btn${s.from==="lesson"?" primary":""}" data-act="endLesson" data-id="${esc(lsn.id)}">📖 ${s.from==="lesson"?T2("Voltar à lição","Back to the lesson"):T2("Ler a lição do tema","Read the topic lesson")}</button>`);
     if(nx) B.push(`<button class="btn${s.from==="lesson"&&!left?" primary":""}" data-act="endLesson" data-id="${esc(nx.id)}">${T2("Próxima lição","Next lesson")} → <small style="opacity:.75">${esc(nx.title||"")}</small></button>`);
@@ -2678,7 +2679,14 @@ function lfullOpen(b,on,save){ if(!b) return; b.classList.toggle("open",on); b.s
 function lfullReveal(el){ if(el&&!el.getClientRects().length){ const b=el.closest(".lesson")?.querySelector(".lfull-sw"); if(b) lfullOpen(b,true,false); } }
 // "Praticar este tema" no fim da lição: quantidade escolhida (10/20/todas = 0) fica salva em settings.lpN
 function lpCount(){ const n=set().lpN; return n===0||n===20||n===10?n:10; }
-function lpQs(d,t){ const all=[...S.qs.values()].filter(q=>q.discipline===d&&q.topic===t&&stdOk(q)&&!q.off); return {all, open:all.filter(q=>status(q.id)==="no")}; }
+// filtro por prova de origem (multisseleção; vazio = todas), salvo por tema em settings.lpEx["disc|tema"]; "_" = questões sem prova (fixação, Banco, UWorld)
+function lpExShort(ex){ return String(ex).replace(/^Prova\s+/i,""); }
+function lpExList(all){ const m=new Map(); let none=0; for(const q of all){ const es=[...new Set(exrExams(q))]; if(!es.length){ none++; continue; } es.forEach(e=>m.set(e,(m.get(e)||0)+1)); }
+  const yr=e=>{ const x=String(e).match(/(\d{2,4})(?:\.(\d))?\s*$/); return x?Number(x[1].slice(-2))*10+Number(x[2]||0):-1; };
+  const L=[...m].map(([ex,n])=>({ex,n})).sort((a,b)=>yr(b.ex)-yr(a.ex)||a.ex.localeCompare(b.ex)); if(none&&L.length) L.push({ex:"_",n:none}); return L; }
+function lpExSel(d,t,all){ const S0=(set().lpEx||{})[d+"|"+t]||[]; if(!S0.length) return []; const ok=new Set(lpExList(all).map(x=>x.ex)); return S0.filter(e=>ok.has(e)); }
+function lpExOk(q,sel){ if(!sel.length) return true; const es=exrExams(q); return es.length?es.some(e=>sel.includes(e)):sel.includes("_"); }
+function lpQs(d,t,byEx){ let all=[...S.qs.values()].filter(q=>q.discipline===d&&q.topic===t&&stdOk(q)&&!q.off); if(byEx){ const sel=lpExSel(d,t,all); if(sel.length) all=all.filter(q=>lpExOk(q,sel)); } return {all, open:all.filter(q=>status(q.id)==="no")}; }
 // modo treino da revisão: colunas escondidas (índice da coluna; 0 = coluna "Número" das tabelas de 2 colunas), por aparelho
 function rvHide(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.rvh")||"[]")); }catch(_){ return new Set(); } }
 function rvCols(html){ const m=String(html||"").match(/<table class="stack"><thead><tr>([\s\S]*?)<\/tr>/); if(!m) return []; return [...m[1].matchAll(/<th>([\s\S]*?)<\/th>/g)].map(x=>x[1].replace(/<[^>]+>/g,"").trim()); }
@@ -2697,7 +2705,10 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-a
   const rv=isReview(l), rvV=rv?rvSplit(l).vesp:"";
   const d=discById(l.discipline); const t=(d?.topics||[]).find(x=>x.id===l.topic);
   const cvL=lsnCov(l.discipline,l.topic);
-  const lq=lpQs(l.discipline,l.topic); const nQ=lq.all.length, nOpen=lq.open.length; const lpN=lpCount();
+  const lq0=lpQs(l.discipline,l.topic), lq=lpQs(l.discipline,l.topic,true); const nQ=lq.all.length, nOpen=lq.open.length; const lpN=lpCount();
+  const exL=lpExList(lq0.all), exSel=lpExSel(l.discipline,l.topic,lq0.all);
+  const exChip=(ex,label,n,on)=>`<button type="button" class="chip" data-act="lpEx" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" data-ex="${esc(ex)}" aria-pressed="${on}">${label} <small style="opacity:.7">${n}</small></button>`;
+  const lpExam=exL.filter(x=>x.ex!=="_").length?`<div class="lpex"><span class="flabel">${T2("Provas:","Exams:")}</span><div class="chips" role="group" aria-label="${T2("Filtrar por prova","Filter by exam")}">${exChip("",T2("Todas","All"),lq0.all.length,!exSel.length)}${exL.map(x=>exChip(x.ex,x.ex==="_"?T2("Sem prova (fixação)","No exam (practice)"):esc(lpExShort(x.ex)),x.n,exSel.includes(x.ex))).join("")}</div></div>`:"";
   const lpChip=(val,label)=>`<button type="button" class="chip" data-act="lpN" data-val="${val}" aria-pressed="${lpN===val}">${label}</button>`;
   const lpChips=nQ>10?`<div class="chips" role="group" aria-label="${T2("Quantidade","Number")}">${[10,20].filter(x=>x<nQ).map(x=>lpChip(x,x)).join("")}${lpChip(0,`${T2("Todas","All")} (${nQ})`)}</div>`:"";
   const tuL=S.tuB!=null;
@@ -2712,6 +2723,7 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-a
    ${rv?rvBarHTML(l):topicLinksHTML(t)}
    <div class="lwrap">${annSurfaceHTML("L:"+l.id,"L:"+l.id,`<article class="lesson${rv?" review":""}" lang="pt-BR">${rv?rvWeights(l.discipline,rvSplit(l).body):lsnHtml(l)}</article>`)}<nav class="ltoc" id="ltoc" hidden></nav></div>
    ${rv?"":`<div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="row" style="justify-content:space-between;gap:12px"><div><b>${T2("Praticar este tema","Practice this topic")}</b><br><small style="color:var(--muted)">${nQ} ${T2("questões","questions")}${nQ&&nOpen<nQ?` · ${nOpen} ${T2(nOpen===1?"não feita":"não feitas",nOpen===1?"not done":"not done")}`:""} · ${tr("std_"+set().std)}</small></div><button class="btn primary" data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}" ${nQ?"":"disabled"}>${T2("Começar","Start")}${nQ?` · ${lpN&&lpN<nQ?lpN:nQ}`:""}</button></div>
+     ${lpExam}
      ${lpChips}
      ${curMode()==="steps"?"":`<div class="seg" role="group" aria-label="Padrão" style="align-self:flex-start">${["ufpr","usmle","all","banco","tudo"].map(x=>`<button type="button" data-std="${x}" aria-pressed="${set().std===x}">${tr("std_"+x)}</button>`).join("")}</div>`}</div>`}
    ${prevL||nextL?`<div class="lnavrow">${navL(prevL,-1)||"<span></span>"}${navL(nextL,1)}</div>`:""}
@@ -3941,9 +3953,11 @@ document.addEventListener("click", async e=>{
   if(act==="pdfDl"){ return pdfSave(S.pdfFiles[a.dataset.i]); }
   if(act==="pdfDlAll"){ return (S.pdfFiles||[]).forEach((f,i)=>setTimeout(()=>pdfSave(f),i*400)); }
   if(act==="lessonBack"){ if(S.tuB!=null&&S.view==="lesson") return tuUp(); if(history.state&&history.state.v==="lesson"&&history.length>1){ history.back(); return; } return go(S.lessonBack&&S.lessonBack!=="lesson"?S.lessonBack:"study"); }
+  if(act==="lpEx"){ const k=a.dataset.d+"|"+a.dataset.t, ex=a.dataset.ex; const all=lpQs(a.dataset.d,a.dataset.t).all; set().lpEx=set().lpEx||{}; let cur=lpExSel(a.dataset.d,a.dataset.t,all);
+    cur=!ex?[]:cur.includes(ex)?cur.filter(x=>x!==ex):cur.concat(ex); if(cur.length&&cur.length===lpExList(all).length) cur=[]; if(cur.length) set().lpEx[k]=cur; else delete set().lpEx[k]; saveProg(); const y=window.scrollY; render(); window.scrollTo({top:y}); return; }
   if(act==="lpN"){ set().lpN=Number(a.dataset.val)||0; saveProg(); return render(); }
   if(act==="lessonGo"){ const id=a.dataset.id; if(!S.lessons.get(id)) return; S.lessonId=id; S.prog.read=S.prog.read||{}; if(!S.prog.read[id]){ S.prog.read[id]=now(); saveProg(); } try{ history.replaceState({v:"lesson"},"","#lesson"); }catch(_){} render(); window.scrollTo({top:0}); return; }
-  if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); const n=lpCount(); const lq=lpQs(a.dataset.d,a.dataset.t);
+  if(act==="lessonPractice"){ set().disc=a.dataset.d; set().topic=a.dataset.t; S.session=null; S.fcDeck=null; saveProg(); const n=lpCount(); const lq=lpQs(a.dataset.d,a.dataset.t,true);
     // não feitas primeiro (por ★); se faltar para completar a quantidade, entram as já feitas (erradas antes)
     const done=lq.all.filter(q=>status(q.id)!=="no"); const pool=prioSort(lq.open).concat(prioSort(done.filter(q=>status(q.id)==="bad")),prioSort(done.filter(q=>status(q.id)!=="bad")));
     if(!pool.length) return toast(tr("none")); S.setup=Object.assign(defaultSetup(),{mode:"study",count:n,filter:"all",order:"seq"}); S.session=buildSession("study",pool,S.setup);

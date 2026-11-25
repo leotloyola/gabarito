@@ -3995,7 +3995,7 @@ document.addEventListener("click", async e=>{
   if(act==="planFinal"){ set().disc=a.dataset.d; a.dataset.act="examEssentials"; return a.click(); }
   if(act==="examStudy"){ set().topic="exam:"+a.dataset.ex; S.session=null; S.fcDeck=null; S.setup=null; S.studyTab="build"; saveProg(); return go("study"); }
   if(act==="studyTab"){ S.studyTab=a.dataset.val; return render(); }
-  if(act==="qfs"){ const v=Math.min(1.6,Math.max(.8,Math.round(((set().qfs||1)+(+a.dataset.d)*.1)*10)/10)); set().qfs=v; document.documentElement.style.setProperty("--qfs",v); document.querySelectorAll("#qfsv").forEach(x=>x.textContent=Math.round(v*100)+"%"); saveProg(); return; }
+  if(act==="qfs"){ const v=Math.min(1.6,Math.max(.6,Math.round(((set().qfs||1)+(+a.dataset.d)*.1)*10)/10)); set().qfs=v; document.documentElement.style.setProperty("--qfs",v); document.querySelectorAll("#qfsv").forEach(x=>x.textContent=Math.round(v*100)+"%"); saveProg(); return; }
   if(act==="fullExam"){ return startFullExam(a.dataset.ex, a.dataset.mode); }
   if(act==="incExam"){ S.incExam=a.dataset.val; return render(); }
   if(act==="incDisc"){ S.incDisc=a.dataset.val; return render(); }

@@ -2737,11 +2737,16 @@ function lbtnsWatch(){ if(S.lbObs){ S.lbObs.disconnect(); S.lbObs=null; } S.lbOf
   const hb=Math.round(document.querySelector("header.top")?.getBoundingClientRect().bottom||0);
   S.lbObs=new IntersectionObserver(es=>{ const e=es[es.length-1]; const off=!e.isIntersecting&&e.boundingClientRect.top<hb+10; if(off!==S.lbOff){ S.lbOff=off; lreadBar(); } },{rootMargin:(-hb)+"px 0px 0px 0px"});
   S.lbObs.observe(r); }
+// pílula presa à borda direita do cartão da lição (não por cima do índice lateral; pedido do Léo, 25/11/2026)
+function lreadBarX(b){ b=b||document.getElementById("lreadBar"); if(!b) return; const art=document.querySelector("#view .lwrap article.lesson"); const r=art&&art.getClientRects().length?art.getBoundingClientRect():null;
+  b.style.right=r&&r.right<innerWidth-40?Math.max(12,Math.round(innerWidth-r.right+12))+"px":""; }
+addEventListener("resize",()=>lreadBarX());
 function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn(), fl=!rd&&S.view==="lesson"&&!!S.lbOff&&!!document.getElementById("lbtns");
   if(!rd&&!fl){ if(b) b.remove(); return; }
   if(!b){ b=document.createElement("div"); b.id="lreadBar"; b.setAttribute("role","toolbar"); document.body.appendChild(b); }
   const o="L:"+S.lessonId, on=annOpen(o);
   b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
+  lreadBarX(b);
   const hasToc=$("#ltoc")&&!$("#ltoc").hidden, tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&hasToc?'<button type="button" class="btn small" data-act="tocTog">☰ '+T2("Índice","Contents")+'</button>'
     :!WIDE_L.matches&&S.lessonId?'<button type="button" class="btn small" data-act="tocPop" aria-label="'+T2("Abrir índice","Open contents")+'">☰ '+T2("Índice","Contents")+'</button>':""; // tela estreita: índice por cima da lição (pedido do Léo, 25/11/2026)
   b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }

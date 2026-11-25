@@ -967,6 +967,8 @@ body:has(#layer .sheet) .ann-float{bottom:calc(12px + env(safe-area-inset-bottom
 .ann-float.mini{left:auto;right:max(12px,env(safe-area-inset-right,0px));transform:none;padding:3px;border-radius:14px;opacity:.6;transition:opacity .2s;box-shadow:0 2px 10px rgba(0,0,0,.14),0 0 0 1px var(--line)}
 .ann-float.mini:hover,.ann-float.mini:focus-within{opacity:1}.ann-float.mini .btn{min-height:32px;padding:4px 8px;font-size:13px;gap:4px}.ann-float.mini [data-act="annMin"] .ann-ic{width:18px;height:18px}
 /* tela dividida, anotando a lição: barra só na coluna da lição, colada ao rodapé, à direita e compacta */
+body.ann-pg .ann-float:not(.mini){left:var(--apC);max-width:var(--apW)}
+body.ann-pg .ann-float.mini{right:var(--apR)}
 body.ann-lp .ann-float{left:auto!important;right:var(--alR,12px)!important;transform:none!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;max-width:var(--alW,calc(100vw - 24px))}
 body.ann-lp .ann-float:not(.mini){gap:3px;padding:4px 6px;border-radius:14px}
 body.ann-lp .ann-float:not(.mini) .ann-lbl{display:none}
@@ -1503,8 +1505,12 @@ function annFloatPos(){ let host=document.getElementById("annHost"); if(!host){ 
 // lição ao lado da questão: a barra de anotação da lição fica dentro da coluna da lição
 // botão "lição em tela cheia" no canto inferior esquerdo da coluna da lição (não da questão)
 function lpFullPos(){ const b=document.getElementById("lpFullBtn"), pane=document.querySelector("#view .qgrid.l3 .qlesson"); if(!b) return; if(!pane){ b.style.removeProperty("left"); b.style.removeProperty("bottom"); return; } const r=(pane.querySelector(".qlbody")||pane).getBoundingClientRect(); b.style.left=Math.max(12,Math.round(r.left+12))+"px"; b.style.bottom=Math.max(12,Math.round((window.visualViewport?.height||innerHeight)-r.bottom+14))+"px"; }
+// página da lição com índice ao lado: barra de anotação (aberta ou minimizada) dentro do cartão da lição, não sobre o índice (pedido do Léo, 25/11/2026)
+function annPgPos(lp){ const art=!lp&&S.view==="lesson"&&!document.body.classList.contains("lpfull")?document.querySelector("#view .lwrap article.lesson"):null, r=art&&art.getClientRects().length?art.getBoundingClientRect():null, W=document.documentElement.clientWidth, on=!!(r&&r.right<W-40);
+  document.body.classList.toggle("ann-pg",on); if(!on) return; const b=document.body.style; b.setProperty("--apR",Math.max(12,Math.round(W-r.right+12))+"px"); b.setProperty("--apC",Math.round((r.left+r.right)/2)+"px"); b.setProperty("--apW",Math.max(200,Math.round(r.width-24))+"px"); }
+addEventListener("resize",()=>{ try{ annPgPos(document.body.classList.contains("ann-lp")); }catch(_){} });
 function annLpPos(){ lpFullPos(); /* tela dividida: barra compacta no rodapé da coluna que está sendo anotada (lição à direita ou questão à esquerda, 22/11/2026) */ const g=document.querySelector("#view .qgrid.l3"), pane=g&&(String(S.annId||"").startsWith("L:")?g.querySelector(".qlesson"):g.querySelector(".qleft")), on=!!(pane&&S.annId&&!document.body.classList.contains("lpfull")&&typeof LP_Q!=="undefined"&&LP_Q.matches&&document.querySelector("#annHost")?.firstElementChild);
-  document.body.classList.toggle("ann-lp",on); if(!on) return; const r=(pane.querySelector(".qlbody")||pane).getBoundingClientRect(), b=document.body.style; b.setProperty("--alR",Math.max(8,Math.round(document.documentElement.clientWidth-r.right+8))+"px"); b.setProperty("--alW",Math.max(200,Math.round(r.width-16))+"px"); }
+  document.body.classList.toggle("ann-lp",on); annPgPos(on); if(!on) return; const r=(pane.querySelector(".qlbody")||pane).getBoundingClientRect(), b=document.body.style; b.setProperty("--alR",Math.max(8,Math.round(document.documentElement.clientWidth-r.right+8))+"px"); b.setProperty("--alW",Math.max(200,Math.round(r.width-16))+"px"); }
 function annRefresh(owner){
   if($("#layer").innerHTML&&S.qs.has(owner)){ bankPreview(owner); requestAnimationFrame(()=>annInit($("#layer"))); return; }
   document.querySelectorAll("[data-ann-bar]").forEach(b=>{ const o=b.dataset.annBar; b.outerHTML=annBar(o,b.dataset.mark==="1"); });
@@ -2738,7 +2744,7 @@ function lbtnsWatch(){ if(S.lbObs){ S.lbObs.disconnect(); S.lbObs=null; } S.lbOf
   S.lbObs=new IntersectionObserver(es=>{ const e=es[es.length-1]; const off=!e.isIntersecting&&e.boundingClientRect.top<hb+10; if(off!==S.lbOff){ S.lbOff=off; lreadBar(); } },{rootMargin:(-hb)+"px 0px 0px 0px"});
   S.lbObs.observe(r); }
 // pílula presa à borda direita do cartão da lição (não por cima do índice lateral; pedido do Léo, 25/11/2026)
-function lreadBarX(b){ b=b||document.getElementById("lreadBar"); if(!b) return; const art=document.querySelector("#view .lwrap article.lesson"); const r=art&&art.getClientRects().length?art.getBoundingClientRect():null;
+function lreadBarX(b){ try{ annPgPos(document.body.classList.contains("ann-lp")); }catch(_){} b=b||document.getElementById("lreadBar"); if(!b) return; const art=document.querySelector("#view .lwrap article.lesson"); const r=art&&art.getClientRects().length?art.getBoundingClientRect():null;
   b.style.right=r&&r.right<innerWidth-40?Math.max(12,Math.round(innerWidth-r.right+12))+"px":""; }
 addEventListener("resize",()=>lreadBarX());
 function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn(), fl=!rd&&S.view==="lesson"&&!!S.lbOff&&!!document.getElementById("lbtns");

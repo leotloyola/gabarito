@@ -2809,14 +2809,13 @@ function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=nul
   S.tocObs=new IntersectionObserver(()=>{ let best=0; hs.forEach((h,i)=>{ const r=h.getBoundingClientRect(); if(r.height&&r.top<220) best=i; }); mark(best); },{rootMargin:"0px 0px -60% 0px",threshold:[0,1]});
   hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
 // temas da disciplina abaixo do índice (ordem do cronograma), o atual destacado; abre a lição no ponto salvo
-// questões de prova UFPR do tema (com exam, origem real; sem fixação, Banco ou UWorld), contadas uma vez cada
-function ufprN(d,t){ if(S._unM!==S.qs||S._unN!==S.qs.size){ S._unM=S.qs; S._unN=S.qs.size; const m={}; for(const q of S.qs.values()){ if(!q.exam||q.origin!=="real"||q.standard==="usmle"||q.discipline==="banco"||q.off) continue; const k=q.discipline+"|"+q.topic; m[k]=(m[k]||0)+1; } S._un=m; } return S._un[d+"|"+t]||0; }
+// aparições do tema nas provas UFPR (questão repetida conta uma vez por prova; sem fixação, Banco ou UWorld) = realW
 function lessonTemasHTML(art){ if(S.tuB!=null&&S.view==="lesson") return ""; const id=(art.closest("[data-owner]")?.dataset.owner||"").replace(/^L:/,""), cur=S.lessons.get(id); if(!cur) return "";
   const L=lessonsOf(cur.discipline); if(L.length<2) return ""; const pane=!!art.closest(".qlesson"), en=set().lang==="en";
   let open=WIDE_L.matches; try{ const v=localStorage.getItem("gab.temas"); if(v!=null) open=v==="1"; }catch(_){}
   const items=L.map((l,i)=>{ const on=l.id===cur.id, nm=topicName(l.discipline,l.topic)||l.title||"", no=pane&&!on&&!lpQs(l.discipline,l.topic).all.length;
     const at=on?`aria-current="true"`:pane?`data-act="lessonPractice" data-d="${esc(l.discipline)}" data-t="${esc(l.topic)}"`:`data-act="lessonGo" data-id="${esc(l.id)}"`;
-    return `<li><button type="button" ${at} class="${on?"on":""}"${no?" disabled":""} title="${esc(l.title||nm)}"><span class="tn">${i+1}</span><span>${esc(nm)}</span>${(k=>k?`<span class="tqn" title="${T2(`${k} questões de prova UFPR`,`${k} UFPR exam questions`)}">${k}q</span>`:"")(ufprN(l.discipline,l.topic))}${lsnCovTag(lsnCov(l.discipline,l.topic),"tr")}</button></li>`; }).join("");
+    return `<li><button type="button" ${at} class="${on?"on":""}"${no?" disabled":""} title="${esc(l.title||nm)}"><span class="tn">${i+1}</span><span>${esc(nm)}</span>${(k=>k?`<span class="tqn" title="${T2(`${k} questões em provas UFPR (repetida conta em cada prova)`,`${k} UFPR exam questions (repeats count per exam)`)}">${k}q</span>`:"")(realW(l.discipline,l.topic))}${lsnCovTag(lsnCov(l.discipline,l.topic),"tr")}</button></li>`; }).join("");
   return `<details class="ltemas"${open?" open":""}><summary>${en?"Topics":"Temas"} · ${L.length}</summary><ol>${items}</ol></details>`; }
 function tocTogLbl(){ const b=$("#tocTog"); if(!b) return; const off=document.documentElement.classList.contains("toc-off"); b.hidden=false; b.setAttribute("aria-pressed",String(!off)); b.textContent="☰ "+T2("Índice","Contents"); b.title=off?T2("Mostrar índice","Show contents"):T2("Recolher índice","Hide contents"); }
 /* ---------- PDF (download) ---------- */

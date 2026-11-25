@@ -459,6 +459,20 @@ body.g-drag iframe{pointer-events:none}
 .lesson .call.vespera{background:var(--surface);box-shadow:0 0 0 2px var(--accent) inset;font-size:calc(15px * var(--fs));padding:14px 16px} .lesson .call.vespera .ct{color:var(--accent);font-size:12px}
 .lesson .call.vespera ul{padding-left:18px} .lesson .call.vespera li{margin:5px 0}
 /* "Não confundir" (23/11/2026): tabela de pares que a banca troca, sempre no fim do arquivo; aparece mesmo com a lição recolhida */
+/* apostila (25/11/2026): perguntas-guia, exemplo resolvido, pare e responda, questão de prova no meio do texto */
+.lesson .call.guia{background:var(--surface);box-shadow:0 0 0 1.5px var(--accent) inset} .lesson .call.guia .ct{color:var(--accent)} .lesson .call.guia ol{margin:4px 0;padding-left:20px} .lesson .call.guia li{margin:4px 0}
+.lesson .call.caso{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-left:4px solid var(--accent)} .lesson .call.caso .ct{color:var(--ink-2)}
+.lesson .call.pare{background:var(--surface);box-shadow:0 0 0 1px var(--line) inset} .lesson .call.pare .ct{color:var(--ink-2)}
+.lesson details.chk{margin:8px 0;border-radius:10px;background:var(--pill);padding:0} .lesson details.chk>summary{cursor:pointer;list-style:none;padding:9px 12px;font-weight:600;color:var(--ink)} .lesson details.chk>summary::-webkit-details-marker{display:none}
+.lesson details.chk>summary::before{content:"? ";color:var(--accent);font-weight:700} .lesson details.chk[open]>summary::before{content:"✓ ";color:var(--ok)}
+.lesson details.chk>div{padding:0 12px 10px;color:var(--ink-2)} .lesson details.chk>div::before{content:"Resposta: ";font-weight:600;color:var(--ok)}
+.lesson .lq{margin:16px 0;padding:14px;border-radius:16px;background:var(--surface);box-shadow:0 0 0 1.5px var(--warn-line) inset;font-family:var(--f-ui)}
+.lesson .lq-h{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-bottom:8px}
+.lesson .lq-s{font-family:var(--f-read);font-size:calc(15.5px * var(--fs));line-height:1.6;margin:0 0 10px;color:var(--ink)}
+.lesson .lq .opts{gap:7px} .lesson .lq .opt{padding:10px 12px;border-radius:12px} .lesson .lq .otext{font-size:calc(14.5px * var(--fs))}
+.lesson .lq .result{margin:10px 0 2px} .lesson .lq-tip{font-size:12px;color:var(--muted);margin-top:8px}
+.lesson .lq-why{margin:8px 0 0;padding:9px 11px;border-radius:10px;font-size:calc(14px * var(--fs));line-height:1.55;background:var(--pill);color:var(--ink-2)} .lesson .lq-why.ok{background:var(--ok-soft)} .lesson .lq-why.ok>b{color:var(--ok)} .lesson .lq-why.bad>b{color:var(--bad)} .lesson .lq-why.peg>b{color:var(--warn)}
+.lesson .lq-more{margin-top:8px} .lesson .lq-more>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)}
 .lesson .call.confundir{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .lesson .call.confundir .ct{color:var(--bad)} .lesson .call.confundir .tbl{margin:6px 0 0}
 .lesson .lfull-sw:not(.open)~.call.confundir{display:block}
 .lesson.rvv{margin-bottom:6px} .lesson.rvv .call.vespera{margin-top:0}
@@ -2629,8 +2643,24 @@ function lessonsListHTML(){ const d=curDisc(); if(!d) return ""; const L=lessons
   return `${rvH}<button class="btn small" data-act="discPdf" style="margin-bottom:10px">⬇ ${T2("Baixar disciplina em PDF","Download discipline as PDF")}</button><div class="panel"><div class="list">${L.map(l=>{ const t=(d.topics||[]).find(x=>x.id===l.topic), cv=lsnCov(l.discipline,l.topic); return `<button type="button" class="li" data-act="lesson" data-id="${esc(l.id)}"><span class="t" style="font-family:var(--f-ui)"><b>${ddot(d)}${esc(l.title)}</b><br><small style="color:var(--subtle)">${esc(t?.exam||"")}${t?wtMeta(d.id,t.id):""}${l.minutes?` · ${l.minutes} min`:""}${cv?` · ${cv.n}/${cv.of} ${T2(cv.hi?"questões ★★+ feitas":"questões feitas",cv.hi?"★★+ questions done":"questions done")}${cv.acc!=null?" · "+lsnAccTxt(cv):""}`:""}</small></span>${cv?lsnCovTag(cv,"st"):`<span class="st no">›</span>`}</button>`; }).join("")}</div></div>${missH}`; }
 // "Ler a lição completa": a prosa abaixo do botão .lfull-sw fica recolhida; estado aberto lembrado por lição
 const LFULL_ON="Recolher a lição completa", LFULL_OFF="Ler a lição completa";
+// Apostila (25/11/2026, pedido do Léo): questão de prova dentro da lição, respondível no lugar.
+// Conteúdo: <div class="lq" data-q="<id da questão>"></div> numa linha. A resposta conta no progresso (revisão espaçada), como em qualquer sessão.
+S.lqP=S.lqP||{};
+function lqExpand(h){ return h&&h.includes('class="lq"')?h.replace(/<div class="lq" data-q="([^"]+)"><\/div>/g,(m,id)=>lqHTML(id)):h; }
+function lqHTML(id, stat){ const q=S.qs.get(id); if(!q) return ""; const {c}=content(q); if(!c||!c.opts) return "";
+  const pk=stat?q.correct:S.lqP[id], rv=pk!=null, ok=pk===q.correct;
+  const head=`<div class="lq-h"><span>📝 ${q.exam?T2("Caiu na prova","Past exam")+" · "+esc(q.exam):T2("Questão de fixação","Practice question")}</span>${q.exc?`<span class="tag exc">${T2("Exceto / incorreta","Except / incorrect")}</span>`:""}</div>`;
+  const opts=c.opts.map((o,i)=>{ let cls="opt"; if(rv&&!stat){ if(i===q.correct) cls+=" correct"; else if(i===pk) cls+=" wrong"; } else if(stat&&i===q.correct) cls+=" correct";
+    return `<button type="button" class="${cls}" data-act="lqPick" data-q="${esc(id)}" data-i="${i}" ${rv?"disabled":""}><div class="orow"><span class="letter">${L[i]}</span><span class="otext">${safe(o.t)}</span></div></button>`; }).join("");
+  const why=(i,lab)=>`<div class="lq-why${i===q.correct?" ok":" bad"}"><b>${L[i]} · ${lab}</b> ${safe(optFull(q,c.opts[i])||"")}</div>`;
+  const rest=c.opts.map((_,i)=>i).filter(i=>i!==q.correct&&i!==pk);
+  const fb=!rv?`<div class="lq-tip">${T2("Responda antes de seguir a leitura: tentar lembrar fixa mais do que reler.","Answer before reading on: trying to recall sticks better than rereading.")}</div>`
+    :`${stat?"":`<div class="result ${ok?"ok":"bad"}">${ok?"✓ "+tr("right"):"✗ "+tr("wrongAns")+" "+L[q.correct]}</div>`}${why(q.correct,"✓")}${!ok&&!stat?why(pk,T2("sua escolha","your choice")):""}${rest.length||c.peg?`<details class="lq-more"${stat?" open":""}><summary>${T2("Demais alternativas","Other options")}${c.peg?" + "+tr("trap"):""}</summary>${rest.map(i=>why(i,T2("errada","wrong"))).join("")}${c.peg?`<div class="lq-why peg"><b>${tr("trap")}</b> ${safe(pegFull(q,c))}</div>`:""}</details>`:""}`;
+  return `<div class="lq${rv?" done":""}" data-lq="${esc(id)}">${head}<div class="lq-s">${safe(c.stem)}</div><div class="opts">${opts}</div>${fb}</div>`; }
+function lqPick(id,i){ const q=S.qs.get(id); if(!q||S.lqP[id]!=null) return; S.lqP[id]=i; try{ record(q,i,{}); }catch(_){}
+  document.querySelectorAll(`.lq[data-lq="${CSS.escape(id)}"]`).forEach(el=>{ el.outerHTML=lqHTML(id); }); }
 function lfullSet(){ try{ return new Set(JSON.parse(localStorage.getItem("gab.lfull")||"[]")); }catch(_){ return new Set(); } }
-function lsnHtml(l){ const h=l.html||""; if(!h.includes("lfull-sw")||!lfullSet().has(l.id)) return h; return h.replace(/class="lfull-sw"([^>]*)aria-expanded="false"([^>]*)>[^<]*</,`class="lfull-sw open"$1aria-expanded="true"$2>${LFULL_ON}<`); }
+function lsnHtml(l){ const h=lqExpand(l.html||""); if(!h.includes("lfull-sw")||!lfullSet().has(l.id)) return h; return h.replace(/class="lfull-sw"([^>]*)aria-expanded="false"([^>]*)>[^<]*</,`class="lfull-sw open"$1aria-expanded="true"$2>${LFULL_ON}<`); }
 function lfullOpen(b,on,save){ if(!b) return; b.classList.toggle("open",on); b.setAttribute("aria-expanded",String(on)); b.textContent=on?LFULL_ON:LFULL_OFF;
   const id=b.closest("[data-owner]")?.dataset.owner?.replace(/^L:/,""); if(save&&id){ const st=lfullSet(); on?st.add(id):st.delete(id); try{ localStorage.setItem("gab.lfull",JSON.stringify([...st])); }catch(_){} } }
 function lfullReveal(el){ if(el&&!el.getClientRects().length){ const b=el.closest(".lesson")?.querySelector(".lfull-sw"); if(b) lfullOpen(b,true,false); } }
@@ -2782,6 +2812,9 @@ const PDF_CSS=`.pg,.pdfc{--surface:#FFFFFF;--ink:#18181B;--ink-2:#27272A;--muted
 .pdfc ol.flow li:not(:last-child)::after{content:"";position:absolute;left:22px;bottom:-11px;width:2px;height:10px;background:var(--line)}
 .pdfc ol.flow li.stop{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc ol.flow li.stop::before{background:var(--bad)}
 .pdfc .call.vespera{background:var(--surface);box-shadow:0 0 0 2px var(--accent) inset} .pdfc .call.vespera .ct{color:var(--accent)} .pdfc .call.vespera ul{padding-left:18px}
+.pdfc .call.guia{background:var(--surface);box-shadow:0 0 0 1.5px var(--accent) inset} .pdfc .call.guia .ct{color:var(--accent)} .pdfc .call.caso{background:var(--surface-2);border-left:4px solid var(--accent)} .pdfc .call.pare{background:var(--surface);box-shadow:0 0 0 1px var(--line) inset}
+.pdfc details.chk{margin:6px 0} .pdfc details.chk>summary{list-style:none;font-weight:600;color:var(--ink)} .pdfc details.chk>summary::-webkit-details-marker{display:none} .pdfc details.chk>summary::before{content:"? ";color:var(--accent)} .pdfc details.chk>div{margin:2px 0 0 14px;font-size:13px} .pdfc details.chk>div::before{content:"Resposta: ";font-weight:600}
+.pdfc .lqp{margin:12px 0;padding:10px 12px;border-radius:12px;box-shadow:0 0 0 1px var(--warn-line) inset}
 .pdfc .call.confundir{background:var(--bad-soft);box-shadow:0 0 0 1px var(--bad-bar) inset} .pdfc .call.confundir .ct{color:var(--bad)} .pdfc .wtp{font-size:.62em;font-weight:600;color:var(--warn)}
 .pdfc .tree{font-size:13px;line-height:1.4} .pdfc .tree .tq{background:var(--ink);color:var(--surface);border-radius:12px;padding:8px 12px;font-weight:600;text-align:center}
 .pdfc .tree .tb{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px} .pdfc .tree .tn{background:var(--surface-2);box-shadow:0 0 0 1px var(--line) inset;border-radius:12px;padding:8px 10px}
@@ -2911,7 +2944,10 @@ async function pdfFromHtml(label, html, op={}){
 }
 // partes da lição: "Na véspera" (antes do botão) e a lição completa
 function lessonParts(l){ const h=l.html||"", m=h.match(/<button[^>]*class="lfull-sw[^"]*"[^>]*>[^<]*<\/button>/); return m?{v:h.slice(0,m.index),f:h.slice(m.index+m[0].length),split:true}:{v:"",f:h,split:false}; }
-function lessonBody(l,o){ const p=lessonParts(l); if(!p.split) return p.f; return o.what==="vesp"?p.v+(p.f.match(/<aside class="call confundir">[\s\S]*?<\/aside>/g)||[]).join("\n"):p.v+`<h2 class="pq-br">${T2("Lição completa","Full lesson")}</h2>`+p.f; }
+function lqStatic(id){ const q=S.qs.get(id); if(!q) return ""; const {c}=content(q); if(!c||!c.opts) return "";
+  return `<div class="pq lqp"><div class="pq-h"><b>📝 ${q.exam?T2("Caiu na prova","Past exam")+" · "+esc(q.exam):T2("Questão de fixação","Practice question")}</b></div><div class="pq-s">${safe(c.stem)}</div>${c.opts.map((o,i)=>`<div class="pq-o"><i>${L[i]})</i>${safe(o.t)}</div>`).join("")}<div class="pq-g"><b class="n">${T2("Resposta","Answer")}: ${L[q.correct]}.</b> ${safe(optFull(q,c.opts[q.correct])||"")}${c.peg?` <em>${tr("trap")}:</em> ${safe(c.peg)}`:""}</div></div>`; }
+function lessonPdfH(h){ return String(h||"").replace(/<div class="lq" data-q="([^"]+)"><\/div>/g,(m,id)=>lqStatic(id)).replace(/<details class="chk">/g,'<details class="chk" open>'); }
+function lessonBody(l,o){ const p=lessonParts({html:lessonPdfH(l.html)}); if(!p.split) return p.f; return o.what==="vesp"?p.v+(p.f.match(/<aside class="call confundir">[\s\S]*?<\/aside>/g)||[]).join("\n"):p.v+`<h2 class="pq-br">${T2("Lição completa","Full lesson")}</h2>`+p.f; }
 const pdfHasQ=o=>o.what==="lq"||o.what==="q"||o.what==="err";
 const pdfQOnly=o=>o.what==="q"||o.what==="err";
 const pdfSuf=o=>({vesp:T2("Na véspera","Night before"),q:T2("Questões","Questions"),err:T2("Erradas","Missed")})[o.what]||"";
@@ -3811,6 +3847,7 @@ document.addEventListener("click", async e=>{
   if(act==="navMore") return openNavMore();
   if(act==="keys") return openKeys();
   if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); lreadBar(); return; }
+  if(act==="lqPick"){ lqPick(a.dataset.q,Number(a.dataset.i)); return; }
   if(act==="lfull"){ const on=!a.classList.contains("open"); lfullOpen(a,on,true); if(!on) a.scrollIntoView({block:"center"}); return; }
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ lfullReveal(h); h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }
   if(act==="quick"){ S.setup=Object.assign(defaultSetup(),{mode:a.dataset.mode, count:10, order:a.dataset.mode==="sim"?"rand":"pri", filter:a.dataset.mode==="study"?"open":"all"}); let pool=setupPool(S.setup); if(!pool.length){ S.setup.filter="all"; pool=setupPool(S.setup);} if(!pool.length) return toast(tr("none")); S.session=buildSession("study",pool,S.setup); return go("study"); }

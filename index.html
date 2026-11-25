@@ -623,6 +623,11 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 #tocPop .tpbox{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:var(--surface);border-radius:18px;padding:10px 10px 12px;box-shadow:0 12px 40px rgba(0,0,0,.25),0 0 0 1px var(--hair)}
 #tocPop .tph{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 6px 10px;font-size:13px;color:var(--ink-2);position:sticky;top:-10px;background:var(--surface)}
 :root.lsn-sepia #tocPop .tpbox,:root.lsn-sepia #tocPop .tph{background:#F4ECD8;--ink-2:#3D362E;--muted:#6B6153;--pill:rgba(214,198,164,.45)} :root.lsn-dark #tocPop .tpbox,:root.lsn-dark #tocPop .tph{background:#191e23;--ink-2:#cbd4dc;--ink:#e6ebef;--muted:#a7b3be}
+#tocPop .tpt{display:flex;flex-direction:column;min-width:0;gap:1px} #tocPop .tpt small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em} #tocPop .tpt b{font-size:15px;line-height:1.3;color:var(--ink-2)}
+#tocPop .tph{align-items:flex-start} #tocPop .tpl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 10px 4px;border-top:1px solid var(--hair);margin-top:4px}
+#tocPop .tpf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair)}
+#tocPop .tpnav{all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px;background:var(--pill);min-width:0} #tocPop .tpnav.nx{text-align:right}
+#tocPop .tpnav small{font-size:11px;font-weight:600;color:var(--accent)} #tocPop .tpnav span{font-size:13px;line-height:1.3;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 #tocPop ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 #tocPop ol button{all:unset;cursor:pointer;display:block;font-size:14px;line-height:1.35;color:var(--ink-2);padding:8px 10px;border-radius:10px;box-sizing:border-box;width:100%}
 #tocPop ol button.sub{padding-left:22px;font-size:13px;color:var(--muted)} #tocPop ol button.vesp{font-weight:600;color:var(--accent)} #tocPop ol button:hover{background:var(--pill);color:var(--ink)} #tocPop ol button.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
@@ -2724,7 +2729,7 @@ function lreadBar(){ let b=document.getElementById("lreadBar"); const rd=lreadOn
   const o="L:"+S.lessonId, on=annOpen(o);
   b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
   const hasToc=$("#ltoc")&&!$("#ltoc").hidden, tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&hasToc?'<button type="button" class="btn small" data-act="tocTog">☰ '+T2("Índice","Contents")+'</button>'
-    :!WIDE_L.matches&&tocPopEls(document.querySelector("#view .lwrap article.lesson")).length?'<button type="button" class="btn small" data-act="tocPop" aria-label="'+T2("Abrir índice","Open contents")+'">☰ '+T2("Índice","Contents")+'</button>':""; // tela estreita: índice por cima da lição (pedido do Léo, 25/11/2026)
+    :!WIDE_L.matches&&S.lessonId?'<button type="button" class="btn small" data-act="tocPop" aria-label="'+T2("Abrir índice","Open contents")+'">☰ '+T2("Índice","Contents")+'</button>':""; // tela estreita: índice por cima da lição (pedido do Léo, 25/11/2026)
   b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
 // troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
 function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
@@ -2757,11 +2762,17 @@ LP_Q.addEventListener&&LP_Q.addEventListener("change",()=>{ if(S.catalog&&inQSes
 function tocPopEls(art){ if(!art) return []; let hs=[...art.querySelectorAll(":scope > h2")]; if(hs.length<3) hs=[...art.querySelectorAll(":scope > h2, :scope > h3")]; if(hs.length<3) return [];
   let vb=art.querySelector(".call.vespera"); while(vb&&vb.parentElement!==art) vb=vb.parentElement;
   return vb&&vb.compareDocumentPosition(hs[0])&Node.DOCUMENT_POSITION_FOLLOWING?[vb,...hs]:hs; }
-function tocPopOpen(a){ const art=a?.closest(".qlesson")?.querySelector("article.lesson")||a?.closest(".sheet")?.querySelector("article.lesson")||document.querySelector("#view .lwrap article.lesson")||document.querySelector("article.lesson"); const els=tocPopEls(art); if(!els.length) return;
+function tocPopOpen(a){ const pane=a?.closest(".qlesson"), sh=a?.closest(".sheet"), art=pane?.querySelector("article.lesson")||sh?.querySelector("article.lesson")||document.querySelector("#view .lwrap article.lesson")||document.querySelector("article.lesson"); const els=tocPopEls(art);
+  const lid=pane?.querySelector(".qlbody")?.dataset.l||(!sh&&S.view==="lesson"?S.lessonId:null), l=lid&&S.lessons.get(lid);
+  // nome da lição + lição anterior/próxima (pedido do Léo, 25/11/2026); navegar só na página da lição (painel e folha seguem a questão)
+  const LL=l&&!pane&&!sh&&S.view==="lesson"&&S.tuB==null?lessonsOf(l.discipline):[], li=l?LL.findIndex(x=>x.id===l.id):-1, pv=li>0?LL[li-1]:null, nx=li>=0&&li<LL.length-1?LL[li+1]:null;
+  const nb=(x,dir)=>x?`<button type="button" class="tpnav${dir>0?" nx":""}" data-act="tocPopL" data-id="${esc(x.id)}"><small>${dir<0?"← "+T2("Anterior","Previous"):T2("Próxima","Next")+" →"}</small><span>${esc(x.title)}</span></button>`:"<span></span>";
+  const head=l?`<div class="tpt"><small>${esc(nm(discById(l.discipline))||"")}</small><b>${esc(l.title)}</b></div>`:`<b>${T2("Índice","Contents")}</b>`, foot=pv||nx?`<div class="tpf">${nb(pv,-1)}${nb(nx,1)}</div>`:"";
+  if(!els.length&&!l) return;
   S.tocPopEls=els; let cur=0; els.forEach((h,i)=>{ if(h.getClientRects().length&&h.getBoundingClientRect().top<140) cur=i; });
   const subOk=els.some(h=>h.tagName==="H2");
   const items=els.map((h,i)=>{ const v=h.classList.contains("call"); const t=v?((h.querySelector(".ct")?.textContent||"").split("·")[0].trim()||T2("Na véspera","Night before")):h.textContent; return `<li><button type="button" data-act="tocPopGo" data-i="${i}" class="${v?"vesp":h.tagName==="H3"&&subOk?"sub":""}${i===cur?" on":""}">${esc(t)}</button></li>`; }).join("");
-  tocPopClose(); const d=document.createElement("div"); d.id="tocPop"; d.innerHTML=`<div class="tpbg" data-act="tocPopX"></div><div class="tpbox" role="dialog" aria-label="${T2("Índice da lição","Lesson contents")}"><div class="tph"><b>${T2("Índice","Contents")}</b><button type="button" class="btn small ghost" data-act="tocPopX" aria-label="${T2("Fechar","Close")}">✕</button></div><ol>${items}</ol></div>`;
+  tocPopClose(); const d=document.createElement("div"); d.id="tocPop"; d.innerHTML=`<div class="tpbg" data-act="tocPopX"></div><div class="tpbox" role="dialog" aria-label="${T2("Índice da lição","Lesson contents")}"><div class="tph">${head}<button type="button" class="btn small ghost" data-act="tocPopX" aria-label="${T2("Fechar","Close")}">✕</button></div>${els.length?`<div class="tpl">${T2("Índice","Contents")}</div><ol>${items}</ol>`:""}${foot}</div>`;
   document.body.appendChild(d); d.querySelector("button.on")?.scrollIntoView({block:"center"}); }
 function tocPopClose(){ document.getElementById("tocPop")?.remove(); }
 function tocPopGo(i){ const h=S.tocPopEls?.[i]; tocPopClose(); if(!h) return; lfullReveal(h); requestAnimationFrame(()=>h.scrollIntoView({behavior:"smooth",block:"start"})); }
@@ -3869,7 +3880,7 @@ document.addEventListener("click", async e=>{
   if(act==="navMore") return openNavMore();
   if(act==="keys") return openKeys();
   if(act==="tocTog"){ const off=document.documentElement.classList.toggle("toc-off"); try{ localStorage.setItem("gab.tocoff",off?"1":"0"); }catch(_){} if(!off&&!WIDE_L.matches){ const d=$("#ltoc details"); if(d) d.open=true; } tocTogLbl(); lreadBar(); return; }
-  if(act==="tocPop"){ tocPopOpen(a); return; } if(act==="tocPopX"){ tocPopClose(); return; } if(act==="tocPopGo"){ tocPopGo(Number(a.dataset.i)); return; }
+  if(act==="tocPop"){ tocPopOpen(a); return; } if(act==="tocPopX"){ tocPopClose(); return; } if(act==="tocPopGo"){ tocPopGo(Number(a.dataset.i)); return; } if(act==="tocPopL"){ tocPopClose(); const id=a.dataset.id; if(!S.lessons.get(id)) return; S.lessonId=id; S.prog.read=S.prog.read||{}; if(!S.prog.read[id]){ S.prog.read[id]=now(); saveProg(); } try{ history.replaceState({v:"lesson"},"","#lesson"); }catch(_){} render(); window.scrollTo({top:0}); return; }
   if(act==="lqPick"){ lqPick(a.dataset.q,Number(a.dataset.i)); return; }
   if(act==="lfull"){ const on=!a.classList.contains("open"); lfullOpen(a,on,true); if(!on) a.scrollIntoView({block:"center"}); return; }
   if(act==="tocGo"){ const h=document.getElementById("sec-"+a.dataset.i); if(h){ lfullReveal(h); h.scrollIntoView({behavior:"smooth",block:"start"}); if(!WIDE_L.matches){ const d=a.closest("details"); if(d) d.open=false; } } return; }

@@ -329,11 +329,11 @@ function fixture(){
     await step("botões da lição na barra de cima (✍ 🔍 📖) e canetas ali", async()=>{
       await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.scrollingElement.scrollTop=1500; });
       await p.waitForTimeout(250);
-      const r=await p.evaluate(async()=>{ const t=document.getElementById("topLsn"); const o={vis:!!t&&!t.hidden, btns:["annToggle","lfind","lread"].every(a=>!!t.querySelector(`[data-act="${a}"]`)), pill:!document.getElementById("lreadBar")};
-        t.querySelector('[data-act="annToggle"]').click(); await new Promise(r=>setTimeout(r,150)); const wide=matchMedia("(min-width:900px)").matches;
-        o.pressed=document.querySelector('#topLsn [data-act="annToggle"]').getAttribute("aria-pressed")==="true"; o.tools=!!document.querySelector("#topAnn #annHost .ann-float")&&!document.getElementById("topAnn").hidden;
+      const r=await p.evaluate(async()=>{ const t=document.getElementById("topLsn"); const o={vis:!!t&&!t.hidden, btns:!!t.querySelector('[data-act="annToggle"]')&&["lfind","lread"].every(a=>!!document.querySelector(`#topLsnR [data-act="${a}"]`)), pill:!document.getElementById("lreadBar")};
+        t.querySelector('[data-act="annToggle"]').click(); await new Promise(r=>setTimeout(r,150)); const wide=innerWidth>=760;
+        o.pressed=document.querySelector('#topLsn [data-act="annToggle"]').getAttribute("aria-pressed")==="true"; o.tools=wide?!!document.querySelector("#topLsn #topLsnAnn #annHost .ann-float")&&document.getElementById("topAnn").hidden:!!document.querySelector("#topAnn #annHost .ann-float")&&!document.getElementById("topAnn").hidden;
         document.querySelector('#topLsn [data-act="annToggle"]').click(); await new Promise(r=>setTimeout(r,150)); o.closed=!document.querySelector("#annHost .ann-float");
-        document.scrollingElement.scrollTop=0; go("home"); o.gone=document.getElementById("topLsn").hidden; return o; });
+        document.scrollingElement.scrollTop=0; go("home"); o.gone=document.getElementById("topLsn").hidden&&document.getElementById("topLsnR").hidden; return o; });
       if(!r.vis||!r.btns||!r.pill||!r.pressed||!r.tools||!r.closed||!r.gone) throw new Error(JSON.stringify(r)); });
     await step("lição sempre anotável com caneta", async()=>{
       const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); localStorage.setItem("gab.ann.auto","1"); ANN.pen=true; S.annId=null; S.lread=false; delete (S.prog.annotations||{})["L:lesson:da:t1"]; S.lessonId="lesson:da:t1"; go("lesson");

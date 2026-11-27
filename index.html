@@ -446,15 +446,20 @@ body.g-drag iframe{pointer-events:none}
 .lesson figure.svg figcaption{font-size:12px;color:var(--muted);margin-top:6px}
 /* mapa mental do tema (27/11/2026): campo mm da lição, aberto por cima da tela pelo botão 🧠 (mmOpen) */
 #mmpop{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:var(--bg)}
-#mmpop .mmh{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--hair)}
+#mmpop .mmh{display:flex;align-items:center;justify-content:space-between;gap:6px 8px;flex-wrap:wrap;padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--hair)}
 #mmpop .mmh b{font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 160px}
-#mmpop .mmh .btn{min-height:40px}
-#mmpop .mmb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#mmpop .mmb>.lesson{min-height:100%;margin:0;padding:12px max(12px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
-#mmpop figure.mm{margin:0 auto;width:calc(var(--mmz,1) * 100%);max-width:none}
+#mmpop .mmh .btn{min-height:40px} #mmpop .mmh .btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+#mmpop .mmt{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px max(12px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--hair)} #mmpop .mmt[hidden]{display:none}
+#mmpop .mmt .btn{min-height:36px;padding:4px 10px} #mmpop .mmt .btn[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent) inset}
+#mmpop .mmt .sw{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:-3px}
+#mmpop .mmb{flex:1;position:relative;overflow:hidden;touch-action:none;border-radius:0;padding:0;box-shadow:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#mmpop .mmb.ink{cursor:crosshair}
+#mmpop .mmst{position:absolute;left:0;top:0;transform-origin:0 0;padding:12px 12px 40px;box-sizing:border-box}
+#mmpop figure.mm{margin:0 auto;position:relative} #mmpop figure.mm figcaption{display:none}
 #mmpop.fw figure.mm svg.mm-w{display:block!important} #mmpop.fw figure.mm svg.mm-n{display:none!important}
 #mmpop.fn figure.mm svg.mm-n{display:block!important;max-width:min(100%,640px)} #mmpop.fn figure.mm svg.mm-w{display:none!important}
-#mmpop.fn figure.mm{width:calc(var(--mmz,1) * 100%)}
+@media (max-width:600px){#mmpop .mmwide{display:none} #mmpop .mmh b{flex-basis:100%}}
+#mmpop svg.mmink{position:absolute;pointer-events:none;overflow:visible}
 .lesson .call{border-radius:14px;padding:12px 14px;margin:12px 0;font-size:calc(14px * var(--fs));background:var(--pill)}
 .lesson .call .ct{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
 .lesson .call.prova{background:var(--accent-soft);box-shadow:0 0 0 1px #99F6E4 inset} .lesson .call.prova .ct{color:var(--accent)}
@@ -2750,20 +2755,71 @@ function vLesson(v){ const l=S.lessons.get(S.lessonId)||(S.lessonId&&/:revisao-a
    ${l.sources?.length?`<div class="box src"><h3>${tr("source")}</h3>${l.sources.map(s=>esc(s)).join("<br>")}</div>`:""}`; if(rv) rvApply(); lessonToc(); srLessonHl(); lbtnsWatch(); }
 /* ---------- MAPA MENTAL DO TEMA (27/11/2026) ---------- */
 // l.mm = <figure class="svg mm"> com duas versões (radial .mm-w e lista .mm-n); abre por cima de tudo, fora do corpo da lição
-// (não mexe nas anotações, no 🎯 Ver na lição, na busca nem no PDF). Radial/Lista e A−/A+ valem só nesta sessão (S.mmLay, S.mmZ).
+// (não mexe nas anotações da lição, no 🎯 Ver na lição, na busca nem no PDF).
+// Pinça/arraste/roda para zoom e mover (MM.z/x/y, transform na .mmst). ✍ liga a caneta (desligada ao abrir): a S Pen (ou o mouse no PC)
+// desenha e o dedo continua movendo. Traços em coordenadas do viewBox, salvos em progress.annotations["MM:<lição>:w|n"] = {ts, strokes:[{t:"p"|"h",c,w,p:[x,y,…]}]}.
+const MM={z:1,x:0,y:0,ptr:new Map(),st:null,undo:[],tool:"p",col:"#1F2937",ink:false};
+const MM_COL=[["#1F2937",T2("Preta","Black")],["#DC2626",T2("Vermelha","Red")],["#2563EB",T2("Azul","Blue")]];
 function mmBtn(l,ico){ if(!l||!l.mm) return ""; const t=T2("Mapa mental do tema (abre por cima da tela)","Topic mind map (opens on top)");
   return ico?`<button type="button" class="btn small ghost" data-act="mmOpen" data-id="${esc(l.id)}" title="${t}" aria-label="${t}">🧠</button>`:`<button type="button" class="btn small" data-act="mmOpen" data-id="${esc(l.id)}" title="${t}">🧠 ${T2("Mapa mental","Mind map")}</button>`; }
 function mmLay(){ return S.mmLay||(Math.min(innerWidth,screen.width||innerWidth)>=720?"w":"n"); }
-function mmPaint(){ const o=document.getElementById("mmpop"); if(!o) return; const L=mmLay(), z=S.mmZ||1;
-  o.classList.toggle("fw",L==="w"); o.classList.toggle("fn",L==="n"); o.style.setProperty("--mmz",z);
-  o.querySelectorAll('[data-act="mmLay"]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===L)));
-  const zl=o.querySelector(".mmzl"); if(zl) zl.textContent=Math.round(z*100)+"%"; }
-function mmOpen(id){ const l=S.lessons.get(id); if(!l||!l.mm) return; mmClose(true);
+function mmKey(){ return "MM:"+MM.id+":"+mmLay(); }
+function mmSvg(){ const o=document.getElementById("mmpop"); return o&&o.querySelector("figure.mm svg."+(mmLay()==="w"?"mm-w":"mm-n")); }
+function mmVB(){ const v=mmSvg()?.viewBox?.baseVal; return v&&v.width?v:{x:0,y:0,width:1000,height:1000}; }
+function mmXf(){ const st=document.querySelector("#mmpop .mmst"); if(!st) return; st.style.transform=`translate(${MM.x.toFixed(1)}px,${MM.y.toFixed(1)}px) scale(${MM.z.toFixed(4)})`; const zl=document.querySelector("#mmpop .mmzl"); if(zl) zl.textContent=Math.round(MM.z*100)+"%"; }
+function mmClamp(){ const vp=document.querySelector("#mmpop .mmb"), st=document.querySelector("#mmpop .mmst"); if(!vp||!st) return; const vw=vp.clientWidth, vh=vp.clientHeight, w=st.offsetWidth*MM.z, h=st.offsetHeight*MM.z;
+  MM.x=Math.min(vw*.6,Math.max(Math.min(0,vw-w)-vw*.6,MM.x)); MM.y=Math.min(vh*.6,Math.max(Math.min(0,vh-h)-vh*.6,MM.y)); }
+function mmZoomAt(f,cx,cy){ const z=Math.max(.4,Math.min(6,MM.z*f)); f=z/MM.z; MM.x=cx-(cx-MM.x)*f; MM.y=cy-(cy-MM.y)*f; MM.z=z; mmClamp(); mmXf(); }
+function mmFit(){ const vp=document.querySelector("#mmpop .mmb"), st=document.querySelector("#mmpop .mmst"); if(!vp||!st) return; st.style.width=vp.clientWidth+"px"; MM.z=1; MM.x=0; MM.y=0; mmXf(); mmInkPos(); }
+// camada da caneta: um <svg> com o mesmo viewBox, sobre a versão visível do mapa
+function mmInkPos(){ const sv=mmSvg(), ink=document.querySelector("#mmpop svg.mmink"), fig=document.querySelector("#mmpop figure.mm"); if(!sv||!ink||!fig) return; const v=mmVB();
+  ink.setAttribute("viewBox",`${v.x} ${v.y} ${v.width} ${v.height}`); const a=sv.getBoundingClientRect(), f=fig.getBoundingClientRect(), z=MM.z||1; // SVG não tem offsetLeft: mede na tela e desfaz o zoom
+  Object.assign(ink.style,{left:((a.left-f.left)/z)+"px",top:((a.top-f.top)/z)+"px",width:(a.width/z)+"px",height:(a.height/z)+"px"}); }
+function mmPathD(p){ if(p.length<2) return ""; let d=`M${p[0]} ${p[1]}`; if(p.length===2) d+=` L${p[0]+.01} ${p[1]}`; for(let i=2;i<p.length;i+=2) d+=` L${p[i]} ${p[i+1]}`; return d; }
+function mmStrokeEl(k){ return `<path d="${mmPathD(k.p)}" fill="none" stroke="${esc(k.c)}" stroke-width="${k.w}" stroke-linecap="round" stroke-linejoin="round"${k.t==="h"?' stroke-opacity=".38"':""}/>`; }
+function mmInkPaint(){ const ink=document.querySelector("#mmpop svg.mmink"); if(!ink) return; ink.innerHTML=annotationStrokes(mmKey()).map(mmStrokeEl).join("")+(MM.st?mmStrokeEl(MM.st):""); }
+function mmPt(e){ const ink=document.querySelector("#mmpop svg.mmink"), r=ink.getBoundingClientRect(), v=mmVB(); return [Math.round(((e.clientX-r.left)/r.width*v.width+v.x)*10)/10, Math.round(((e.clientY-r.top)/r.height*v.height+v.y)*10)/10]; }
+function mmUnit(){ const r=document.querySelector("#mmpop svg.mmink")?.getBoundingClientRect(); return r&&r.width?mmVB().width/r.width:1; } // unidades do viewBox por pixel de tela
+function mmSave(list){ MM.undo.push(annotationStrokes(mmKey())); if(MM.undo.length>60) MM.undo.shift(); annSet(mmKey(),list,false); mmTools(); }
+function mmErase(e){ const [x,y]=mmPt(e), R=14*mmUnit(), L=annotationStrokes(mmKey()); const keep=L.filter(k=>{ for(let i=0;i<k.p.length;i+=2){ if(Math.hypot(k.p[i]-x,k.p[i+1]-y)<=R+k.w/2) return false; } return true; });
+  if(keep.length!==L.length){ if(!MM.erasing){ MM.erasing=true; MM.undo.push(L); } annSet(mmKey(),keep,false); mmInkPaint(); mmTools(); } }
+function mmTools(){ const t=document.querySelector("#mmpop .mmt"); if(!t) return; t.hidden=!MM.ink; document.querySelector("#mmpop .mmb")?.classList.toggle("ink",MM.ink);
+  document.querySelector('#mmpop [data-act="mmInk"]')?.setAttribute("aria-pressed",String(MM.ink));
+  t.querySelectorAll("[data-act=mmTool]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.t===MM.tool&&(MM.tool!=="p"||b.dataset.c===MM.col))));
+  const u=t.querySelector('[data-act="mmUndo"]'); if(u) u.disabled=!MM.undo.length; const c=t.querySelector('[data-act="mmClear"]'); if(c){ c.disabled=!annotationStrokes(mmKey()).length; c.textContent=MM.clr?T2("Apagar tudo?","Clear all?"):"🗑"; } }
+function mmPaint(){ const o=document.getElementById("mmpop"); if(!o) return; const L=mmLay(); o.classList.toggle("fw",L==="w"); o.classList.toggle("fn",L==="n");
+  o.querySelectorAll('[data-act="mmLay"]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===L))); MM.undo=[]; MM.clr=false; mmFit(); mmInkPaint(); mmTools(); }
+function mmOpen(id){ const l=S.lessons.get(id); if(!l||!l.mm) return; mmClose(true); Object.assign(MM,{id,z:1,x:0,y:0,st:null,undo:[],ink:false,clr:false}); MM.ptr.clear();
   const o=document.createElement("div"); o.id="mmpop"; o.setAttribute("role","dialog"); o.setAttribute("aria-modal","true"); o.setAttribute("aria-label",T2("Mapa mental","Mind map")+": "+l.title);
-  o.innerHTML=`<div class="mmh"><b>🧠 ${esc(l.title)}</b><span class="row" style="gap:6px;flex-wrap:wrap"><span class="seg" role="group" aria-label="${T2("Formato","Layout")}"><button type="button" data-act="mmLay" data-v="w">${T2("Radial","Radial")}</button><button type="button" data-act="mmLay" data-v="n">${T2("Lista","List")}</button></span><button type="button" class="btn small ghost" data-act="mmZ" data-d="-1" aria-label="${T2("Diminuir","Smaller")}">A−</button><span class="mono mmzl" style="font-size:12px;min-width:38px;text-align:center"></span><button type="button" class="btn small ghost" data-act="mmZ" data-d="1" aria-label="${T2("Aumentar","Larger")}">A+</button><button type="button" class="btn small primary" data-act="mmClose">✕ ${T2("Fechar","Close")}</button></span></div><div class="mmb"><article class="lesson" lang="pt-BR">${l.mm}</article></div>`;
-  document.body.appendChild(o); document.body.classList.add("mm-on"); mmPaint();
+  const tb=(t,c,label,ic)=>`<button type="button" class="btn small ghost" data-act="mmTool" data-t="${t}"${c?` data-c="${c}"`:""} title="${label}" aria-label="${label}">${ic}</button>`;
+  o.innerHTML=`<div class="mmh"><b>🧠 ${esc(l.title)}</b><span class="row" style="gap:6px;flex-wrap:wrap"><span class="seg" role="group" aria-label="${T2("Formato","Layout")}"><button type="button" data-act="mmLay" data-v="w">${T2("Radial","Radial")}</button><button type="button" data-act="mmLay" data-v="n">${T2("Lista","List")}</button></span><button type="button" class="btn small ghost" data-act="mmZ" data-d="-1" aria-label="${T2("Diminuir","Zoom out")}">−</button><button type="button" class="btn small ghost mono mmzl" data-act="mmFit" title="${T2("Ajustar à tela","Fit to screen")}" style="min-width:58px">100%</button><button type="button" class="btn small ghost" data-act="mmZ" data-d="1" aria-label="${T2("Aumentar","Zoom in")}">+</button><button type="button" class="btn small ghost" data-act="mmInk" aria-pressed="false" title="${T2("Caneta: a S Pen escreve, o dedo move","Pen: the stylus writes, fingers move")}" aria-label="${T2("Anotar","Annotate")}">✍</button><button type="button" class="btn small primary" data-act="mmClose" aria-label="${T2("Fechar","Close")}">✕<span class="mmwide"> ${T2("Fechar","Close")}</span></button></span></div>
+   <div class="mmt" hidden role="toolbar" aria-label="${T2("Caneta","Pen")}">${MM_COL.map(([c,n])=>tb("p",c,T2("Caneta ","Pen ")+n,`<span class="sw" style="background:${c}"></span>`)).join("")}${tb("h","","Marca-texto",`<span class="sw" style="background:#FACC15"></span> ${T2("Marca-texto","Highlighter")}`)}${tb("e","",T2("Borracha","Eraser"),"⌫ "+T2("Borracha","Eraser"))}<button type="button" class="btn small ghost" data-act="mmUndo" title="${T2("Desfazer","Undo")}">↶ ${T2("Desfazer","Undo")}</button><button type="button" class="btn small ghost" data-act="mmClear" title="${T2("Apagar todos os traços deste mapa","Clear all strokes on this map")}">🗑</button><small class="mmwide" style="color:var(--muted)">${T2("S Pen escreve · dedo move e dá zoom","Stylus writes · fingers pan and zoom")}</small></div>
+   <div class="mmb lesson" lang="pt-BR"><div class="mmst">${l.mm}<svg class="mmink" xmlns="http://www.w3.org/2000/svg"></svg></div></div>`;
+  document.body.appendChild(o); document.body.classList.add("mm-on");
+  const fig=o.querySelector("figure.mm"), ink=o.querySelector("svg.mmink"); if(fig&&ink) fig.appendChild(ink);
+  mmBind(o.querySelector(".mmb")); mmPaint(); requestAnimationFrame(()=>{ mmFit(); mmInkPaint(); });
   try{ history.pushState(Object.assign({},history.state||{},{mm:1}),"",location.href); S.mmPushed=true; }catch(_){ S.mmPushed=false; } }
-function mmClose(raw){ const o=document.getElementById("mmpop"); if(!o) return false; o.remove(); document.body.classList.remove("mm-on");
+function mmBind(vp){
+  const loc=e=>{ const r=vp.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
+  const draws=e=>MM.ink&&(e.pointerType==="pen"||e.pointerType==="mouse"&&e.button===0);
+  vp.addEventListener("pointerdown",e=>{ if(draws(e)&&!MM.ptr.size){ e.preventDefault(); try{ vp.setPointerCapture(e.pointerId); }catch(_){} MM.pid=e.pointerId;
+      if(MM.tool==="e"){ MM.erasing=false; mmErase(e); MM.st={t:"e",p:[]}; return; }
+      const px=MM.tool==="h"?16:2.6; MM.st={t:MM.tool,c:MM.tool==="h"?"#FACC15":MM.col,w:Math.round(px*mmUnit()*100)/100,p:mmPt(e)}; mmInkPaint(); return; }
+    if(MM.st) return; try{ vp.setPointerCapture(e.pointerId); }catch(_){} MM.ptr.set(e.pointerId,loc(e)); MM.pinch=null; });
+  vp.addEventListener("pointermove",e=>{ if(MM.st&&e.pointerId===MM.pid){ e.preventDefault(); if(MM.st.t==="e"){ mmErase(e); return; }
+      const [x,y]=mmPt(e), p=MM.st.p, n=p.length; if(Math.hypot(x-p[n-2],y-p[n-1])>=.6*mmUnit()){ p.push(x,y); mmInkPaint(); } return; }
+    if(!MM.ptr.has(e.pointerId)) return; const prev=MM.ptr.get(e.pointerId), cur=loc(e); MM.ptr.set(e.pointerId,cur);
+    if(MM.ptr.size===1){ MM.x+=cur[0]-prev[0]; MM.y+=cur[1]-prev[1]; mmClamp(); mmXf(); return; }
+    const [a,b]=[...MM.ptr.values()], d=Math.hypot(a[0]-b[0],a[1]-b[1]), m=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+    if(MM.pinch){ MM.x+=m[0]-MM.pinch.m[0]; MM.y+=m[1]-MM.pinch.m[1]; mmZoomAt(d/MM.pinch.d,m[0],m[1]); } MM.pinch={d:Math.max(d,1),m}; });
+  const end=e=>{ if(MM.st&&e.pointerId===MM.pid){ const k=MM.st; MM.st=null; MM.pid=null;
+      if(k.t!=="e"&&k.p.length>=2) mmSave(annotationStrokes(mmKey()).concat([k])); MM.erasing=false; mmInkPaint(); return; }
+    MM.ptr.delete(e.pointerId); MM.pinch=null; };
+  vp.addEventListener("pointerup",end); vp.addEventListener("pointercancel",end); vp.addEventListener("lostpointercapture",e=>{ if(MM.ptr.has(e.pointerId)||e.pointerId===MM.pid) end(e); });
+  vp.addEventListener("wheel",e=>{ e.preventDefault(); const [x,y]=loc(e); if(e.ctrlKey||e.metaKey) mmZoomAt(Math.exp(-e.deltaY*.01),x,y); else { MM.x-=e.deltaX; MM.y-=e.deltaY; mmClamp(); mmXf(); } },{passive:false});
+  vp.addEventListener("dblclick",e=>{ if(MM.ink) return; const [x,y]=loc(e); mmZoomAt(MM.z<1.9?2:1/MM.z,x,y); }); }
+addEventListener("resize",()=>{ if(document.getElementById("mmpop")){ const st=document.querySelector("#mmpop .mmst"), vp=document.querySelector("#mmpop .mmb"); if(st&&vp) st.style.width=vp.clientWidth+"px"; mmClamp(); mmXf(); mmInkPos(); } });
+function mmClose(raw){ const o=document.getElementById("mmpop"); if(!o) return false; o.remove(); document.body.classList.remove("mm-on"); MM.ptr.clear(); MM.st=null;
   if(!raw&&S.mmPushed){ S.mmPushed=false; try{ history.back(); }catch(_){} } else if(raw) S.mmPushed=false; return true; }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("mmpop")){ e.preventDefault(); e.stopImmediatePropagation(); mmClose(); } },true);
 /* ---------- MODO LEITURA DA LIÇÃO ---------- */
@@ -3929,7 +3985,11 @@ document.addEventListener("click", async e=>{
   if(act==="settings") return openSettings();
   if(act==="lread"){ lreadSet(!lreadOn()); return; }
   if(act==="mmOpen"){ mmOpen(a.dataset.id); return; } if(act==="mmClose"){ mmClose(); return; }
-  if(act==="mmLay"){ S.mmLay=a.dataset.v; mmPaint(); return; } if(act==="mmZ"){ S.mmZ=Math.max(.6,Math.min(2.5,Math.round(((S.mmZ||1)+Number(a.dataset.d)*.2)*10)/10)); mmPaint(); return; }
+  if(act==="mmLay"){ S.mmLay=a.dataset.v; mmPaint(); return; } if(act==="mmFit"){ mmFit(); return; }
+  if(act==="mmZ"){ const vp=document.querySelector("#mmpop .mmb"); if(vp) mmZoomAt(Number(a.dataset.d)>0?1.25:.8,vp.clientWidth/2,vp.clientHeight/2); return; }
+  if(act==="mmInk"){ MM.ink=!MM.ink; MM.clr=false; mmTools(); return; } if(act==="mmTool"){ MM.tool=a.dataset.t; if(a.dataset.c) MM.col=a.dataset.c; MM.clr=false; mmTools(); return; }
+  if(act==="mmUndo"){ const prev=MM.undo.pop(); if(prev){ annSet(mmKey(),prev,false); mmInkPaint(); } MM.clr=false; mmTools(); return; }
+  if(act==="mmClear"){ if(!MM.clr){ MM.clr=true; mmTools(); return; } MM.clr=false; mmSave([]); mmInkPaint(); return; }
   if(act==="lfind"){ lfOpen(a); return; } if(act==="lfNext"){ lfGo(LF.i+1); return; } if(act==="lfPrev"){ lfGo(LF.i-1); return; } if(act==="lfClose"){ lfClose(); return; }
   if(act==="toggleFocus"){ set().focus = set().focus===false; saveProg(); render(); return openSettings(); }
   if(act==="fs"){ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI:"hide"}); }catch(err){ toast(set().lang==="en"?"Full screen is not available here":"Tela cheia não disponível aqui"); } setTimeout(render,150); return; }

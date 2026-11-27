@@ -221,7 +221,7 @@ function fixture(){
         document.querySelector(".lesson .lfull-sw").click(); o.opened=vis(); go("lesson"); o.kept=vis(); document.querySelector(".lesson .lfull-sw").click(); o.reclosed=vis();
         document.querySelector('#ltoc [data-act="tocGo"][data-i="2"]').click(); o.tocOpens=vis(); go("lesson"); o.notSaved=vis();
         const f=await lessonPdf(S.lessons.get(id),false); o.pdf=f.size>1000; localStorage.removeItem("gab.lfull"); S.lessons.delete(id); return o; });
-      if(r.closed||!r.opened||!r.kept||r.reclosed||!r.tocOpens||r.notSaved||r.toc!==4||r.v1!=="v"||r.vtx!=="Na véspera"||!r.vid||!/· 3 /.test(r.sum)||r.temas!==2||!r.pdf) throw new Error(JSON.stringify(r)); });
+      if(r.closed||!r.opened||!r.kept||r.reclosed||!r.tocOpens||r.notSaved||r.toc!==4||r.v1!=="v"||r.vtx!=="Na véspera"||!r.vid||!/· 3$/.test(r.sum)||r.temas!==2||!r.pdf) throw new Error(JSON.stringify(r)); });
     await step("pdf da lição", async()=>{ const r=await p.evaluate(async()=>{ const f=await lessonPdf(S.lessons.get("lesson:da:t1")); const h=new Uint8Array(await f.slice(0,5).arrayBuffer()); return {n:f.name,s:f.size,h:String.fromCharCode(...h),pages:(new TextDecoder("latin1").decode(await f.arrayBuffer()).match(/\/Type \/Page /g)||[]).length}; });
       if(!r.n.endsWith(".pdf")||r.s<10240||r.h!=="%PDF-"||r.pages<2) throw new Error("PDF inválido: "+JSON.stringify(r)); });
     await step("pdf da disciplina", async()=>{ const r=await p.evaluate(async()=>{ const fs=await discPdfFiles("da"); const f=fs[fs.length-1]; const h=new Uint8Array(await f.slice(0,5).arrayBuffer()); const nq=fs.slice(0,-1).filter(x=>x.name.endsWith("99 Questões.pdf")).length; return {n:fs.length,last:f.name,h:String.fromCharCode(...h),nq}; });

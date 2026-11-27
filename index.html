@@ -68,14 +68,20 @@ button{font:inherit;color:inherit}
 .brand{font-family:var(--f-display);font-weight:600;font-size:19px;letter-spacing:-.02em;display:flex;align-items:baseline;gap:2px;white-space:nowrap;color:var(--ink)}
 .brand i{font-style:normal;color:var(--accent)}
 /* página da lição: ✍ / 🔍 / 📖 na barra de cima, e o menu das canetas abre ali (27/11/2026, pedido do Léo) */
-.toplsn{display:flex;align-items:center;gap:6px;min-width:0;flex:0 1 auto;margin-left:8px;margin-right:auto} .toplsn[hidden]{display:none}
-.toplsn>.btn{min-height:38px;white-space:nowrap;flex:none} .toplsn>.btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.toplsn{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;margin-left:8px} .toplsn[hidden],.toplsn-r[hidden]{display:none}
+.toplsn-r{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
+.toplsn .btn,.toplsn-r>.btn{min-height:38px;white-space:nowrap;flex:none} .toplsn>.btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tlann{display:flex;align-items:center;min-width:0;overflow-x:auto;scrollbar-width:none} .tlann:empty{display:none} .tlann::-webkit-scrollbar{display:none}
 .topann{display:flex;justify-content:center;padding:0 max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));overflow-x:auto;scrollbar-width:none} .topann[hidden]{display:none} .topann::-webkit-scrollbar{display:none}
-.topann #annHost{display:flex;min-width:0}
-.top .topann #annHost .ann-float{position:static!important;transform:none!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;max-width:none!important;width:max-content!important;margin:0!important;opacity:1!important}
-.top .topann #annHost .ann-float [data-act="annToggle"]{display:none} /* o ✍ da barra de cima já liga/desliga */
+.top #annHost.intop{display:flex;min-width:0}
+.top #annHost.intop .ann-float{position:static!important;transform:none!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;max-width:none!important;width:max-content!important;margin:0!important;opacity:1!important;box-shadow:none}
+.top #annHost.intop .ann-float [data-act="annToggle"]{display:none}
+.top #annHost.intop .ann-float{gap:3px;padding:3px 5px;border-radius:14px;background:transparent} .top #annHost.intop .ann-lbl{display:none}
+.top #annHost.intop .ann-float .btn{min-height:32px;padding:3px 7px;font-size:14px} .top #annHost.intop .ann-ic{width:19px;height:19px}
+.top #annHost.intop .ann-color{width:24px;height:24px;min-width:24px} .top #annHost.intop .ann-size{width:28px;height:28px} .top #annHost.intop .ann-sep{margin:2px 1px}
+body.toplsn-pen .toplsn-r .tl-lbl{display:none} /* o ✍ da barra de cima já liga/desliga */
 body.toplsn-on .sync{display:none}
-@media (max-width:899px){.toplsn .tl-lbl{display:none}} @media (max-width:520px){.toplsn{gap:2px;margin-left:2px}.toplsn>.btn{padding:6px 8px}}
+@media (max-width:1099px){.toplsn-r .tl-lbl{display:none}} @media (max-width:520px){.toplsn,.toplsn-r{gap:2px}.toplsn{margin-left:2px}.toplsn .btn,.toplsn-r>.btn{padding:6px 8px}}
 .sync{font-size:11px;color:var(--subtle);margin-left:auto;display:flex;align-items:center;gap:6px;white-space:nowrap;letter-spacing:.02em}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--subtle)}
 .dot.on{background:#34D399} .dot.warn{background:#FBBF24}
@@ -1055,6 +1061,7 @@ body.ann-lp .ann-float .ann-sep{margin:2px 1px}
     <div class="top-in">
       <div class="brand">Gabarito<i>.</i></div>
       <div class="toplsn" id="topLsn" role="toolbar" hidden></div>
+      <div class="toplsn-r" id="topLsnR" role="toolbar" hidden></div>
       <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">…</span></div>
       <button class="iconbtn" type="button" data-act="search" aria-label="Buscar" id="btnSearch" title="Buscar (/)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
       <button class="iconbtn" type="button" data-act="settings" aria-label="Ajustes" id="btnSettings">
@@ -2853,17 +2860,23 @@ function lreadBar(){ try{ topLsnSync(); }catch(_){} let b=document.getElementByI
   const hasToc=$("#ltoc")&&!$("#ltoc").hidden, tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&hasToc?'<button type="button" class="btn small" data-act="tocTog">☰ '+T2("Índice","Contents")+'</button>'
     :!WIDE_L.matches&&S.lessonId?'<button type="button" class="btn small" data-act="tocPop" aria-label="'+T2("Abrir índice","Open contents")+'">☰ '+T2("Índice","Contents")+'</button>':""; // tela estreita: índice por cima da lição (pedido do Léo, 25/11/2026)
   b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'">✍ '+T2("Anotar","Annotate")+'</button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕ '+T2("Sair da leitura","Exit reading")+'</button>':'<button type="button" class="btn small" data-act="lread">📖 '+T2("Modo leitura","Reading mode")+'</button>'); }
-// página da lição: botões na barra de cima (fora do cartão da lição) e o menu das canetas numa linha logo abaixo deles (#annHost vai para #topAnn)
+// página da lição: ✍ ao lado do nome do app com as canetas abertas logo ao lado dele (#annHost vai para #topLsnAnn); 🔍 📖 🧠 à direita, junto da lupa. Tela estreita (<760 px): canetas numa linha logo abaixo (#topAnn)
 function topLsnOn(){ return S.view==="lesson"&&!!S.lessonId&&!lreadOn()&&!!S.lessons.get(S.lessonId)&&!$("#layer")?.innerHTML; }
-function topLsnSync(){ const el=document.getElementById("topLsn"); if(!el) return; const on=topLsnOn(), host=document.getElementById("annHost");
+function topLsnSync(){ const el=document.getElementById("topLsn"), er=document.getElementById("topLsnR"); if(!el||!er) return; const on=topLsnOn(), host=document.getElementById("annHost");
   const row=document.getElementById("topAnn"); document.body.classList.toggle("toplsn-on",on);
-  if(!on){ if(!el.hidden){ el.hidden=true; el.innerHTML=""; } if(row) row.hidden=true; if(host&&host.parentElement!==document.body) document.body.appendChild(host); return; }
+  const home=()=>{ if(host&&host.parentElement!==document.body){ document.body.appendChild(host); host.classList.remove("intop"); } };
+  if(!on){ if(!el.hidden){ el.hidden=true; el.innerHTML=""; } if(!er.hidden){ er.hidden=true; er.innerHTML=""; } if(row) row.hidden=true; home(); document.body.classList.remove("toplsn-pen"); return; }
   const o="L:"+S.lessonId, op=annOpen(o), l=S.lessons.get(S.lessonId);
   const k=[o,op,!!l.mm,set().lang].join("|");
-  if(el.dataset.k!==k||el.hidden){ el.dataset.k=k; el.hidden=false; 
-    el.innerHTML=`<button type="button" class="btn small ${op?"primary":"ghost"}" data-act="annToggle" data-q="${esc(o)}" aria-pressed="${op}" title="${op?T2("Fechar a caneta","Close pen"):T2("Anotar com a caneta","Annotate with the pen")}" aria-label="${T2("Anotar","Annotate")}">✍</button><button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button><button type="button" class="btn small ghost" data-act="lread" title="${T2("Modo leitura","Reading mode")}">📖<span class="tl-lbl"> ${T2("Modo leitura","Reading mode")}</span></button>${l.mm?`<button type="button" class="btn small ghost" data-act="mmOpen" data-id="${esc(l.id)}" title="${T2("Mapa mental do tema","Topic mind map")}" aria-label="${T2("Mapa mental","Mind map")}">🧠</button>`:""}`;
+  if(el.dataset.k!==k||el.hidden){ el.dataset.k=k; el.hidden=false; er.hidden=false;
+    if(host&&el.contains(host)) document.body.appendChild(host);
+    el.innerHTML=`<button type="button" class="btn small ${op?"primary":"ghost"}" data-act="annToggle" data-q="${esc(o)}" aria-pressed="${op}" title="${op?T2("Fechar a caneta","Close pen"):T2("Anotar com a caneta","Annotate with the pen")}" aria-label="${T2("Anotar","Annotate")}">✍</button><span class="tlann" id="topLsnAnn"></span>`;
+    er.innerHTML=`<button type="button" class="btn small ghost" data-act="lfind" title="${T2("Buscar na lição (Ctrl+F)","Find in lesson (Ctrl+F)")}" aria-label="${T2("Buscar na lição","Find in lesson")}">🔍</button><button type="button" class="btn small ghost" data-act="lread" title="${T2("Modo leitura","Reading mode")}">📖<span class="tl-lbl"> ${T2("Modo leitura","Reading mode")}</span></button>${l.mm?`<button type="button" class="btn small ghost" data-act="mmOpen" data-id="${esc(l.id)}" title="${T2("Mapa mental do tema","Topic mind map")}" aria-label="${T2("Mapa mental","Mind map")}">🧠</button>`:""}`;
   }
-  if(host&&row){ const want=String(S.annId||"")===o; if(want&&host.parentElement!==row) row.appendChild(host); else if(!want&&host.parentElement===row) document.body.appendChild(host); row.hidden=!(want&&host.firstElementChild); } }
+  if(!host) return; const want=String(S.annId||"")===o&&!!host.firstElementChild, inl=document.getElementById("topLsnAnn"), wide=innerWidth>=760;
+  if(!want){ home(); if(row) row.hidden=true; document.body.classList.remove("toplsn-pen"); return; }
+  const tgt=wide?inl:row; if(tgt&&host.parentElement!==tgt) tgt.appendChild(host); host.classList.add("intop"); if(row) row.hidden=wide; document.body.classList.toggle("toplsn-pen",wide); }
+addEventListener("resize",()=>{ try{ if(topLsnOn()) topLsnSync(); }catch(_){} });
 // troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
 function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
   if(sf){ for(const b of annBlocks(sf)){ const r=b.getBoundingClientRect(); if(r.bottom>70&&r.height){ ref=b; top=r.top; break; } } }

@@ -81,9 +81,6 @@ function fixture(){
         out.chips=document.querySelectorAll('[data-act="lpN"]').length; out.all=run(0); out.ten=run(10); out.kept=set().lpN;
         ids.forEach(id=>{ S.qs.delete(id); delete S.prog.q[id]; }); [...S.qs.values()].filter(q=>q.topic==="t4"&&q.discipline==="da").forEach(q=>{}); S.lessons.delete("lesson:da:t4"); set().std=std0; set().lpN=n0; S.session=null; return out; });
       if(r.chips!==3) throw new Error("chips "+r.chips); if(r.all[0]<18) throw new Error("Todas fez "+r.all[0]); if(r.all[1]!=="lp-0"&&r.all[0]===18) throw new Error("feita não ficou no fim"); if(r.ten[0]!==10) throw new Error("10 fez "+r.ten[0]); if(r.kept!==10) throw new Error("não guardou escolha"); });
-    await step("pílula flutuante dentro do cartão da lição", async()=>{ const r=await p.evaluate(async()=>{ const L=S.lessons.get("lesson:da:t1"), h0=L.html; L.html=h0+Array.from({length:12},(_,i)=>`<h2>${4+i}. Seção</h2><p>${"texto ".repeat(200)}</p>`).join(""); S.session=null; S.lessonId="lesson:da:t1"; go("lesson"); window.scrollTo(0,1500); await new Promise(r=>setTimeout(r,400));
-        const b=document.getElementById("lreadBar"), a=document.querySelector("#view .lwrap article.lesson"); const o={b:b?Math.round(b.getBoundingClientRect().right):null, a:Math.round(a.getBoundingClientRect().right), w:innerWidth}; L.html=h0; window.scrollTo(0,0); go("lesson"); return o; });
-      if(r.b==null||(r.a<r.w-40&&r.b>r.a+1)) throw new Error(JSON.stringify(r)); });
     await step("temas da lição com nº de questões UFPR", async()=>{ const r=await p.evaluate(()=>{ S.lessons.set("lesson:da:t2",{id:"lesson:da:t2",kind:"lesson",discipline:"da",topic:"t2",title:"L2",html:"<h2>a</h2><p>x</p><h2>b</h2><p>y</p>"}); S.session=null; S.lessonId="lesson:da:t1"; go("lesson");
         const t=[...document.querySelectorAll("#ltoc .ltemas .tqn")].map(x=>x.textContent); S.lessons.delete("lesson:da:t2"); return t; }); if(r[0]!=="6q"||r[1]!=="6q") throw new Error(JSON.stringify(r)); });
     await step("praticar tema: filtrar por prova", async()=>{ const r=await p.evaluate(()=>{ const std0=set().std, n0=set().lpN; set().std="ufpr"; set().lpN=0; S.session=null; S.lessonId="lesson:da:t1"; go("lesson"); const out={};
@@ -329,17 +326,15 @@ function fixture(){
         document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); out.off=!document.body.classList.contains("lread")&&!document.getElementById("lreadBar")&&vis(document.querySelector('#view [data-act="lessonPractice"]'));
         S.annId=null; localStorage.setItem("gab.lread","0"); S.lread=false; go("home"); out.home=!document.body.classList.contains("lread"); return out; });
       if(!r.on||r.top||r.tabs||!r.text||r.practice||!r.ann||!r.off||!r.home) throw new Error("leitura: "+JSON.stringify(r)); });
-    await step("botões flutuantes ao rolar a lição", async()=>{
-      await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.scrollingElement.scrollTop=0; });
-      await p.waitForTimeout(150);
-      const a=await p.evaluate(()=>!document.getElementById("lreadBar"));
-      await p.evaluate(()=>{ document.scrollingElement.scrollTop=1500; });
+    await step("botões da lição na barra de cima (✍ 🔍 📖) e canetas ali", async()=>{
+      await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector(".lwrap .lesson").insertAdjacentHTML("beforeend",'<div style="height:4000px">alto</div>'); document.scrollingElement.scrollTop=1500; });
       await p.waitForTimeout(250);
-      const b=await p.evaluate(()=>{ const bar=document.getElementById("lreadBar"); return !!bar&&bar.classList.contains("fl")&&!!bar.querySelector('[data-act="lread"]')&&!!bar.querySelector('[data-act="annToggle"]'); });
-      await p.evaluate(()=>{ document.scrollingElement.scrollTop=0; });
-      await p.waitForTimeout(250);
-      const c=await p.evaluate(()=>{ const ok=!document.getElementById("lreadBar"); go("home"); return ok; });
-      if(!a||!b||!c) throw new Error("flutuantes: "+JSON.stringify({a,b,c})); });
+      const r=await p.evaluate(async()=>{ const t=document.getElementById("topLsn"); const o={vis:!!t&&!t.hidden, btns:["annToggle","lfind","lread"].every(a=>!!t.querySelector(`[data-act="${a}"]`)), pill:!document.getElementById("lreadBar")};
+        t.querySelector('[data-act="annToggle"]').click(); await new Promise(r=>setTimeout(r,150)); const wide=matchMedia("(min-width:900px)").matches;
+        o.pressed=document.querySelector('#topLsn [data-act="annToggle"]').getAttribute("aria-pressed")==="true"; o.tools=!!document.querySelector("#topAnn #annHost .ann-float")&&!document.getElementById("topAnn").hidden;
+        document.querySelector('#topLsn [data-act="annToggle"]').click(); await new Promise(r=>setTimeout(r,150)); o.closed=!document.querySelector("#annHost .ann-float");
+        document.scrollingElement.scrollTop=0; go("home"); o.gone=document.getElementById("topLsn").hidden; return o; });
+      if(!r.vis||!r.btns||!r.pill||!r.pressed||!r.tools||!r.closed||!r.gone) throw new Error(JSON.stringify(r)); });
     await step("lição sempre anotável com caneta", async()=>{
       const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); localStorage.setItem("gab.ann.auto","1"); ANN.pen=true; S.annId=null; S.lread=false; delete (S.prog.annotations||{})["L:lesson:da:t1"]; S.lessonId="lesson:da:t1"; go("lesson");
         const out={}; const sf=()=>document.querySelector(".lwrap [data-ann-surface]");

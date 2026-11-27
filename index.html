@@ -694,13 +694,13 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 .ltoc .ltemas .tqn+.lcov{margin-left:4px}
 .ltoc .ltemas .lcov{margin-left:auto;font-size:10.5px;padding:0 5px;min-width:2.4em}
 /* temas da disciplina abaixo do índice */
-.ltoc .ltemas{margin-top:10px}
+.ltoc .ltemas{margin-bottom:10px} /* temas da disciplina acima do índice da lição (27/11, pedido do Léo) */
 .ltoc .ltemas summary{pointer-events:auto!important;cursor:pointer}
 .ltoc .ltemas button{display:flex;gap:6px;align-items:baseline;font-size:12.5px;padding:5px 10px}
 .ltoc .ltemas .tn{min-width:1.4em;font-variant-numeric:tabular-nums;opacity:.7}
 .ltoc .ltemas button.on{cursor:default}
 .ltoc .ltemas button[disabled]{opacity:.45;cursor:default}
-@media (min-width:1150px){ .ltoc .ltemas{border-top:1px solid var(--hair);border-radius:0;padding-top:10px} .ltoc .ltemas summary::after{content:" ▾";font-size:10px} .ltoc .ltemas:not([open]) summary::after{content:" ▸"} }
+@media (min-width:1150px){ .ltoc .ltemas{border-bottom:1px solid var(--hair);border-radius:0;padding-bottom:10px} .ltoc .ltemas summary::after{content:" ▾";font-size:10px} .ltoc .ltemas:not([open]) summary::after{content:" ▸"} }
 /* índice recolhido (gab.tocoff): some a caixa/coluna e o texto ocupa a largura toda */
 html.toc-off .ltoc{display:none}
 html.toc-off .lwrap>.gdrag{display:none!important}
@@ -2950,7 +2950,7 @@ function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=nul
   const vtx=vb?((vb.querySelector(".ct")?.textContent||"").split("·")[0].trim()||(en?"Night before":"Na véspera")):"";
   const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${h===vb?"v":i-(vb?1:0)}" class="${h===vb?"vesp":h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h===vb?vtx:h.textContent)}</button></li>`).join("");
   const nsec=hs.length-(vb?1:0);
-  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button>${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${nsec} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`:""}${temas}`; nav.hidden=false; tocTogLbl();
+  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher índice"}">»</button>${temas}${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Índice"} · ${nsec} ${en?"sections":"seções"}</summary><ol>${items}</ol></details>`:""}`; nav.hidden=false; tocTogLbl();
   nav.querySelector(".ltemas")?.addEventListener("toggle",e=>{ try{ localStorage.setItem("gab.temas",e.target.open?"1":"0"); }catch(_){} });
   if(!hs.length) return;
   const btns=nav.querySelectorAll("details:not(.ltemas) ol button"); let cur=-1;

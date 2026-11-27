@@ -667,9 +667,9 @@ kbd{font-family:var(--f-mono,ui-monospace,monospace);font-size:12px;background:v
 :root.lsn-sepia #tocPop .tpbox,:root.lsn-sepia #tocPop .tph{background:#F4ECD8;--ink-2:#3D362E;--muted:#6B6153;--pill:rgba(214,198,164,.45)} :root.lsn-dark #tocPop .tpbox,:root.lsn-dark #tocPop .tph{background:#191e23;--ink-2:#cbd4dc;--ink:#e6ebef;--muted:#a7b3be}
 #tocPop .tpt{display:flex;flex-direction:column;min-width:0;gap:1px} #tocPop .tpt small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em} #tocPop .tpt b{font-size:15px;line-height:1.3;color:var(--ink-2)}
 #tocPop .tph{align-items:flex-start} #tocPop .tpl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 10px 4px;border-top:1px solid var(--hair);margin-top:4px}
-#tocPop .tpf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair)}
-#tocPop .tpnav{all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px;background:var(--pill);min-width:0} #tocPop .tpnav.nx{text-align:right}
-#tocPop .tpnav small{font-size:11px;font-weight:600;color:var(--accent)} #tocPop .tpnav span{font-size:13px;line-height:1.3;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#tocPop .tpf,.ltoc .tpf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair)}
+#tocPop .tpnav,.ltoc .tpnav{all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px;background:var(--pill);min-width:0} #tocPop .tpnav.nx,.ltoc .tpnav.nx{text-align:right} .ltoc .tpnav:hover{background:var(--accent-soft)} .ltoc .tpf{margin:12px 6px 4px}
+#tocPop .tpnav small,.ltoc .tpnav small{font-size:11px;font-weight:600;color:var(--accent)} #tocPop .tpnav span,.ltoc .tpnav span{font-size:13px;line-height:1.3;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 #tocPop ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 #tocPop ol button{all:unset;cursor:pointer;display:block;font-size:14px;line-height:1.35;color:var(--ink-2);padding:8px 10px;border-radius:10px;box-sizing:border-box;width:100%}
 #tocPop ol button.sub{padding-left:22px;font-size:13px;color:var(--muted)} #tocPop ol button.vesp{font-weight:600;color:var(--accent)} #tocPop ol button:hover{background:var(--pill);color:var(--ink)} #tocPop ol button.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
@@ -2950,7 +2950,7 @@ function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=nul
   const vtx=vb?((vb.querySelector(".ct")?.textContent||"").split("·")[0].trim()||(en?"Night before":"Na véspera")):"";
   const items=hs.map((h,i)=>`<li><button type="button" data-act="tocGo" data-i="${h===vb?"v":i-(vb?1:0)}" class="${h===vb?"vesp":h.tagName==="H3"&&hs.some(x=>x.tagName==="H2")?"sub":""}">${esc(h===vb?vtx:h.textContent)}</button></li>`).join("");
   const nsec=hs.length-(vb?1:0);
-  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher tópicos"}">»</button>${temas}${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Tópicos"} · ${nsec}</summary><ol>${items}</ol></details>`:""}`; nav.hidden=false; tocTogLbl();
+  nav.innerHTML=`<button type="button" class="tochide" data-act="tocTog" title="${en?"Hide contents":"Recolher tópicos"}">»</button>${temas}${hs.length?`<details ${WIDE_L.matches?"open":""}><summary>${en?"Contents":"Tópicos"} · ${nsec}</summary><ol>${items}</ol></details>`:""}${lessonNavHTML(art)}`; nav.hidden=false; tocTogLbl();
   nav.querySelector(".ltemas")?.addEventListener("toggle",e=>{ try{ localStorage.setItem("gab.temas",e.target.open?"1":"0"); }catch(_){} });
   if(!hs.length) return;
   const btns=nav.querySelectorAll("details:not(.ltemas) ol button"); let cur=-1;
@@ -2959,6 +2959,11 @@ function lessonToc(art0,nav0){ if(S.tocObs){ S.tocObs.disconnect(); S.tocObs=nul
   hs.forEach(h=>S.tocObs.observe(h)); mark(0); }
 // temas da disciplina abaixo do índice (ordem do cronograma), o atual destacado; abre a lição no ponto salvo
 // aparições do tema nas provas UFPR (questão repetida conta uma vez por prova; sem fixação, Banco ou UWorld) = realW
+// fim da lista lateral: lição anterior/próxima na ordem das aulas (27/11, pedido do Léo); só na página da lição
+function lessonNavHTML(art){ if(S.view!=="lesson"||S.tuB!=null||!art.closest("#view .lwrap")) return ""; const id=(art.closest("[data-owner]")?.dataset.owner||"").replace(/^L:/,""), l=S.lessons.get(id); if(!l) return "";
+  const LL=lessonsOf(l.discipline), i=LL.findIndex(x=>x.id===l.id); if(i<0) return ""; const pv=i>0?LL[i-1]:null, nx=i<LL.length-1?LL[i+1]:null; if(!pv&&!nx) return "";
+  const nb=(x,dir)=>x?`<button type="button" class="tpnav${dir>0?" nx":""}" data-act="tocPopL" data-id="${esc(x.id)}"><small>${dir<0?"← "+T2("Anterior","Previous"):T2("Próxima","Next")+" →"}</small><span>${esc(x.title)}</span></button>`:"<span></span>";
+  return `<div class="tpf">${nb(pv,-1)}${nb(nx,1)}</div>`; }
 function lessonTemasHTML(art){ if(S.tuB!=null&&S.view==="lesson") return ""; const id=(art.closest("[data-owner]")?.dataset.owner||"").replace(/^L:/,""), cur=S.lessons.get(id); if(!cur) return "";
   const L=lessonsOf(cur.discipline); if(L.length<2) return ""; const pane=!!art.closest(".qlesson"), en=set().lang==="en";
   let open=WIDE_L.matches; try{ const v=localStorage.getItem("gab.temas"); if(v!=null) open=v==="1"; }catch(_){}

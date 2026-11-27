@@ -624,14 +624,14 @@ body.lread .wrap:has(.lwrap){max-width:860px}
   html:not(.toc-off) body.lread .lwrap>.ann-surface{width:100%;max-width:880px;justify-self:center}
 }
 /* modo leitura: botões em coluna na margem esquerda do texto quando há espaço (27/11, pedido do Léo) */
-#lreadBar.vt{flex-direction:column;border-radius:24px;opacity:.7;max-height:calc(100vh - 90px);overflow-y:auto;scrollbar-width:none} body.lr-pen #lreadBar.vt{opacity:1} #lreadBar.vt .btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+#lreadBar.vt{flex-direction:column;border-radius:24px;opacity:.7;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:none} body.lr-pen #lreadBar.vt{opacity:1} #lreadBar.vt .btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
 .lrann{display:flex;flex-direction:column;align-items:center} #annHost.inlr{display:flex;flex-direction:column;align-items:center}
 #annHost.inlr .ann-float{position:static!important;transform:none!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;max-width:none!important;width:auto!important;margin:0!important;opacity:1!important;box-shadow:none!important;background:transparent!important;flex-direction:column;flex-wrap:nowrap;gap:4px;padding:4px 0;border-radius:0;overflow:visible}
 #annHost.inlr .ann-float [data-act="annToggle"]{display:none} #annHost.inlr .ann-lbl{display:none} #annHost.inlr .ann-float .btn{min-height:34px;min-width:40px;padding:4px 6px;font-size:15px;justify-content:center}
 #annHost.inlr .ann-ic{width:19px;height:19px} #annHost.inlr .ann-color{width:26px;height:26px;min-width:26px} #annHost.inlr .ann-size{width:30px;height:30px} #annHost.inlr .ann-sep{width:auto;height:1px;align-self:stretch;margin:2px 4px}
 #annHost.inlr [data-act="annMin"] svg{transform:rotate(-90deg)} #annHost.inlr .ann-float [role="group"]{display:flex;flex-direction:column;align-items:center;gap:4px} #annHost.inlr .ann-float.mini{padding:0} #lreadBar.vt .lb-l{display:none} #lreadBar.vt .btn{justify-content:center;min-width:40px;padding:8px}
 body.lread{--nav-h:0px}
-body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
+body.lread main{padding-left:calc(64px + env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
 /* sem faixa escura dos lados: o fundo da tela vira o mesmo da lição */
 :root.lsn-sepia body.lread{background:#F4ECD8}:root.lsn-light:not(.lsn-sepia) body.lread{background:#FFFFFF}:root.lsn-dark body.lread{background:#191e23}
 :root.lsn-light body.lread .lesson,:root.lsn-dark body.lread .lesson{box-shadow:none}
@@ -2859,8 +2859,8 @@ function lbtnsWatch(){ if(S.lbObs){ S.lbObs.disconnect(); S.lbObs=null; } S.lbOf
   S.lbObs.observe(r); }
 // pílula presa à borda direita do cartão da lição (não por cima do índice lateral; pedido do Léo, 25/11/2026)
 function lreadBarX(b){ try{ annPgPos(document.body.classList.contains("ann-lp")); }catch(_){} b=b||document.getElementById("lreadBar"); if(!b) return; const art=document.querySelector("#view .lwrap article.lesson"); const r=art&&art.getClientRects().length?art.getBoundingClientRect():null;
-  const vt=lreadOn()&&!!r&&r.left>=76; b.classList.toggle("vt",vt);
-  if(vt){ b.style.left=Math.max(8,Math.round(r.left-66))+"px"; b.style.right="auto"; b.style.top="calc(env(safe-area-inset-top,0px) + 72px)"; return; }
+  const vt=lreadOn(); b.classList.toggle("vt",vt); /* modo leitura: coluna sempre na borda esquerda da tela, numa margem reservada (27/11, pedido do Léo) */
+  if(vt){ b.style.left="max(8px,env(safe-area-inset-left,0px))"; b.style.right="auto"; b.style.top="calc(env(safe-area-inset-top,0px) + 12px)"; return; }
   b.style.left=""; b.style.right=r&&r.right<innerWidth-40?Math.max(12,Math.round(innerWidth-r.right+12))+"px":""; }
 addEventListener("resize",()=>lreadBarX());
 function lreadBar(){ try{ topLsnSync(); }catch(_){} let b=document.getElementById("lreadBar"); const rd=lreadOn(), fl=!rd&&S.view==="lesson"&&!!S.lbOff&&!!document.getElementById("lbtns")&&!topLsnOn();

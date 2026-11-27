@@ -321,7 +321,7 @@ function fixture(){
       const r=await p.evaluate(()=>{ S.annId=null; S.lread=false; S.lessonId="lesson:da:t1"; go("lesson"); document.querySelector('[data-act="lread"]').click();
         const vis=el=>!!el&&getComputedStyle(el).display!=="none"&&el.getBoundingClientRect().height>0;
         const out={on:document.body.classList.contains("lread"),top:vis(document.querySelector(".top")),tabs:vis(document.querySelector("nav.tabs")),text:vis(document.querySelector(".lwrap .lesson")),practice:vis(document.querySelector('#view [data-act="lessonPractice"]'))};
-        document.querySelector('#lreadBar [data-act="annToggle"]').click(); out.ann=S.annId==="L:lesson:da:t1"&&!!document.querySelector(".lwrap .ann-surface.ann-enabled")&&!!document.querySelector("#annHost .ann-float")&&!document.querySelector('#lreadBar [data-act="annToggle"]');
+        document.querySelector('#lreadBar [data-act="annToggle"]').click(); out.ann=S.annId==="L:lesson:da:t1"&&!!document.querySelector(".lwrap .ann-surface.ann-enabled")&&!!document.querySelector("#annHost .ann-float")&&(!document.querySelector('#lreadBar [data-act="annToggle"]')||document.querySelector('#lreadBar [data-act="annToggle"]').getAttribute("aria-pressed")==="true"&&!!document.querySelector("#lreadBar #lrAnn #annHost .ann-float"));
         document.querySelector('#annHost [data-act="annToggle"]').click();
         document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})); out.off=!document.body.classList.contains("lread")&&!document.getElementById("lreadBar")&&vis(document.querySelector('#view [data-act="lessonPractice"]'));
         S.annId=null; localStorage.setItem("gab.lread","0"); S.lread=false; go("home"); out.home=!document.body.classList.contains("lread"); return out; });

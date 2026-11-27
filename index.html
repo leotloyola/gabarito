@@ -624,7 +624,12 @@ body.lread .wrap:has(.lwrap){max-width:860px}
   html:not(.toc-off) body.lread .lwrap>.ann-surface{width:100%;max-width:880px;justify-self:center}
 }
 /* modo leitura: botões em coluna na margem esquerda do texto quando há espaço (27/11, pedido do Léo) */
-#lreadBar.vt{flex-direction:column;border-radius:24px;opacity:.7} #lreadBar.vt .lb-l{display:none} #lreadBar.vt .btn{justify-content:center;min-width:40px;padding:8px}
+#lreadBar.vt{flex-direction:column;border-radius:24px;opacity:.7;max-height:calc(100vh - 90px);overflow-y:auto;scrollbar-width:none} body.lr-pen #lreadBar.vt{opacity:1} #lreadBar.vt .btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lrann{display:flex;flex-direction:column;align-items:center} #annHost.inlr{display:flex;flex-direction:column;align-items:center}
+#annHost.inlr .ann-float{position:static!important;transform:none!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;max-width:none!important;width:auto!important;margin:0!important;opacity:1!important;box-shadow:none!important;background:transparent!important;flex-direction:column;flex-wrap:nowrap;gap:4px;padding:4px 0;border-radius:0;overflow:visible}
+#annHost.inlr .ann-float [data-act="annToggle"]{display:none} #annHost.inlr .ann-lbl{display:none} #annHost.inlr .ann-float .btn{min-height:34px;min-width:40px;padding:4px 6px;font-size:15px;justify-content:center}
+#annHost.inlr .ann-ic{width:19px;height:19px} #annHost.inlr .ann-color{width:26px;height:26px;min-width:26px} #annHost.inlr .ann-size{width:30px;height:30px} #annHost.inlr .ann-sep{width:auto;height:1px;align-self:stretch;margin:2px 4px}
+#annHost.inlr [data-act="annMin"] svg{transform:rotate(-90deg)} #annHost.inlr .ann-float [role="group"]{display:flex;flex-direction:column;align-items:center;gap:4px} #annHost.inlr .ann-float.mini{padding:0} #lreadBar.vt .lb-l{display:none} #lreadBar.vt .btn{justify-content:center;min-width:40px;padding:8px}
 body.lread{--nav-h:0px}
 body.lread main{padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
 /* sem faixa escura dos lados: o fundo da tela vira o mesmo da lição */
@@ -2859,18 +2864,24 @@ function lreadBarX(b){ try{ annPgPos(document.body.classList.contains("ann-lp"))
   b.style.left=""; b.style.right=r&&r.right<innerWidth-40?Math.max(12,Math.round(innerWidth-r.right+12))+"px":""; }
 addEventListener("resize",()=>lreadBarX());
 function lreadBar(){ try{ topLsnSync(); }catch(_){} let b=document.getElementById("lreadBar"); const rd=lreadOn(), fl=!rd&&S.view==="lesson"&&!!S.lbOff&&!!document.getElementById("lbtns")&&!topLsnOn();
-  if(!rd&&!fl){ if(b) b.remove(); return; }
+  if(!rd&&!fl){ if(b){ const h=document.getElementById("annHost"); if(h&&b.contains(h)){ document.body.appendChild(h); h.classList.remove("inlr"); } b.remove(); document.body.classList.remove("lr-pen"); } return; }
   if(!b){ b=document.createElement("div"); b.id="lreadBar"; b.setAttribute("role","toolbar"); document.body.appendChild(b); }
   const o="L:"+S.lessonId, on=annOpen(o);
   b.classList.toggle("fl",fl); b.style.top=fl?Math.round((document.querySelector("header.top")?.getBoundingClientRect().bottom||0)+8)+"px":"";
-  const hasToc=$("#ltoc")&&!$("#ltoc").hidden, tocB=rd&&WIDE_L.matches&&document.documentElement.classList.contains("toc-off")&&hasToc?'<button type="button" class="btn small" data-act="tocTog" aria-label="'+T2("Índice","Contents")+'">☰<span class="lb-l"> '+T2("Índice","Contents")+'</span></button>'
+  const hasToc=!!$("#ltoc"), tocOff=document.documentElement.classList.contains("toc-off"), tocB=rd&&WIDE_L.matches&&hasToc?'<button type="button" class="btn small" data-act="tocTog" aria-pressed="'+!tocOff+'" aria-label="'+T2("Índice","Contents")+'">☰<span class="lb-l"> '+T2("Índice","Contents")+'</span></button>'
     :!WIDE_L.matches&&S.lessonId?'<button type="button" class="btn small" data-act="tocPop" aria-label="'+T2("Abrir índice","Open contents")+'">☰<span class="lb-l"> '+T2("Índice","Contents")+'</span></button>':""; // tela estreita: índice por cima da lição (pedido do Léo, 25/11/2026)
-  b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on?"":'<button type="button" class="btn small" data-act="annToggle" data-q="'+esc(o)+'" aria-label="'+T2("Anotar","Annotate")+'">✍<span class="lb-l"> '+T2("Anotar","Annotate")+'</span></button>')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕<span class="lb-l"> '+T2("Sair da leitura","Exit reading")+'</span></button>':'<button type="button" class="btn small" data-act="lread">📖<span class="lb-l"> '+T2("Modo leitura","Reading mode")+'</span></button>'); lreadBarX(b); }
+  lreadBarX(b); const vt=b.classList.contains("vt"), host=document.getElementById("annHost"), mine=vt&&String(S.annId||"")===o;
+  if(host&&b.contains(host)) document.body.appendChild(host);
+  b.innerHTML=tocB+'<button type="button" class="btn small" data-act="lfind" aria-label="'+T2("Buscar na lição","Find in lesson")+'">🔍</button>'+(on&&(!vt||annIsAuto(o))?"":'<button type="button" class="btn small'+(on?" primary":"")+'" data-act="annToggle" data-q="'+esc(o)+'" aria-pressed="'+on+'" aria-label="'+T2("Anotar","Annotate")+'">✍<span class="lb-l"> '+T2("Anotar","Annotate")+'</span></button>')+(mine?'<span class="lrann" id="lrAnn"></span>':'')+(rd?'<button type="button" class="btn small" data-act="lread" aria-label="'+T2("Sair do modo leitura","Exit reading mode")+'">✕<span class="lb-l"> '+T2("Sair da leitura","Exit reading")+'</span></button>':'<button type="button" class="btn small" data-act="lread">📖<span class="lb-l"> '+T2("Modo leitura","Reading mode")+'</span></button>');
+  lrAnnSync(); }
+// modo leitura com a coluna de botões: as canetas abrem dentro dela, logo abaixo do ✍ (27/11, pedido do Léo)
+function lrAnnSync(){ const slot=document.getElementById("lrAnn"), host=document.getElementById("annHost"); document.body.classList.toggle("lr-pen",!!slot); if(!host) return;
+  if(slot){ if(host.parentElement!==slot) slot.appendChild(host); host.classList.remove("intop"); host.classList.add("inlr"); } else { host.classList.remove("inlr"); if(host.parentElement?.id==="lrAnn") document.body.appendChild(host); } }
 // página da lição: ✍ ao lado do nome do app com as canetas abertas logo ao lado dele (#annHost vai para #topLsnAnn); 🔍 📖 🧠 à direita, junto da lupa. Tela estreita (<760 px): canetas numa linha logo abaixo (#topAnn)
 function topLsnOn(){ return S.view==="lesson"&&!!S.lessonId&&!lreadOn()&&!!S.lessons.get(S.lessonId)&&!$("#layer")?.innerHTML; }
 function topLsnSync(){ const el=document.getElementById("topLsn"), er=document.getElementById("topLsnR"); if(!el||!er) return; const on=topLsnOn(), host=document.getElementById("annHost");
   const row=document.getElementById("topAnn"); document.body.classList.toggle("toplsn-on",on);
-  const home=()=>{ if(host&&host.parentElement!==document.body){ document.body.appendChild(host); host.classList.remove("intop"); } };
+  const home=()=>{ if(!host) return; if(host.parentElement!==document.body&&!(host.parentElement?.id==="lrAnn"&&lreadOn())) document.body.appendChild(host); if(host.parentElement===document.body) host.classList.remove("intop","inlr"); };
   if(!on){ if(!el.hidden){ el.hidden=true; el.innerHTML=""; } if(!er.hidden){ er.hidden=true; er.innerHTML=""; } if(row) row.hidden=true; home(); document.body.classList.remove("toplsn-pen"); return; }
   const o="L:"+S.lessonId, op=annOpen(o), l=S.lessons.get(S.lessonId);
   const k=[o,op,!!l.mm,set().lang].join("|");
@@ -2881,7 +2892,7 @@ function topLsnSync(){ const el=document.getElementById("topLsn"), er=document.g
   }
   if(!host) return; const want=String(S.annId||"")===o&&!!host.firstElementChild, inl=document.getElementById("topLsnAnn"), wide=innerWidth>=760;
   if(!want){ home(); if(row) row.hidden=true; document.body.classList.remove("toplsn-pen"); return; }
-  const tgt=wide?inl:row; if(tgt&&host.parentElement!==tgt) tgt.appendChild(host); host.classList.add("intop"); if(row) row.hidden=wide; document.body.classList.toggle("toplsn-pen",wide); }
+  const tgt=wide?inl:row; if(tgt&&host.parentElement!==tgt) tgt.appendChild(host); host.classList.remove("inlr"); host.classList.add("intop"); if(row) row.hidden=wide; document.body.classList.toggle("toplsn-pen",wide); }
 addEventListener("resize",()=>{ try{ if(topLsnOn()) topLsnSync(); }catch(_){} });
 // troca sem redesenhar a lição e mantém na tela o mesmo parágrafo
 function lreadSet(on){ const sf=document.querySelector("#view .lwrap [data-ann-surface]"); let ref=null,top=0;
